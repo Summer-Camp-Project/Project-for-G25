@@ -1,6 +1,3 @@
-Generated bash
-$ cat README.md
-
 # Ethiopian Heritage Virtual Museum (Pre-Development)
 
 ![Project Coming Soon Banner](https://via.placeholder.com/1200x300.png?text=Project+Initiation+-+Development+Coming+Soon)
