@@ -1,6 +1,6 @@
 # Ethiopian Heritage Virtual Museum (Pre-Development)
 
-![Project Coming Soon Banner](https://via.placeholder.com/1200x300.png?text=Project+Initiation+-+Development+Coming+Soon)
+!Project Coming Soon!
 
 **Project Status:** 🟢 **Planning Phase.** This `README` outlines the vision, goals, and planned architecture for a new project. The codebase has not yet been started.
 
