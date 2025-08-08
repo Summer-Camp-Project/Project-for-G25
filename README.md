@@ -1,70 +1,111 @@
-# Ethiopian Heritage Virtual Museum (Pre-Development)
+# EthioHeritage360
 
-!Project Coming Soon!
+## Overview
+EthioHeritage360 is a digital platform dedicated to preserving and promoting Ethiopia's rich cultural heritage through innovative technology. The platform offers a virtual museum, interactive heritage maps, virtual and physical tour bookings, and an AI-powered assistant, accessible to visitors, tour organizers, museum admins, and super admins with role-based dashboards. This project combines modern web technologies to provide an immersive experience for exploring artifacts, heritage sites, and cultural events.
 
-**Project Status:** 🟢 **Planning Phase.** This `README` outlines the vision, goals, and planned architecture for a new project. The codebase has not yet been started.
+## Features
+- **Virtual Museum**: Paginated, searchable artifact gallery with 3D/AR/VR experiences, detailed views, and filters (region, era, category, keyword) in multiple languages (English, Amharic, Afan Oromo).
+- **Cultural Map**: Interactive map with heritage site pins, info popups, and dynamic data fetching.
+- **Tours**: Listings for physical and virtual tours, managed by tour organizers with booking and livestream capabilities.
+- **Authentication**: Single sign-in/sign-up page with options for Visitors or Tour Organizers, redirecting to respective dashboards.
+- **Dashboards**:
+  - **Visitor**: Explore feeds, view artifacts, book tours, and chat with the AI assistant.
+  - **Tour Organizer**: Create tours, manage bookings, schedules, and livestream events.
+  - **Museum Admin**: Manage museum profiles, upload/edit artifacts, and view analytics.
+  - **Super Admin**: Oversee the ecosystem, approve accounts, and manage settings.
+- **AI Assistant**: Floating chatbot for Q&A and recommendations, with optional history for logged-in users.
+- **Multilingual Support**: English, Amharic, Afan Oromo, with optional Tigrinya.
 
----
+## Tech Stack
+- **Frontend**: React with Tailwind CSS for responsive, styled components.
+- **Backend**: Node.js with Express for API services.
+- **Database**: PostgreSQL for structured data storage.
+- **Additional Tools**: Docker for containerization, Git for version control.
 
-## 1. Vision & Introduction
+## Folder Structure
+/ethioheritage360
+├── /client           # React frontend with Tailwind CSS
+├── /server           # Node.js/Express backend
+├── /docs             # Project documentation
+├── /tests            # Test suites
+├── /scripts          # Build and deployment scripts
+├── /.env             # Environment variables
+├── /package.json     # Project dependencies
+├── /README.md        # This file
+└── /docker-compose.yml # Docker configuration
+- Detailed structure is available in `/docs/user-flow.md`.
 
-The Ethiopian Heritage Virtual Museum is a planned full-stack web application designed to be an immersive digital home for Ethiopia's vast and profound cultural heritage. The vision is to create a globally accessible, interactive, and educational platform that digitally preserves and celebrates historical artifacts, significant sites, traditional arts, and oral histories for generations to come.
+## Prerequisites
+- Node.js (v18.x or later)
+- PostgreSQL (v15.x or later)
+- Docker (optional, for containerized setup)
+- Git
 
-## 2. Project Goals & Objectives
+## Installation
 
-This project aims to achieve the following high-level goals:
+### 1. Clone the Repository
 
-- **Preserve & Educate:** Create a lasting digital archive of Ethiopian heritage that serves as a primary educational resource.
-- **Global Accessibility:** Break down physical barriers, making Ethiopian culture accessible to anyone with an internet connection.
-- **Engage & Immerse:** Provide an engaging user experience through modern web technologies, including interactive maps and a rich virtual gallery.
-- **Build a Foundation:** Develop a robust and scalable platform that can be expanded upon with future features like community contributions, 3D models, and more.
+git clone https://github.com/your-username/ethioheritage360.git
+cd ethioheritage360
+### 2. Set Up Environment Variables
 
-## 3. Core Features (Planned)
+Create a .env file in the root directory.
+Add the following variables (replace with your values):
+textNODE_ENV=development
+PORT=3000
+DATABASE_URL=postgres://user:password@localhost:5432/ethioheritage360
+JWT_SECRET=your-secret-key
+AI_API_KEY=your-ai-api-key
 
-### Public User Features
 
-- **Virtual Gallery:** A browsable, searchable, and filterable gallery of all artifacts.
-- **Detailed Artifact View:** An individual page for each artifact with high-resolution media and multilingual descriptions.
-- **Multilingual Interface:** Full support for English, Amharic, and Afan Oromo.
-- **Interactive Heritage Map:** A map showcasing the locations of key heritage sites with informational pop-ups.
-- **Fully Responsive Design:** A seamless experience across desktop, tablet, and mobile devices.
+### 3. Install Dependencies
 
-### Admin Features
+Frontend:
+bashcd client
+npm install
 
-- **Secure Dashboard:** A password-protected administrative area to manage the museum's content.
-- **Artifact & Site Management:** Full CRUD (Create, Read, Update, Delete) capabilities for all artifacts and historical sites.
-- **Multilingual Content Input:** A user-friendly interface for managing content in all supported languages.
-- **Cloud Media Uploads:** A system for uploading and managing artifact media (images, videos) to a cloud storage provider.
+Backend:
+bashcd ../server
+npm install
 
-## 4. Proposed Tech Stack
 
-| Area         | Technology            | Purpose                                                    |
-| :----------- | :-------------------- | :--------------------------------------------------------- |
-| **Frontend** | Next.js, TailwindCSS  | SEO, performant rendering, and rapid UI development.       |
-| **Backend**  | Node.js (NestJS)      | Scalable, robust, and maintainable API development.        |
-| **Database** | PostgreSQL            | Structured, reliable data storage for artifacts and users. |
-| **Media**    | AWS S3 or Cloudinary  | Scalable and efficient storage for all media assets.       |
-| **Auth**     | JWT (JSON Web Tokens) | Secure, stateless authentication for the admin panel.      |
-| **Mapping**  | Leaflet or Mapbox     | Interactive and customizable map integration.              |
+### 4. Set Up Database
 
-## 5. Proposed Project Structure
+Create a PostgreSQL database named ethioheritage360.
+Run the schema and seed scripts (to be added in /scripts/seed.js):
+bashcd ../scripts
+node seed.js
 
-To ensure a clean separation of concerns, the project will be architected with distinct frontend and backend directories.
 
-/
-├── backend/ # Houses the entire backend API (NestJS/Go)
-│ ├── src/
-│ └── ...
-├── frontend/ # Houses the entire frontend application (Next.js)
-│ ├── components/
-│ ├── pages/
-│ └── ...
-└── README.md
+### 5. Start the Application
 
-Generated code
+Start the backend:
+bashcd ../server
+npm start
 
-## 6. How to Contribute (Future)
+Start the frontend:
+bashcd ../client
+npm start
 
-This project is currently in the planning stages. Once development begins, we will be looking for contributors. If you are interested in contributing to the preservation of cultural heritage through technology, please check back for updates on how to get involved.
+Alternatively, use Docker:
+bashdocker-compose up --build
 
-**Stay tuned for the first commit!**
+
+### Development
+
+Frontend: Edit components in /client/components, pages in /client/pages, and styles in /client/styles with Tailwind CSS.
+Backend: Modify API routes in /server/routes, controllers in /server/controllers, and models in /server/models.
+Testing: Run tests in /tests with your preferred framework (e.g., Jest).
+
+### Contributing
+
+Fork the repository.
+Create a feature branch (git checkout -b feature-name).
+Commit changes (git commit -m "description").
+Push to the branch (git push origin feature-name).
+Open a Pull Request.
+
+
+Project Lead: 
+Support: Visit the Help Center in the app or contact us at support@ethioheritage360.com.
+
