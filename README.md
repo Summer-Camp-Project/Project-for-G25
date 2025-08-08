@@ -115,4 +115,3 @@ Support: Visit the Help Center in the app or contact us at support@ethioheritage
 Acknowledgements
 
 Inspired by Ethiopia's cultural heritage preservation efforts.
-Built with contributions from the xAI community and open-source tools
