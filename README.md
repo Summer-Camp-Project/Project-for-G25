@@ -44,7 +44,7 @@ EthioHeritage360 is a digital platform dedicated to preserving and promoting Eth
 ## Installation
 
 ### 1. Clone the Repository
-```bash
+
 git clone https://github.com/your-username/ethioheritage360.git
 cd ethioheritage360
 ### 2. Set Up Environment Variables
