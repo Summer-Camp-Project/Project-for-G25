@@ -105,13 +105,7 @@ Commit changes (git commit -m "description").
 Push to the branch (git push origin feature-name).
 Open a Pull Request.
 
-License
-This project is licensed under the MIT License - see the LICENSE.md file for details (to be created).
-Contact
 
 Project Lead: 
 Support: Visit the Help Center in the app or contact us at support@ethioheritage360.com.
 
-Acknowledgements
-
-Inspired by Ethiopia's cultural heritage preservation efforts.
