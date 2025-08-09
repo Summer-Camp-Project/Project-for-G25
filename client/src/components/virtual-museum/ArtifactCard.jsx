@@ -1,0 +1,1 @@
+export default function ArtifactCard() { return <div>Artifact Card</div>; }

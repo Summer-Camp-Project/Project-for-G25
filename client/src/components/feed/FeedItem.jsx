@@ -1,0 +1,1 @@
+export default function FeedItem() { return <article>Feed Item</article>; }

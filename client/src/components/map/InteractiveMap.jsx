@@ -1,0 +1,1 @@
+export default function InteractiveMap() { return <div>Interactive Map</div>; }

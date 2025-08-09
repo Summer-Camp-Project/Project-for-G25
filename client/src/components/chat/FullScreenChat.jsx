@@ -1,0 +1,1 @@
+export default function FullScreenChat() { return <div>Full Screen Chat</div>; }

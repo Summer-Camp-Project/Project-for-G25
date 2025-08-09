@@ -1,0 +1,1 @@
+export default function OrganizerDashboard() { return <main>Organizer Dashboard</main>; }

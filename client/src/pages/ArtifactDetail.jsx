@@ -1,0 +1,1 @@
+export default function ArtifactDetailPage() { return <main>Artifact Detail Page</main>; }

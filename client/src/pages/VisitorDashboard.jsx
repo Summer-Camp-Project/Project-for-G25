@@ -1,0 +1,1 @@
+export default function VisitorDashboard() { return <main>Visitor Dashboard</main>; }
