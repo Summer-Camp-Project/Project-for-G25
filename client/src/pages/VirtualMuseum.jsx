@@ -1,0 +1,1 @@
+export default function VirtualMuseum() { return <main>Virtual Museum</main>; }

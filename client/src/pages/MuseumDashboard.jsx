@@ -1,0 +1,1 @@
+export default function MuseumDashboard() { return <main>Museum Dashboard</main>; }

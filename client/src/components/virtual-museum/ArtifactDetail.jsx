@@ -1,0 +1,1 @@
+export default function ArtifactDetail() { return <div>Artifact Detail</div>; }
