@@ -1,4 +1,4 @@
-# EthioHeritage360
+# Ethio360
 
 ## Overview
 EthioHeritage360 is a digital platform dedicated to preserving and promoting Ethiopia's rich cultural heritage through innovative technology. The platform offers a virtual museum, interactive heritage maps, virtual and physical tour bookings, and an AI-powered assistant, accessible to visitors, tour organizers, museum admins, and super admins with role-based dashboards. This project combines modern web technologies to provide an immersive experience for exploring artifacts, heritage sites, and cultural events.
