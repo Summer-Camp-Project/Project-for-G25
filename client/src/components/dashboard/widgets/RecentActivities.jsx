@@ -34,9 +34,9 @@ export function RecentActivities() {
   };
 
   return (
-    <Card className="bg-white border-stone-200">
+    <Card className="bg-white border-gray-200">
       <CardHeader>
-        <CardTitle className="text-lg text-stone-800">Recent Activities</CardTitle>
+        <CardTitle className="text-lg text-gray-800">Recent Activities</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {activities.slice(0, 5).map((activity, index) => {
@@ -45,16 +45,16 @@ export function RecentActivities() {
           return (
             <div key={activity.id}>
               <div
-                className="flex items-start gap-4 cursor-pointer hover:bg-stone-50 p-2 rounded-lg -m-2"
+                className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg -m-2"
                 onClick={() => handleActivityClick(activity)}
               >
-                <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
-                  <ActivityIcon className="w-5 h-5 text-stone-600" />
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <ActivityIcon className="w-5 h-5 text-gray-600" />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-sm font-medium text-stone-800">
+                    <h4 className="text-sm font-medium text-gray-800">
                       {activity.title}
                     </h4>
                     <Badge
@@ -73,11 +73,11 @@ export function RecentActivities() {
                     </Badge>
                   </div>
 
-                  <p className="text-sm text-stone-600 mb-1">
+                  <p className="text-sm text-gray-600 mb-1">
                     {activity.description}
                   </p>
 
-                  <div className="flex items-center gap-2 text-xs text-stone-500">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Clock className="w-3 h-3" />
                     {activity.time}
                     {activity.user !== "System" && (
@@ -100,7 +100,7 @@ export function RecentActivities() {
         <div className="pt-2">
           <button
             onClick={handleViewAllActivities}
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+            className="text-sm text-green-600 hover:text-green-700 font-medium"
           >
             View all activities →
           </button>

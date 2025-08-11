@@ -61,7 +61,7 @@ export function TourPackagesPage() {
         </div>
         <Button 
           onClick={() => setShowCreateTourModal(true)}
-          className="h-12 bg-blue-400 hover:bg-emerald-700 text-white shadow-md flex items-center"
+          className="h-12 bg-green-400 hover:bg-green-700 text-white shadow-md flex items-center"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create New Tour
@@ -81,12 +81,12 @@ export function TourPackagesPage() {
                 placeholder="Search tours..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-gray-300 focus:ring-emerald-500 focus:border-emerald-500"
+                className="pl-10 border-gray-300 focus:ring-green-500 focus:border-green-500"
               />
             </div>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+              <SelectTrigger className="border-gray-300 focus:ring-green-500 focus:border-green-500">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -98,7 +98,7 @@ export function TourPackagesPage() {
             </Select>
             
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger className="border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+              <SelectTrigger className="border-gray-300 focus:ring-green-500 focus:border-green-500">
                 <SelectValue placeholder="Filter by region" />
               </SelectTrigger>
               <SelectContent>
@@ -128,7 +128,7 @@ export function TourPackagesPage() {
                     <Badge 
                       className={`${
                         tour.status === 'active' 
-                          ? 'bg-emerald-100 text-emerald-800' 
+                          ? 'bg-green-100 text-green-800' 
                           : tour.status === 'inactive'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
@@ -165,7 +165,7 @@ export function TourPackagesPage() {
                   <span>Max {tour.maxGuests} guests</span>
                 </div>
                 
-                <div className="flex items-center gap-2 text-sm font-medium text-emerald-600">
+                <div className="flex items-center gap-2 text-sm font-medium text-green-600">
                   <DollarSign className="w-4 h-4" />
                   <span>${tour.price} per person</span>
                 </div>
@@ -240,7 +240,7 @@ export function TourPackagesPage() {
           {!searchTerm && statusFilter === "all" && regionFilter === "all" && (
             <Button 
               onClick={() => setShowCreateTourModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 flex items-center mx-auto"
+              className="bg-green-600 hover:bg-green-700 flex items-center mx-auto"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create New Tour

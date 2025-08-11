@@ -3,13 +3,13 @@ import { TopBar } from "./TopBar";
 import { MainContent } from "../MainContent";
 import { CreateTourModal } from "../modals/CreateTourModal";
 import { BookingRequestsModal } from "../modals/BookingRequestsModal";
-import { useDashboard } from "../../context/DashboardContext";
+import { useDashboard } from "../../../context/DashboardContext";
 
 export function DashboardLayout() {
   const { showCreateTourModal, showBookingRequestsModal } = useDashboard();
 
   return (
-    <div className="flex h-screen bg-stone-50">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar />
       
@@ -25,6 +25,7 @@ export function DashboardLayout() {
       </div>
 
       {/* Modals */}
+      
       {showCreateTourModal && <CreateTourModal />}
       {showBookingRequestsModal && <BookingRequestsModal />}
     </div>

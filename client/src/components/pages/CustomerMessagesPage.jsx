@@ -75,8 +75,8 @@ export function CustomerMessagesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Customer Messages</h1>
-          <p className="text-stone-600">Manage customer inquiries and communications</p>
+          <h1 className="text-2xl font-semibold text-gray-800">Customer Messages</h1>
+          <p className="text-gray-600">Manage customer inquiries and communications</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{messages.filter((m) => m.status === "unread").length} unread</Badge>
@@ -88,14 +88,14 @@ export function CustomerMessagesPage() {
         {[
           { label: "Total Messages", value: messages.length, color: "bg-blue-100 text-blue-800" },
           { label: "Unread", value: messages.filter((m) => m.status === "unread").length, color: "bg-red-100 text-red-800" },
-          { label: "Replied", value: messages.filter((m) => m.status === "replied").length, color: "bg-emerald-100 text-emerald-800" },
+          { label: "Replied", value: messages.filter((m) => m.status === "replied").length, color: "bg-green-100 text-green-800" },
         ].map((stat, index) => (
           <Card key={index}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-stone-600">{stat.label}</p>
-                  <p className="text-2xl font-semibold text-stone-800">{stat.value}</p>
+                  <p className="text-sm text-gray-600">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-gray-800">{stat.value}</p>
                 </div>
                 <div className={`w-10 h-10 rounded-full ${stat.color} flex items-center justify-center`}>
                   <Mail className="w-5 h-5" />
@@ -117,7 +117,7 @@ export function CustomerMessagesPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search messages..."
                 value={searchTerm}
@@ -150,9 +150,9 @@ export function CustomerMessagesPage() {
           <div className="space-y-3">
             {filteredMessages.length === 0 ? (
               <div className="text-center py-8">
-                <Mail className="w-12 h-12 text-stone-400 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-stone-800 mb-2">No messages found</h3>
-                <p className="text-stone-600">
+                <Mail className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-800 mb-2">No messages found</h3>
+                <p className="text-gray-600">
                   {searchTerm || statusFilter !== "all"
                     ? "Try adjusting your filters"
                     : "Customer messages will appear here"}
@@ -167,8 +167,8 @@ export function CustomerMessagesPage() {
                     key={message.id}
                     className={`p-4 border rounded-lg hover:shadow-sm transition-all cursor-pointer ${
                       message.status === "unread"
-                        ? "border-emerald-300 bg-emerald-50"
-                        : "border-stone-200 hover:border-stone-300"
+                        ? "border-green-300 bg-green-50"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => handleMessageClick(message.id)}
                   >
@@ -176,7 +176,7 @@ export function CustomerMessagesPage() {
                       <div className="flex items-start gap-3 flex-1">
                         <StatusIcon
                           className={`w-5 h-5 mt-1 ${
-                            message.status === "unread" ? "text-emerald-600" : "text-stone-400"
+                            message.status === "unread" ? "text-green-600" : "text-gray-400"
                           }`}
                         />
 
@@ -184,7 +184,7 @@ export function CustomerMessagesPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <h4
                               className={`font-medium ${
-                                message.status === "unread" ? "text-stone-900" : "text-stone-700"
+                                message.status === "unread" ? "text-gray-900" : "text-gray-700"
                               }`}
                             >
                               {message.customerName}
@@ -194,22 +194,22 @@ export function CustomerMessagesPage() {
                             </Badge>
                           </div>
 
-                          <p className="text-sm text-stone-600 mb-1">{message.customerEmail}</p>
+                          <p className="text-sm text-gray-600 mb-1">{message.customerEmail}</p>
 
                           <h5
                             className={`text-sm mb-2 ${
-                              message.status === "unread" ? "font-medium text-stone-900" : "text-stone-800"
+                              message.status === "unread" ? "font-medium text-gray-900" : "text-gray-800"
                             }`}
                           >
                             {message.subject}
                           </h5>
 
-                          <p className="text-sm text-stone-600 line-clamp-2">{message.message}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{message.message}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        <span className="text-xs text-stone-500">{formatDate(message.createdAt)}</span>
+                        <span className="text-xs text-gray-500">{formatDate(message.createdAt)}</span>
 
                         <div className="flex items-center gap-1">
                           <Dialog>
@@ -223,9 +223,9 @@ export function CustomerMessagesPage() {
                                 <DialogTitle>Reply to {message.customerName}</DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4">
-                                <div className="bg-stone-50 p-4 rounded-lg">
+                                <div className="bg-gray-50 p-4 rounded-lg">
                                   <h4 className="font-medium mb-2">Original Message:</h4>
-                                  <p className="text-sm text-stone-700">{message.message}</p>
+                                  <p className="text-sm text-gray-700">{message.message}</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -248,7 +248,7 @@ export function CustomerMessagesPage() {
                                   >
                                     Cancel
                                   </Button>
-                                  <Button onClick={() => handleReply(message.id)} className="bg-emerald-600 hover:bg-emerald-700">
+                                  <Button onClick={() => handleReply(message.id)} className="bg-green-600 hover:bg-green-700">
                                     Send Reply
                                   </Button>
                                 </div>

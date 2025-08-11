@@ -72,7 +72,7 @@ export function SchedulesPage() {
     // Empty slots for days before first of month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="p-2 h-24 border border-stone-200 bg-stone-50"></div>
+        <div key={`empty-${i}`} className="p-2 h-24 border border-gray-200 bg-gray-50"></div>
       );
     }
     
@@ -85,11 +85,11 @@ export function SchedulesPage() {
       days.push(
         <div
           key={day}
-          className={`p-2 h-24 border border-stone-200 hover:bg-stone-50 transition-colors ${
-            isToday ? 'bg-emerald-50 border-emerald-300' : 'bg-white'
+          className={`p-2 h-24 border border-gray-200 hover:bg-gray-50 transition-colors ${
+            isToday ? 'bg-green-50 border-green-300' : 'bg-white'
           }`}
         >
-          <div className={`text-sm font-medium mb-1 ${isToday ? 'text-emerald-700' : 'text-stone-800'}`}>
+          <div className={`text-sm font-medium mb-1 ${isToday ? 'text-green-700' : 'text-gray-800'}`}>
             {day}
           </div>
           <div className="space-y-1">
@@ -99,14 +99,14 @@ export function SchedulesPage() {
                 <div
                   key={booking.id}
                   onClick={() => handleTourClick(booking.id)}
-                  className="bg-emerald-100 text-emerald-800 text-xs p-1 rounded cursor-pointer hover:bg-emerald-200 transition-colors truncate"
+                  className="bg-green-100 text-green-800 text-xs p-1 rounded cursor-pointer hover:bg-green-200 transition-colors truncate"
                 >
                   {tour?.title || 'Unknown Tour'}
                 </div>
               );
             })}
             {dayBookings.length > 2 && (
-              <div className="text-xs text-stone-600">+{dayBookings.length - 2} more</div>
+              <div className="text-xs text-gray-600">+{dayBookings.length - 2} more</div>
             )}
           </div>
         </div>
@@ -131,7 +131,7 @@ export function SchedulesPage() {
             return (
               <div
                 key={day}
-                className={`p-2 text-sm font-medium text-center ${isToday ? 'text-emerald-700' : 'text-stone-600'}`}
+                className={`p-2 text-sm font-medium text-center ${isToday ? 'text-green-700' : 'text-gray-600'}`}
               >
                 <div>{day}</div>
                 <div className="text-xs">{date.getDate()}</div>
@@ -141,7 +141,7 @@ export function SchedulesPage() {
         </div>
         
         {/* Week grid */}
-        <div className="grid grid-cols-7 gap-0 border border-stone-200 rounded-lg overflow-hidden">
+        <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden">
           {weekDates.map(date => {
             const dayBookings = getBookingsForDate(date);
             const isToday = date.toDateString() === new Date().toDateString();
@@ -149,11 +149,11 @@ export function SchedulesPage() {
             return (
               <div
                 key={date.toISOString()}
-                className={`p-2 h-24 border border-stone-200 hover:bg-stone-50 transition-colors ${
-                  isToday ? 'bg-emerald-50 border-emerald-300' : 'bg-white'
+                className={`p-2 h-24 border border-gray-200 hover:bg-gray-50 transition-colors ${
+                  isToday ? 'bg-green-50 border-green-300' : 'bg-white'
                 }`}
               >
-                <div className={`text-sm font-medium mb-1 ${isToday ? 'text-emerald-700' : 'text-stone-800'}`}>
+                <div className={`text-sm font-medium mb-1 ${isToday ? 'text-green-700' : 'text-gray-800'}`}>
                   {date.getDate()}
                 </div>
                 <div className="space-y-1">
@@ -163,14 +163,14 @@ export function SchedulesPage() {
                       <div
                         key={booking.id}
                         onClick={() => handleTourClick(booking.id)}
-                        className="bg-emerald-100 text-emerald-800 text-xs p-1 rounded cursor-pointer hover:bg-emerald-200 transition-colors truncate"
+                        className="bg-green-100 text-green-800 text-xs p-1 rounded cursor-pointer hover:bg-green-200 transition-colors truncate"
                       >
                         {tour?.title || 'Unknown Tour'}
                       </div>
                     );
                   })}
                   {dayBookings.length > 2 && (
-                    <div className="text-xs text-stone-600">+{dayBookings.length - 2} more</div>
+                    <div className="text-xs text-gray-600">+{dayBookings.length - 2} more</div>
                   )}
                 </div>
               </div>
@@ -192,8 +192,8 @@ export function SchedulesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Schedules</h1>
-          <p className="text-stone-600">View and manage your tour schedule</p>
+          <h1 className="text-2xl font-semibold text-gray-800">Schedules</h1>
+          <p className="text-gray-600">View and manage your tour schedule</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={viewMode} onValueChange={(value) => setViewMode(value)}>
@@ -205,7 +205,7 @@ export function SchedulesPage() {
               <SelectItem value="week">Week View</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleAddEvent} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleAddEvent} className="bg-green-600 hover:bg-green-700">
             <Plus className="w-4 h-4 mr-2" />
             Add Event
           </Button>
@@ -242,12 +242,12 @@ export function SchedulesPage() {
                 <>
                   <div className="grid grid-cols-7 mb-2">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                      <div key={day} className="p-2 text-sm font-medium text-stone-600 text-center">
+                      <div key={day} className="p-2 text-sm font-medium text-gray-600 text-center">
                         {day}
                       </div>
                     ))}
                   </div>
-                  <div className="grid grid-cols-7 gap-0 border border-stone-200 rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden">
                     {renderCalendar()}
                   </div>
                 </>
@@ -266,7 +266,7 @@ export function SchedulesPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {upcomingTours.length === 0 ? (
-                <p className="text-stone-600 text-sm">No upcoming tours scheduled</p>
+                <p className="text-gray-600 text-sm">No upcoming tours scheduled</p>
               ) : (
                 upcomingTours.map(booking => {
                   const tour = tourPackages.find(t => t.id === booking.tourPackageId);
@@ -276,10 +276,10 @@ export function SchedulesPage() {
                     <div
                       key={booking.id}
                       onClick={() => handleTourClick(booking.id)}
-                      className="p-3 border border-stone-200 rounded-lg hover:border-emerald-300 hover:shadow-sm transition-all cursor-pointer"
+                      className="p-3 border border-gray-200 rounded-lg hover:border-green-300 hover:shadow-sm transition-all cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-stone-800 text-sm">
+                        <h4 className="font-medium text-gray-800 text-sm">
                           {tour?.title || 'Unknown Tour'}
                         </h4>
                         <Badge variant="secondary" className="text-xs">
@@ -288,17 +288,17 @@ export function SchedulesPage() {
                       </div>
                       
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs text-stone-600">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
                           <CalendarIcon className="w-3 h-3" />
                           {tourDate.toLocaleDateString()}
                         </div>
                         
-                        <div className="flex items-center gap-2 text-xs text-stone-600">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
                           <Users className="w-3 h-3" />
                           {booking.guests} guests
                         </div>
                         
-                        <div className="flex items-center gap-2 text-xs text-stone-600">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
                           <MapPin className="w-3 h-3" />
                           {tour?.location}
                         </div>
@@ -317,18 +317,18 @@ export function SchedulesPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-600">Total Tours</span>
+                <span className="text-sm text-gray-600">Total Tours</span>
                 <span className="font-medium">{upcomingTours.length}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-600">Total Guests</span>
+                <span className="text-sm text-gray-600">Total Guests</span>
                 <span className="font-medium">
                   {upcomingTours.reduce((sum, booking) => sum + booking.guests, 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-stone-600">Revenue</span>
-                <span className="font-medium text-emerald-600">
+                <span className="text-sm text-gray-600">Revenue</span>
+                <span className="font-medium text-green-600">
                   ${upcomingTours.reduce((sum, booking) => sum + booking.totalAmount, 0)}
                 </span>
               </div>

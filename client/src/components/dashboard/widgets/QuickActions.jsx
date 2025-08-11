@@ -14,11 +14,17 @@ export function QuickActions() {
   const pendingBookings = bookings.filter(b => b.status === "pending").length;
 
   const handleCreateTour = () => {
+    console.log('Create Tour button clicked');
+    console.log('Current showCreateTourModal state:', setShowCreateTourModal);
     setShowCreateTourModal(true);
+    console.log('After setting showCreateTourModal to true');
   };
 
   const handleViewBookingRequests = () => {
+    console.log('View Booking Requests button clicked');
+    console.log('Current showBookingRequestsModal state:', setShowBookingRequestsModal);
     setShowBookingRequestsModal(true);
+    console.log('After setting showBookingRequestsModal to true');
   };
 
   const handleManageCustomers = () => {
@@ -30,15 +36,15 @@ export function QuickActions() {
   };
 
   return (
-    <Card className="bg-white border-stone-200">
+    <Card className="bg-white border-gray-200">
       <CardHeader>
-        <CardTitle className="text-lg text-stone-800">Quick Actions</CardTitle>
+        <CardTitle className="text-lg text-gray-800">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Button
             onClick={handleCreateTour}
-            className="h-12 bg-blue-400 hover:bg-emerald-700 text-white shadow-md"
+            className="h-12 bg-green-600 hover:bg-green-700 text-white shadow-md"
             size="lg"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -48,7 +54,7 @@ export function QuickActions() {
           <Button
             onClick={handleViewBookingRequests}
             variant="outline"
-            className="h-12 border-stone-300 text-stone-700 hover:bg-stone-50 relative"
+            className="h-12 border-gray-300 text-gray-700 hover:bg-gray-50 relative"
             size="lg"
           >
             <Eye className="w-5 h-5 mr-2" />
@@ -63,7 +69,7 @@ export function QuickActions() {
           <Button
             onClick={handleManageCustomers}
             variant="outline"
-            className="h-12 border-stone-300 text-stone-700 hover:bg-stone-50"
+            className="h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
             size="lg"
           >
             <Users className="w-5 h-5 mr-2" />
@@ -73,7 +79,7 @@ export function QuickActions() {
           <Button
             onClick={handleViewAnalytics}
             variant="outline"
-            className="h-12 border-stone-300 text-stone-700 hover:bg-stone-50"
+            className="h-12 border-gray-300 text-gray-700 hover:bg-gray-50"
             size="lg"
           >
             <BarChart3 className="w-5 h-5 mr-2" />

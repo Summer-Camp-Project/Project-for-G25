@@ -52,15 +52,15 @@ export function TourBookingsPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "confirmed":
-        return "bg-emerald-600";
+        return "bg-green-600";
       case "pending":
-        return "bg-amber-600";
+        return "bg-yellow-600";
       case "completed":
         return "bg-blue-600";
       case "cancelled":
         return "bg-red-600";
       default:
-        return "bg-stone-600";
+        return "bg-gray-600";
     }
   };
 
@@ -76,8 +76,8 @@ export function TourBookingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-800">Tour Bookings</h1>
-          <p className="text-stone-600">Manage customer bookings and reservations</p>
+          <h1 className="text-2xl font-semibold text-gray-800">Tour Bookings</h1>
+          <p className="text-gray-600">Manage customer bookings and reservations</p>
         </div>
         <Button onClick={handleExport} variant="outline">
           <Download className="w-4 h-4 mr-2" />
@@ -89,16 +89,16 @@ export function TourBookingsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: "Total Bookings", value: bookings.length, color: "bg-blue-100 text-blue-800" },
-          { label: "Pending", value: bookings.filter(b => b.status === "pending").length, color: "bg-amber-100 text-amber-800" },
-          { label: "Confirmed", value: bookings.filter(b => b.status === "confirmed").length, color: "bg-emerald-100 text-emerald-800" },
+          { label: "Pending", value: bookings.filter(b => b.status === "pending").length, color: "bg-yellow-100 text-yellow-800" },
+          { label: "Confirmed", value: bookings.filter(b => b.status === "confirmed").length, color: "bg-green-100 text-green-800" },
           { label: "Completed", value: bookings.filter(b => b.status === "completed").length, color: "bg-green-100 text-green-800" },
         ].map((stat, i) => (
           <Card key={i}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-stone-600">{stat.label}</p>
-                  <p className="text-2xl font-semibold text-stone-800">{stat.value}</p>
+                  <p className="text-sm text-gray-600">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-gray-800">{stat.value}</p>
                 </div>
                 <div className={`w-10 h-10 rounded-full ${stat.color} flex items-center justify-center`}>
                   <Calendar className="w-5 h-5" />
@@ -149,9 +149,9 @@ export function TourBookingsPage() {
         <CardContent>
           {filteredBookings.length === 0 ? (
             <div className="text-center py-8">
-              <Calendar className="w-12 h-12 text-stone-400 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-stone-800 mb-2">No bookings found</h3>
-              <p className="text-stone-600">
+              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-gray-800 mb-2">No bookings found</h3>
+              <p className="text-gray-600">
                 {searchTerm || statusFilter !== "all"
                   ? "Try adjusting your filters"
                   : "Bookings will appear here once customers make reservations"}
@@ -181,25 +181,25 @@ export function TourBookingsPage() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{booking.customerName}</p>
-                          <p className="text-sm text-stone-600">{booking.customerEmail}</p>
+                          <p className="text-sm text-gray-600">{booking.customerEmail}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{tour?.title || "Unknown Tour"}</p>
-                          <p className="text-sm text-stone-600">{tour?.location}</p>
+                          <p className="text-sm text-gray-600">{tour?.location}</p>
                         </div>
                       </TableCell>
                       <TableCell>{tourDate}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4 text-stone-600" />
+                          <Users className="w-4 h-4 text-gray-600" />
                           {booking.guests}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-emerald-600" />
+                          <DollarSign className="w-4 h-4 text-green-600" />
                           {booking.totalAmount}
                         </div>
                       </TableCell>
@@ -220,7 +220,7 @@ export function TourBookingsPage() {
                               <Button
                                 size="sm"
                                 onClick={() => handleStatusChange(booking.id, "confirmed")}
-                                className="bg-emerald-600 hover:bg-emerald-700"
+                                className="bg-green-600 hover:bg-green-700"
                                 aria-label="Confirm Booking"
                               >
                                 Confirm
