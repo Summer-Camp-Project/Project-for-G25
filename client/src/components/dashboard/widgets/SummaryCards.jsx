@@ -19,8 +19,8 @@ export function SummaryCards() {
       value: dashboardStats.upcomingBookings?.toString() || "0",
       change: "+5 this week",
       icon: Calendar,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-100",
+      color: "text-green-600",
+      bgColor: "bg-green-100",
     },
     {
       title: "Completed Tours",
@@ -35,8 +35,8 @@ export function SummaryCards() {
       value: dashboardStats.pendingRequests?.toString() || "0",
       change: "3 new today",
       icon: Clock,
-      color: "text-amber-600",
-      bgColor: "bg-amber-100",
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-100",
     },
   ];
 
@@ -45,10 +45,10 @@ export function SummaryCards() {
       {summaryData.map((item, index) => (
         <Card
           key={index}
-          className="bg-white border border-stone-200 hover:shadow-md transition-shadow"
+          className="bg-white border border-gray-200 hover:shadow-md transition-shadow"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-stone-600">
+            <CardTitle className="text-sm font-medium text-gray-600">
               {item.title}
             </CardTitle>
             <div
@@ -58,10 +58,10 @@ export function SummaryCards() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-stone-800 mb-1">
+            <div className="text-2xl font-bold text-gray-800 mb-1">
               {item.value}
             </div>
-            <p className="text-xs text-stone-600">{item.change}</p>
+            <p className="text-xs text-gray-600">{item.change}</p>
           </CardContent>
         </Card>
       ))}

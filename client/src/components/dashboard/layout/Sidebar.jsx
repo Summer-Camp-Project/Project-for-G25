@@ -38,13 +38,13 @@ export function Sidebar() {
   };
 
   return (
-    <div className={`bg-white border-r border-stone-200 h-full transition-all duration-300 ${
+    <div className={`bg-white border-r border-gray-200 h-full transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
     }`}>
-      <div className="p-4 border-b border-stone-200">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <h2 className="text-xl font-semibold text-stone-800">Tour Organizer</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Tour Organizer</h2>
           )}
           <Button
             variant="ghost"
@@ -68,8 +68,8 @@ export function Sidebar() {
               variant={isActive ? "default" : "ghost"}
               className={`w-full justify-start ${
                 isActive 
-                  ? "bg-blue-400 text-white hover:bg-emerald-700" 
-                  : "text-stone-600 hover:bg-stone-100"
+                  ? "bg-green-600 text-white hover:bg-green-700" 
+                  : "text-gray-600 hover:bg-gray-100"
               }`}
               onClick={() => handleNavigation(item.id)}
             >

@@ -26,15 +26,15 @@ export function CalendarView() {
   };
 
   return (
-    <Card className="bg-white border-stone-200">
+    <Card className="bg-white border-gray-200">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg text-stone-800">Upcoming Tours</CardTitle>
+          <CardTitle className="text-lg text-gray-800">Upcoming Tours</CardTitle>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="w-8 h-8">
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-medium text-stone-700 min-w-[100px] text-center">
+            <span className="text-sm font-medium text-gray-700 min-w-[100px] text-center">
               January 2025
             </span>
             <Button variant="ghost" size="icon" className="w-8 h-8">
@@ -46,8 +46,8 @@ export function CalendarView() {
       <CardContent className="space-y-4">
         {upcomingTours.length === 0 ? (
           <div className="text-center py-8">
-            <CalendarIcon className="w-12 h-12 text-stone-400 mx-auto mb-3" />
-            <p className="text-stone-600">No upcoming tours scheduled</p>
+            <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-600">No upcoming tours scheduled</p>
           </div>
         ) : (
           upcomingTours.map((tour) => {
@@ -57,18 +57,18 @@ export function CalendarView() {
             return (
               <div 
                 key={tour.id}
-                className="flex gap-4 p-4 rounded-lg border border-stone-200 hover:border-emerald-300 hover:shadow-sm transition-all cursor-pointer"
+                className="flex gap-4 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all cursor-pointer"
                 onClick={() => handleTourClick(tour.id)}
               >
                 {/* Date Column */}
                 <div className="text-center min-w-[60px]">
-                  <div className="text-lg font-semibold text-stone-800">
+                  <div className="text-lg font-semibold text-gray-800">
                     {day}
                   </div>
-                  <div className="text-xs text-stone-600 uppercase">
+                  <div className="text-xs text-gray-600 uppercase">
                     {month}
                   </div>
-                  <div className="text-xs text-stone-500 mt-1">
+                  <div className="text-xs text-gray-500 mt-1">
                     {dayName.slice(0, 3)}
                   </div>
                 </div>
@@ -76,7 +76,7 @@ export function CalendarView() {
                 {/* Tour Details */}
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-stone-800">
+                    <h4 className="font-medium text-gray-800">
                       {tour.tourTitle}
                     </h4>
                     <Badge 
@@ -88,22 +88,22 @@ export function CalendarView() {
                   </div>
                   
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Clock className="w-4 h-4" />
                       {tourPackage?.duration || 'Duration TBD'}
                     </div>
                     
-                    <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
                       {tour.guests} guests
                     </div>
                     
-                    <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="w-4 h-4" />
                       {tour.location}
                     </div>
                     
-                    <div className="flex items-center gap-2 text-sm text-stone-600">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
                       <span className="font-medium">Customer:</span>
                       {tour.customerName}
                     </div>
@@ -117,7 +117,7 @@ export function CalendarView() {
         <div className="pt-2">
           <button 
             onClick={handleViewFullCalendar}
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+            className="text-sm text-green-600 hover:text-green-700 font-medium"
           >
             View full calendar →
           </button>

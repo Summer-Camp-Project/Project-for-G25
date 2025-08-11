@@ -67,19 +67,19 @@ export function TopBar() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-stone-200 px-6 flex items-center justify-between">
+    <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between">
       {/* Page Title and Search */}
       <div className="flex items-center gap-6">
-        <h1 className="text-xl font-semibold text-stone-800">{getPageTitle(currentPage)}</h1>
+        <h1 className="text-xl font-semibold text-gray-800">{getPageTitle(currentPage)}</h1>
 
         {/* Search Bar */}
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
             placeholder="Search tours, bookings..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-80 bg-stone-50 border-stone-200 focus:border-emerald-400 focus:ring-emerald-300"
+            className="pl-10 w-80 bg-gray-50 border-gray-200 focus:border-green-400 focus:ring-green-300"
           />
         </div>
       </div>
@@ -90,9 +90,9 @@ export function TopBar() {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5 text-stone-600" />
+              <Bell className="w-5 h-5 text-gray-600" />
               {unreadNotifications.length > 0 && (
-                <Badge className="absolute -top-2 -right-3 w-5 h-5 text-xs bg-red-500 hover:bg-red-500">
+                <Badge className="absolute -top-2 -right-3 w-5 h-5 text-white text-xs bg-red-500 hover:bg-red-500">
                   {unreadNotifications.length}
                 </Badge>
               )}
@@ -118,21 +118,21 @@ export function TopBar() {
 
               <div className="space-y-3 max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <p className="text-sm text-stone-600 text-center py-4">No notifications</p>
+                  <p className="text-sm text-gray-600 text-center py-4">No notifications</p>
                 ) : (
                   notifications.slice(0, 5).map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-3 rounded-lg border cursor-pointer hover:bg-stone-50 ${
-                        !notification.read ? "bg-blue-50 border-blue-200" : "border-stone-200"
+                      className={`p-3 rounded-lg border cursor-pointer hover:bg-gray-50 ${
+                        !notification.read ? "bg-blue-50 border-blue-200" : "border-gray-200"
                       }`}
                       onClick={() => handleNotificationClick(notification.id)}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-stone-800">{notification.title}</p>
-                          <p className="text-xs text-stone-600 mt-1">{notification.message}</p>
-                          <p className="text-xs text-stone-500 mt-1">
+                          <p className="text-sm font-medium text-gray-800">{notification.title}</p>
+                          <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">
                             {new Date(notification.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -151,10 +151,10 @@ export function TopBar() {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-3 hover:bg-stone-100">
+            <Button variant="ghost" className="flex items-center gap-3 hover:bg-gray-100">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={currentUser.avatar} />
-                <AvatarFallback className="bg-emerald-100 text-emerald-700">
+                <AvatarFallback className="bg-green-100 text-green-700">
                   {currentUser.name
                     .split(" ")
                     .map((n) => n[0])
@@ -162,10 +162,10 @@ export function TopBar() {
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-stone-800">{currentUser.name}</p>
-                <p className="text-xs text-stone-600 capitalize">{currentUser.role.replace("_", " ")}</p>
+                <p className="text-sm font-medium text-gray-800">{currentUser.name}</p>
+                <p className="text-xs text-gray-600 capitalize">{currentUser.role.replace("_", " ")}</p>
               </div>
-              <ChevronDown className="w-4 h-4 text-stone-600" />
+              <ChevronDown className="w-4 h-4 text-gray-600" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
