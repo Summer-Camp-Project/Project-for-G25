@@ -27,7 +27,7 @@ import { Card, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ScrollArea } from "../ui/scroll-area";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
-//this is component for displaying detailed information about an artifact in a virtual museum setting.
+
 export function ArtifactDetailsModal({
   artifact,
   isOpen,
