@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from "react"; 
 import { Plus, Edit, Trash2, Eye, MapPin, Users, Clock, DollarSign, Search, Package } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -120,10 +120,25 @@ export function TourPackagesPage() {
             key={tour.id} 
             className="hover:shadow-md transition-shadow duration-300 border border-gray-200 rounded-lg overflow-hidden"
           >
+            {/* Image Preview */}
+            {tour.images && tour.images.length > 0 ? (
+              <img
+                src={tour.images[0]}
+                alt={tour.title}
+                className="w-full h-48 object-cover"
+              />
+            ) : (
+              <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
+                No image
+              </div>
+            )}
+
             <CardHeader className="pb-3 border-b border-gray-100">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold text-gray-800 mb-2">{tour.title}</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-gray-800 mb-2">
+                    {tour.title}
+                  </CardTitle>
                   <div className="flex flex-wrap gap-2">
                     <Badge 
                       className={`${
