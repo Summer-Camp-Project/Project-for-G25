@@ -1,0 +1,1 @@
+export default function FeedGrid() { return <section>Feed Grid</section>; }

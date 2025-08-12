@@ -1,0 +1,1 @@
+export default function MapPin() { return <div>Map Pin</div>; }

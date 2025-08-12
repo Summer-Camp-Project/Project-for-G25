@@ -1,0 +1,1 @@
+export default function ARVRViewer() { return <div>3D/AR/VR Viewer</div>; }

@@ -1,0 +1,1 @@
+export default function MapPage() { return <main>Cultural Map</main>; }

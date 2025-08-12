@@ -1,0 +1,10 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <g fill="currentColor">
+    <!-- Simplified Ethiopian map outline -->
+    <path d="M8 4 L24 6 L26 8 L28 12 L26 16 L28 20 L24 24 L20 26 L16 28 L12 26 L8 24 L6 20 L4 16 L6 12 L8 8 Z" opacity="0.9" />
+    <!-- Central star representing unity -->
+    <polygon points="16,10 18,14 22,14 19,17 20,21 16,19 12,21 13,17 10,14 14,14" opacity="0.8" />
+    <!-- Regional divisions -->
+    <path d="M16 4 L16 28 M8 16 L24 16" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+  </g>
+</svg>

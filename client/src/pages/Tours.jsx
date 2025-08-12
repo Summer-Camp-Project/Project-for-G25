@@ -1,0 +1,1 @@
+export default function ToursPage() { return <main>Tours Listing</main>; }
