@@ -5,7 +5,8 @@ import { TourBookingsPage } from "../pages/TourBookingsPage";
 import { SchedulesPage } from "../pages/SchedulesPage";
 import { CustomerMessagesPage } from "../pages/CustomerMessagesPage";
 import { ProfileSettingsPage } from "../pages/ProfileSettingsPage";
-
+import { CustomersPage } from "../pages/CustomersPage";
+import { AnalyticsPage } from "../pages/AnalyticsPage";
 export function MainContent() {
   const { currentPage } = useDashboard();
 
@@ -19,10 +20,14 @@ export function MainContent() {
         return <TourBookingsPage />;
       case "schedules":
         return <SchedulesPage />;
-      case "customers":
+      case "customersmessages":
         return <CustomerMessagesPage />;
       case "profile":
         return <ProfileSettingsPage />;
+      case "customers":
+        return <CustomersPage />;
+      case 'analytics':
+        return <AnalyticsPage />;
       default:
         return <DashboardMain />;
     }

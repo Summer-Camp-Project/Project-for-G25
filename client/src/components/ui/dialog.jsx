@@ -27,9 +27,9 @@ function DialogOverlay({ className, ...props }) {
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        // Set a lower z-index for the overlay
-        "data-[state=open]:animate-in data-[state=closed]:animate-out fixed inset-0 z-40 bg-black/50",
-        className,
+        // Replaced animated/token classes with plain overlay styles
+        "fixed inset-0 z-50 bg-black/50",
+        className
       )}
       {...props}
     />
@@ -38,26 +38,36 @@ function DialogOverlay({ className, ...props }) {
 
 function DialogContent({ className, children, ...props }) {
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        data-slot="dialog-content"
         className={cn(
-          // Set a higher z-index for the content
-          "bg-background fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
-          className,
+          "fixed inset-0 z-50 flex justify-center p-4 overflow-y-auto", // removed items-center
         )}
         {...props}
       >
-        {children}
-        <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        <div
+          className={cn(
+            "relative w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-lg",
+            "mt-10 mb-auto", // pushes down from top
+            className
+          )}
+        >
+          {children}
+          <DialogPrimitive.Close
+            className="absolute top-4 right-4 inline-flex items-center justify-center rounded-sm p-1 opacity-70 transition hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white"
+          >
+            <XIcon className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        </div>
       </DialogPrimitive.Content>
     </DialogPortal>
   );
 }
+
+
+
 function DialogHeader({ className, ...props }) {
   return (
     <div
@@ -74,28 +84,29 @@ function DialogFooter({ className, ...props }) {
       data-slot="dialog-footer"
       className={cn(
         "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-        className,
+        className
       )}
       {...props}
     />
   );
 }
 
-function DialogTitle(props) {
+function DialogTitle({ className, ...props }) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg leading-none font-semibold")}
+      className={cn("text-lg font-semibold leading-none", className)}
       {...props}
     />
   );
 }
 
-function DialogDescription(props) {
+function DialogDescription({ className, ...props }) {
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm")}
+      // text-muted-foreground -> text-gray-500
+      className={cn("text-sm text-gray-500", className)}
       {...props}
     />
   );

@@ -1,94 +1,96 @@
-import { useState } from "react";
 import { 
-  LayoutDashboard, 
+  Home, 
   Package, 
   Calendar, 
+  Clock, 
   MessageSquare, 
-  Settings, 
-  Users, 
-  BarChart3,
-  LogOut,
-  Menu,
-  X
+  User, 
+  Settings,
+  Mountain,
+  Users,
+  BarChart3
 } from "lucide-react";
 import { Button } from "../../ui/button";
+import { Separator } from "../../ui/separator";
 import { useDashboard } from "../../../context/DashboardContext";
 
-export function Sidebar() {
-  const { currentPage, setCurrentPage } = useDashboard();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const navigationItems = [
+  { icon: Home, label: "Dashboard", page: "dashboard" },
+  { icon: Package, label: "Tour Packages", page: "tour-packages" },
+  { icon: Calendar, label: "Tour Bookings", page: "tour-bookings" },
+  { icon: Clock, label: "Schedules", page: "schedules" },
+  { icon: Users, label: "Customers", page: "customers" },
+  { icon: BarChart3, label: "Analytics", page: "analytics" },
+  { icon: MessageSquare, label: "Customer Messages", page: "customer-messages" },
+  { icon: User, label: "Profile & Settings", page: "profile-settings" },
+];
 
-  const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'tour-packages', label: 'Tour Packages', icon: Package },
-    { id: 'bookings', label: 'Bookings', icon: Calendar },
-    { id: 'schedules', label: 'Schedules', icon: Calendar },
-    { id: 'customers', label: 'Customer Messages', icon: MessageSquare },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'profile', label: 'Profile Settings', icon: Settings },
-  ];
+export function Sidebar() {
+  const { currentPage, setCurrentPage, messages } = useDashboard();
+
+  const unreadMessages = messages.filter((m) => m.status === "unread").length;
 
   const handleNavigation = (page) => {
     setCurrentPage(page);
   };
 
-  const handleLogout = () => {
-    // Logout functionality would be implemented here
-    console.log('Logout clicked');
-  };
-
   return (
-    <div className={`bg-white border-r border-gray-200 h-full transition-all duration-300 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <h2 className="text-xl font-semibold text-gray-800">Tour Organizer</h2>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1"
-          >
-            {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
-          </Button>
+    <div className="w-64 bg-white border-r border-stone-200 flex flex-col">
+      {/* Logo and Brand */}
+      <div className="p-6 border-b border-stone-200">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center">
+            <Mountain className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-stone-800">EthioHeritage360</h1>
+            <p className="text-xs text-stone-600">Tour Organizer</p>
+          </div>
         </div>
       </div>
 
-      <nav className="p-4 space-y-2">
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
         {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentPage === item.id;
-          
+          const isActive = currentPage === item.page;
+
           return (
             <Button
-              key={item.id}
+              key={item.page}
               variant={isActive ? "default" : "ghost"}
-              className={`w-full justify-start ${
+              onClick={() => handleNavigation(item.page)}
+              className={`w-full justify-start gap-3 h-11 relative ${
                 isActive 
                   ? "bg-green-600 text-white hover:bg-green-700" 
-                  : "text-gray-600 hover:bg-gray-100"
+                  : "text-stone-700 hover:bg-stone-100 hover:text-stone-900"
               }`}
-              onClick={() => handleNavigation(item.id)}
             >
-              <Icon className="w-4 h-4 mr-3" />
-              {!isCollapsed && item.label}
+              <item.icon className="w-5 h-5" />
+              {item.label}
+              {item.page === "customer-messages" && unreadMessages > 0 && (
+                <div className="absolute right-3 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {unreadMessages}
+                </div>
+              )}
             </Button>
           );
         })}
       </nav>
 
-      <div className="absolute bottom-0 left-0 right-4">
-        <Button
-          variant="ghost"
-          className="w-1/5 justify-start text-red-600 hover:bg-red-50"
-          onClick={handleLogout}
-        >
-          <LogOut className="w-4 h-4 mr-3" />
-          {!isCollapsed && "Logout"}
-        </Button>
+      {/* Bottom Section */}
+      <div className="p-4 border-t border-stone-200">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-yellow-800 mb-2">
+            Need Help?
+          </h4>
+          <p className="text-xs text-yellow-700 mb-3">
+            Contact support for assistance with tour management.
+          </p>
+          <Button size="sm" variant="outline" className="w-full border-yellow-300 text-yellow-800 hover:bg-yellow-100">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Get Support
+          </Button>
+        </div>
       </div>
     </div>
   );
