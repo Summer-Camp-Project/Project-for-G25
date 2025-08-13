@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { useDashboard } from "../../context/DashboardContext";
-import { Toaster } from "../ui/sonner";
+import { toast } from "sonner";
 
 export function CustomerMessagesPage() {
   const { messages, markMessageAsRead } = useDashboard();
@@ -22,7 +22,8 @@ export function CustomerMessagesPage() {
       message.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
       message.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || message.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || message.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -42,7 +43,6 @@ export function CustomerMessagesPage() {
     }
 
     try {
-      // Simulate sending reply
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const message = messages.find((m) => m.id === messageId);
@@ -60,44 +60,69 @@ export function CustomerMessagesPage() {
     toast.info("Delete functionality would be implemented here");
   };
 
-  const getStatusIcon = (status) => (status === "unread" ? Mail : MailOpen);
+  const getStatusIcon = (status) => {
+    return status === "unread" ? Mail : MailOpen;
+  };
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">Customer Messages</h1>
-          <p className="text-gray-600">Manage customer inquiries and communications</p>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Customer Messages
+          </h1>
+          <p className="text-gray-600">
+            Manage customer inquiries and communications
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">{messages.filter((m) => m.status === "unread").length} unread</Badge>
+          <Badge variant="secondary">
+            {messages.filter((m) => m.status === "unread").length} unread
+          </Badge>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: "Total Messages", value: messages.length, color: "bg-blue-100 text-blue-800" },
-          { label: "Unread", value: messages.filter((m) => m.status === "unread").length, color: "bg-red-100 text-red-800" },
-          { label: "Replied", value: messages.filter((m) => m.status === "replied").length, color: "bg-green-100 text-green-800" },
+          {
+            label: "Total Messages",
+            value: messages.length,
+            color: "bg-blue-100 text-blue-800",
+          },
+          {
+            label: "Unread",
+            value: messages.filter((m) => m.status === "unread").length,
+            color: "bg-red-100 text-red-800",
+          },
+          {
+            label: "Replied",
+            value: messages.filter((m) => m.status === "replied").length,
+            color: "bg-green-100 text-green-800",
+          },
         ].map((stat, index) => (
           <Card key={index}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-semibold text-gray-800">{stat.value}</p>
+                  <p className="text-2xl font-semibold text-gray-800">
+                    {stat.value}
+                  </p>
                 </div>
-                <div className={`w-10 h-10 rounded-full ${stat.color} flex items-center justify-center`}>
+                <div
+                  className={`w-10 h-10 rounded-full ${stat.color} flex items-center justify-center`}
+                >
                   <Mail className="w-5 h-5" />
                 </div>
               </div>
@@ -151,7 +176,9 @@ export function CustomerMessagesPage() {
             {filteredMessages.length === 0 ? (
               <div className="text-center py-8">
                 <Mail className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-gray-800 mb-2">No messages found</h3>
+                <h3 className="text-lg font-medium text-gray-800 mb-2">
+                  No messages found
+                </h3>
                 <p className="text-gray-600">
                   {searchTerm || statusFilter !== "all"
                     ? "Try adjusting your filters"
@@ -172,11 +199,13 @@ export function CustomerMessagesPage() {
                     }`}
                     onClick={() => handleMessageClick(message.id)}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1">
                         <StatusIcon
                           className={`w-5 h-5 mt-1 ${
-                            message.status === "unread" ? "text-green-600" : "text-gray-400"
+                            message.status === "unread"
+                              ? "text-green-600"
+                              : "text-gray-400"
                           }`}
                         />
 
@@ -184,32 +213,49 @@ export function CustomerMessagesPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <h4
                               className={`font-medium ${
-                                message.status === "unread" ? "text-gray-900" : "text-gray-700"
+                                message.status === "unread"
+                                  ? "text-gray-900"
+                                  : "text-gray-700"
                               }`}
                             >
                               {message.customerName}
                             </h4>
-                            <Badge variant={message.status === "unread" ? "default" : "secondary"} className="text-xs">
+                            <Badge
+                              variant={
+                                message.status === "unread"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className="text-xs"
+                            >
                               {message.status}
                             </Badge>
                           </div>
 
-                          <p className="text-sm text-gray-600 mb-1">{message.customerEmail}</p>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {message.customerEmail}
+                          </p>
 
                           <h5
                             className={`text-sm mb-2 ${
-                              message.status === "unread" ? "font-medium text-gray-900" : "text-gray-800"
+                              message.status === "unread"
+                                ? "font-medium text-gray-900"
+                                : "text-gray-800"
                             }`}
                           >
                             {message.subject}
                           </h5>
 
-                          <p className="text-sm text-gray-600 line-clamp-2">{message.message}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {message.message}
+                          </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 ml-4">
-                        <span className="text-xs text-gray-500">{formatDate(message.createdAt)}</span>
+                      <div className="flex items-center gap-2 sm:ml-4">
+                        <span className="text-xs text-gray-500">
+                          {formatDate(message.createdAt)}
+                        </span>
 
                         <div className="flex items-center gap-1">
                           <Dialog>
@@ -220,25 +266,35 @@ export function CustomerMessagesPage() {
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">
                               <DialogHeader>
-                                <DialogTitle>Reply to {message.customerName}</DialogTitle>
+                                <DialogTitle>
+                                  Reply to {message.customerName}
+                                </DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
-                                  <h4 className="font-medium mb-2">Original Message:</h4>
-                                  <p className="text-sm text-gray-700">{message.message}</p>
+                                  <h4 className="font-medium mb-2">
+                                    Original Message:
+                                  </h4>
+                                  <p className="text-sm text-gray-700">
+                                    {message.message}
+                                  </p>
                                 </div>
 
                                 <div className="space-y-2">
-                                  <label className="text-sm font-medium">Your Reply:</label>
+                                  <label className="text-sm font-medium">
+                                    Your Reply:
+                                  </label>
                                   <Textarea
                                     value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
+                                    onChange={(e) =>
+                                      setReplyText(e.target.value)
+                                    }
                                     placeholder="Type your reply here..."
                                     rows={6}
                                   />
                                 </div>
 
-                                <div className="flex justify-end gap-2">
+                                <div className="flex flex-wrap justify-end gap-2">
                                   <Button
                                     variant="outline"
                                     onClick={() => {
@@ -248,7 +304,10 @@ export function CustomerMessagesPage() {
                                   >
                                     Cancel
                                   </Button>
-                                  <Button onClick={() => handleReply(message.id)} className="bg-green-600 hover:bg-green-700">
+                                  <Button
+                                    onClick={() => handleReply(message.id)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
                                     Send Reply
                                   </Button>
                                 </div>
