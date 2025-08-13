@@ -27,9 +27,9 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 Virtual Museums
               </a>
-              <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+              <Link to="/map" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 Heritage Map
-              </a>
+              </Link>
               <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 Live Tours
               </a>
@@ -78,9 +78,9 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
                 Virtual Museums
               </a>
-              <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
+              <Link to="/map" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
                 Heritage Map
-              </a>
+              </Link>
               <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
                 Live Tours
               </a>
