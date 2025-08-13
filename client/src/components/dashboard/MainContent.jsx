@@ -16,7 +16,7 @@ export function MainContent() {
         return <DashboardMain />;
       case "tour-packages":
         return <TourPackagesPage />;
-      case "bookings":
+      case "tour-bookings":
         return <TourBookingsPage />;
       case "schedules":
         return <SchedulesPage />;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import {
+import { 
   tourPackages as initialTourPackages,
   bookings as initialBookings,
   activities as initialActivities,
@@ -10,7 +10,7 @@ import {
   getUpcomingTours
 } from '../data/sampleData';
 
-export const DashboardContext = createContext();
+const DashboardContext = createContext(undefined);
 
 export const useDashboard = () => {
   const context = useContext(DashboardContext);
@@ -27,23 +27,28 @@ export const DashboardProvider = ({ children }) => {
   const [activities, setActivities] = useState(initialActivities);
   const [messages, setMessages] = useState(initialMessages);
   const [notifications, setNotifications] = useState(initialNotifications);
-  
+
   // Navigation
   const [currentPage, setCurrentPage] = useState('dashboard');
-  
+
   // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // UI State
   const [showCreateTourModal, setShowCreateTourModal] = useState(false);
   const [showBookingRequestsModal, setShowBookingRequestsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Computed values
   const dashboardStats = getDashboardStats();
   const upcomingTours = getUpcomingTours();
-  
+
   // Actions
+  const addActivity = useCallback((newActivity) => {
+    const activity = { ...newActivity, id: Date.now().toString() };
+    setActivities(prev => [activity, ...prev.slice(0, 9)]); // Keep only 10 latest
+  }, []);
+
   const createTourPackage = useCallback((newTour) => {
     const tour = {
       ...newTour,
@@ -51,10 +56,7 @@ export const DashboardProvider = ({ children }) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
     setTourPackages(prev => [tour, ...prev]);
-    
-    // Add activity
     addActivity({
       type: 'tour_update',
       title: 'New tour package created',
@@ -64,17 +66,12 @@ export const DashboardProvider = ({ children }) => {
       status: 'updated',
       relatedId: tour.id
     });
-  }, []);
-  
+  }, [addActivity]);
+
   const updateBookingStatus = useCallback((bookingId, status) => {
     setBookings(prev => 
-      prev.map(booking => 
-        booking.id === bookingId
-          ? { ...booking, status }
-          : booking
-      )
+      prev.map(booking => booking.id === bookingId ? { ...booking, status } : booking)
     );
-    
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
       addActivity({
@@ -87,41 +84,22 @@ export const DashboardProvider = ({ children }) => {
         relatedId: bookingId
       });
     }
-  }, [bookings]);
-  
+  }, [bookings, addActivity]);
+
   const markNotificationAsRead = useCallback((notificationId) => {
     setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification
-      )
+      prev.map(notification => notification.id === notificationId ? { ...notification, read: true } : notification)
     );
   }, []);
-  
+
   const markMessageAsRead = useCallback((messageId) => {
     setMessages(prev =>
-      prev.map(message =>
-        message.id === messageId
-          ? { ...message, status: 'read' }
-          : message
-      )
+      prev.map(message => message.id === messageId ? { ...message, status: 'read' } : message)
     );
   }, []);
-  
-  const addActivity = useCallback((newActivity) => {
-    const activity = {
-      ...newActivity,
-      id: Date.now().toString()
-    };
-    
-    setActivities(prev => [activity, ...prev.slice(0, 9)]);
-  }, []);
-  
+
   const deleteTourPackage = useCallback((tourId) => {
     setTourPackages(prev => prev.filter(tour => tour.id !== tourId));
-    
-    // Add activity
     const tour = tourPackages.find(t => t.id === tourId);
     if (tour) {
       addActivity({
@@ -135,7 +113,53 @@ export const DashboardProvider = ({ children }) => {
       });
     }
   }, [tourPackages, addActivity]);
-  
+
+  const createBookingFromUser = useCallback((newBooking) => {
+    const booking = { ...newBooking, id: Date.now().toString(), createdAt: new Date().toISOString() };
+    setBookings(prev => [booking, ...prev]);
+    const tour = tourPackages.find(t => t.id === newBooking.tourPackageId);
+    const tourTitle = tour ? tour.title : 'a tour';
+    addActivity({
+      type: 'booking',
+      title: 'New booking request received',
+      description: `${newBooking.customerName} requested to book "${tourTitle}" for ${newBooking.guests} guest(s) on ${new Date(newBooking.tourDate).toLocaleDateString()}`,
+      time: 'Just now',
+      user: newBooking.customerName,
+      status: 'pending',
+      relatedId: booking.id
+    });
+    setNotifications(prev => [{
+      id: Date.now().toString(),
+      title: 'New Booking Request',
+      message: `${newBooking.customerName} wants to book "${tourTitle}" - ${newBooking.totalAmount}`,
+      type: 'info',
+      read: false,
+      createdAt: new Date().toISOString()
+    }, ...prev]);
+  }, [addActivity, tourPackages]);
+
+  const addCustomerMessage = useCallback((newMessage) => {
+    const message = { ...newMessage, id: Date.now().toString(), createdAt: new Date().toISOString() };
+    setMessages(prev => [message, ...prev]);
+    addActivity({
+      type: 'message',
+      title: 'New customer inquiry received',
+      description: `${newMessage.customerName} sent a message about "${newMessage.subject}" - Reply from Messages page`,
+      time: 'Just now',
+      user: newMessage.customerName,
+      status: 'unread',
+      relatedId: message.id
+    });
+    setNotifications(prev => [{
+      id: Date.now().toString(),
+      title: 'New Customer Message',
+      message: `${newMessage.customerName}: "${newMessage.subject}" - Click to respond`,
+      type: 'info',
+      read: false,
+      createdAt: new Date().toISOString()
+    }, ...prev]);
+  }, [addActivity]);
+
   const value = {
     // Data
     tourPackages,
@@ -164,6 +188,8 @@ export const DashboardProvider = ({ children }) => {
     markMessageAsRead,
     addActivity,
     deleteTourPackage,
+    createBookingFromUser,
+    addCustomerMessage,
     
     // UI State
     showCreateTourModal,
@@ -175,7 +201,7 @@ export const DashboardProvider = ({ children }) => {
     isLoading,
     setIsLoading
   };
-  
+
   return (
     <DashboardContext.Provider value={value}>
       {children}

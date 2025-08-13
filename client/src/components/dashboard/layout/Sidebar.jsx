@@ -11,7 +11,6 @@ import {
   BarChart3
 } from "lucide-react";
 import { Button } from "../../ui/button";
-import { Separator } from "../../ui/separator";
 import { useDashboard } from "../../../context/DashboardContext";
 
 const navigationItems = [
@@ -21,7 +20,7 @@ const navigationItems = [
   { icon: Clock, label: "Schedules", page: "schedules" },
   { icon: Users, label: "Customers", page: "customers" },
   { icon: BarChart3, label: "Analytics", page: "analytics" },
-  { icon: MessageSquare, label: "Customer Messages", page: "customer-messages" },
+  { icon: MessageSquare, label: "Customer Messages", page: "customersmessages" },
   { icon: User, label: "Profile & Settings", page: "profile-settings" },
 ];
 
@@ -67,7 +66,7 @@ export function Sidebar() {
             >
               <item.icon className="w-5 h-5" />
               {item.label}
-              {item.page === "customer-messages" && unreadMessages > 0 && (
+              {item.page === "customersmessages" && unreadMessages > 0 && (
                 <div className="absolute right-3 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                   {unreadMessages}
                 </div>
