@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Filter, Info, Globe } from 'lucide-react';
-import InteractiveMap from '../components/map/InteractiveMap';
+import { MapPin, Filter, Info, Globe, AlertCircle } from 'lucide-react';
+import LeafletMap from '../components/map/LeafletMap';
 import SiteSelector from '../components/map/SiteSelector';
 
 const MapPage = () => {
@@ -8,41 +8,97 @@ const MapPage = () => {
   const [sites, setSites] = useState([]);
   const [filteredSites, setFilteredSites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data for now (replace with API call)
+  // Fetch heritage sites from API
   useEffect(() => {
-    const mockSites = [
-      {
-        id: 1,
-        name: "Rock-Hewn Churches of Lalibela",
-        region: "Amhara",
-        category: "UNESCO World Heritage",
-        lat: 12.0333,
-        lng: 39.0333
-      },
-      {
-        id: 2, 
-        name: "Aksum Obelisks",
-        region: "Tigray",
-        category: "UNESCO World Heritage",
-        lat: 14.1319,
-        lng: 38.7195
-      },
-      {
-        id: 3,
-        name: "Simien Mountains",
-        region: "Amhara",
-        category: "Natural Heritage", 
-        lat: 13.1885,
-        lng: 38.0404
+    const fetchSites = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Try to fetch from API, fallback to mock data
+        let sitesData;
+        try {
+          const response = await fetch('http://localhost:5000/api/map/sites');
+          if (response.ok) {
+            const result = await response.json();
+            sitesData = result.data;
+          } else {
+            throw new Error('API not available');
+          }
+        } catch (apiError) {
+          console.log('API not available, using mock data');
+          // Fallback to mock data with more Ethiopian sites
+          sitesData = [
+            {
+              id: 1,
+              name: "Rock-Hewn Churches of Lalibela",
+              description: "Eleven medieval monolithic cave churches carved from rock",
+              region: "Amhara",
+              category: "UNESCO World Heritage",
+              lat: 12.0333,
+              lng: 39.0333
+            },
+            {
+              id: 2, 
+              name: "Aksum Obelisks",
+              description: "Ancient granite obelisks marking royal tombs",
+              region: "Tigray",
+              category: "UNESCO World Heritage",
+              lat: 14.1319,
+              lng: 38.7195
+            },
+            {
+              id: 3,
+              name: "Simien Mountains National Park",
+              description: "Dramatic mountain landscape with endemic wildlife",
+              region: "Amhara",
+              category: "Natural Heritage", 
+              lat: 13.1885,
+              lng: 38.0404
+            },
+            {
+              id: 4,
+              name: "Fasil Ghebbi Castle",
+              description: "17th century royal fortress and palace complex",
+              region: "Amhara",
+              category: "UNESCO World Heritage",
+              lat: 12.6087,
+              lng: 37.4679
+            },
+            {
+              id: 5,
+              name: "Harar Jugol",
+              description: "Historic fortified city with unique Islamic architecture",
+              region: "Harari",
+              category: "UNESCO World Heritage",
+              lat: 9.3133,
+              lng: 42.1333
+            },
+            {
+              id: 6,
+              name: "Lower Valley of the Awash",
+              description: "Archaeological site with early human fossils including Lucy",
+              region: "Afar",
+              category: "Archaeological Site",
+              lat: 11.0833,
+              lng: 40.5833
+            }
+          ];
+        }
+        
+        setSites(sitesData);
+        setFilteredSites(sitesData);
+      } catch (err) {
+        setError('Failed to load heritage sites');
+        console.error('Error fetching sites:', err);
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
     
-    setTimeout(() => {
-      setSites(mockSites);
-      setFilteredSites(mockSites);
-      setLoading(false);
-    }, 500);
+    fetchSites();
   }, []);
 
   const handleSiteSelect = (site) => {
@@ -85,7 +141,7 @@ const MapPage = () => {
 
         {/* Right Side - Interactive Map */}
         <div className="flex-1">
-          <InteractiveMap 
+          <LeafletMap 
             sites={filteredSites}
             selectedSite={selectedSite}
             onSiteSelect={handleSiteSelect}

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Info, Star, Navigation } from 'lucide-react';
+import { MapPin, Info, Star, Navigation, ZoomIn, ZoomOut } from 'lucide-react';
+// Import Leaflet CSS in index.html or App.css
+// import 'leaflet/dist/leaflet.css';
 
 const InteractiveMap = ({ sites, selectedSite, onSiteSelect }) => {
   const mapRef = useRef(null);
