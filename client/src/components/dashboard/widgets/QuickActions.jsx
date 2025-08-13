@@ -5,34 +5,29 @@ import { useDashboard } from "../../../context/DashboardContext";
 import { toast } from "sonner";
 
 export function QuickActions() {
-  const {
-    setShowCreateTourModal,
+  const { 
+    setShowCreateTourModal, 
     setShowBookingRequestsModal,
-    bookings
+    setCurrentPage,
+    bookings 
   } = useDashboard();
-
-  const pendingBookings = bookings.filter(b => b.status === "pending").length;
-
+  
+  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+  
   const handleCreateTour = () => {
-    console.log('Create Tour button clicked');
-    console.log('Current showCreateTourModal state:', setShowCreateTourModal);
     setShowCreateTourModal(true);
-    console.log('After setting showCreateTourModal to true');
   };
-
+  
   const handleViewBookingRequests = () => {
-    console.log('View Booking Requests button clicked');
-    console.log('Current showBookingRequestsModal state:', setShowBookingRequestsModal);
     setShowBookingRequestsModal(true);
-    console.log('After setting showBookingRequestsModal to true');
   };
-
+  
   const handleManageCustomers = () => {
-    toast.info("Customer management page would open here");
+    setCurrentPage('customers');
   };
-
+  
   const handleViewAnalytics = () => {
-    toast.info("Analytics dashboard would open here");
+    setCurrentPage('analytics');
   };
 
   return (
