@@ -279,10 +279,10 @@ const Home = () => {
                 <p className="text-muted-foreground mb-4 leading-relaxed">
                   Explore Ethiopia's heritage sites on an interactive map with detailed information and virtual visits.
                 </p>
-                <button className="text-primary font-semibold hover:text-primary/80 transition-colors flex items-center group-hover:translate-x-2 transition-transform duration-300">
-                  Explore Feature
+                <Link to="/map" className="text-primary font-semibold hover:text-primary/80 transition-colors flex items-center group-hover:translate-x-2 transition-transform duration-300">
+                  Explore Heritage Map
                   <ArrowRight className="ml-2 w-4 h-4" />
-                </button>
+                </Link>
               </div>
             </div>
 

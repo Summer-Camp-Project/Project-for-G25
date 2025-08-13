@@ -5,6 +5,7 @@ import Footer from './components/common/Footer'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
 import ContactUs from './pages/ContactUs'
+import MapPage from './pages/Map'
 import './styles/global.css'
 
 function App() {
@@ -34,6 +35,13 @@ function App() {
             </>
           } />
           <Route path="/auth" element={<Auth darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
+          <Route path="/map" element={
+            <>
+              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <MapPage />
+              <Footer />
+            </>
+          } />
           <Route path="/contact" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
