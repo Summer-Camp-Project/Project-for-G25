@@ -56,6 +56,7 @@ export default function App() {
   }, [darkMode]);
 
   return (
+    <Router>
       <DashboardProvider>
         <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
           <ViewToggle />
@@ -63,5 +64,6 @@ export default function App() {
           <Toaster position="top-right" />
         </div>
       </DashboardProvider>
+    </Router>
   );
 }

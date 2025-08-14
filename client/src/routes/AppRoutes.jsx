@@ -6,6 +6,7 @@ import Footer from "../components/common/Footer";
 import Home from "../pages/Home";
 import Auth from "../pages/Auth";
 import ContactUs from "../pages/ContactUs"; // Fixed import
+import MapPage from "../pages/Map";
 
 export default function AppRoutes({ darkMode, toggleDarkMode }) {
   return (
@@ -31,6 +32,16 @@ export default function AppRoutes({ darkMode, toggleDarkMode }) {
           <>
             <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <ContactUs />
+            <Footer />
+          </>
+        }
+      />
+      <Route
+        path="/map"
+        element={
+          <>
+            <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            <MapPage />
             <Footer />
           </>
         }
