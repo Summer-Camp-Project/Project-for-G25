@@ -160,6 +160,17 @@ export const DashboardProvider = ({ children }) => {
     }, ...prev]);
   }, [addActivity]);
 
+  const addBooking = (newBooking) => {
+    setBookings(prev => [
+      ...prev,
+      {
+        ...newBooking,
+        id: Date.now().toString(), // or use uuid
+        status: "confirmed", // or "pending"
+      },
+    ]);
+  };
+
   const value = {
     // Data
     tourPackages,
@@ -190,6 +201,7 @@ export const DashboardProvider = ({ children }) => {
     deleteTourPackage,
     createBookingFromUser,
     addCustomerMessage,
+    addBooking,
     
     // UI State
     showCreateTourModal,

@@ -7,10 +7,100 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useDashboard } from "../../context/DashboardContext";
 import { toast } from "sonner";
 
+function AddEventModal({ open, onClose, onAdd, tourPackages }) {
+  const [form, setForm] = useState({
+    tourDate: "",
+    guests: 1,
+    tourPackageId: "",
+    totalAmount: 0,
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onAdd(form);
+    setForm({
+      tourDate: "",
+      guests: 1,
+      tourPackageId: "",
+      totalAmount: 0,
+    });
+    onClose();
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4 w-96">
+        <h2 className="text-lg font-semibold mb-2">Add New Event</h2>
+        <div>
+          <label className="block text-sm mb-1">Date</label>
+          <input
+            type="date"
+            name="tourDate"
+            value={form.tourDate}
+            onChange={handleChange}
+            className="border rounded px-2 py-1 w-full"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Guests</label>
+          <input
+            type="number"
+            name="guests"
+            value={form.guests}
+            min={1}
+            onChange={handleChange}
+            className="border rounded px-2 py-1 w-full"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Tour Package</label>
+          <select
+            name="tourPackageId"
+            value={form.tourPackageId}
+            onChange={handleChange}
+            className="border rounded px-2 py-1 w-full"
+            required
+          >
+            <option value="">Select a package</option>
+            {tourPackages.map(pkg => (
+              <option key={pkg.id} value={pkg.id}>{pkg.title}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Total Amount</label>
+          <input
+            type="number"
+            name="totalAmount"
+            value={form.totalAmount}
+            min={0}
+            onChange={handleChange}
+            className="border rounded px-2 py-1 w-full"
+            required
+          />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="submit">Add</Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function SchedulesPage() {
-  const { bookings, tourPackages } = useDashboard();
+  const { bookings, tourPackages, addBooking } = useDashboard();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('month'); // 'month' | 'week'
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
   
   // Helpers for month view
   const getDaysInMonth = (date) => {
@@ -59,8 +149,11 @@ export function SchedulesPage() {
     toast.info(`Tour details for booking ${bookingId} would open here`);
   };
   
-  const handleAddEvent = () => {
-    toast.info("Add new event functionality would open here");
+  const handleAddEvent = () => setShowAddEventModal(true);
+  
+  const handleEventAdd = (eventData) => {
+    addBooking(eventData);
+    toast.success("Event added!");
   };
   
   // Render calendar for month view
@@ -336,6 +429,14 @@ export function SchedulesPage() {
           </Card>
         </div>
       </div>
+
+      {/* Add Event Modal */}
+      <AddEventModal
+        open={showAddEventModal}
+        onClose={() => setShowAddEventModal(false)}
+        onAdd={handleEventAdd}
+        tourPackages={tourPackages}
+      />
     </div>
   );
 }
