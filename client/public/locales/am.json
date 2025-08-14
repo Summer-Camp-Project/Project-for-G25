@@ -1,1 +1,11 @@
-{ "welcome": "እንኳን ደህና መጡ" }
+{
+  "common": {
+    "welcome": "እንኳን ደስ አለዎ",
+    "dashboard": "ዳሽቦርድ",
+    "tours": "ጉዞዎች",
+    "bookings": "ቦኪንጎች",
+    "customers": "ደንበኞች",
+    "settings": "ቅንብሮች"
+  }
+}
+

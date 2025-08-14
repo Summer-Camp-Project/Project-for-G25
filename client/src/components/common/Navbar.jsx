@@ -30,9 +30,12 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 Heritage Map
               </a>
-              <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+              {/* <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 Live Tours
-              </a>
+                </a> */}
+              <Link to="/customer" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+                Live Tours
+              </Link>
               <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 Education
               </a>
