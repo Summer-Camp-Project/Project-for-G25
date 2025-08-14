@@ -1,3 +1,6 @@
+// Comprehensive Ethiopian Heritage Sites Data
+// Sources: UNESCO, Ethiopian Tourism Organization, Ministry of Culture and Tourism
+
 module.exports = [
   {
     name: "Rock-Hewn Churches of Lalibela",
@@ -100,6 +103,70 @@ module.exports = [
     },
     category: "Natural Heritage",
     significance: "National",
+    isActive: true
+  },
+  {
+    name: "Omo Valley Cultural Landscape",
+    description: "Traditional cultures and archaeological sites",
+    location: {
+      coordinates: { latitude: 5.8000, longitude: 36.0000 },
+      address: "Omo Valley, Southern Nations",
+      region: "SNNPR"
+    },
+    category: "Cultural Monument",
+    significance: "UNESCO World Heritage",
+    yearEstablished: 1980,
+    isActive: true
+  },
+  {
+    name: "Danakil Depression",
+    description: "Unique geological formation with salt flats and active volcanoes",
+    location: {
+      coordinates: { latitude: 14.2417, longitude: 40.3000 },
+      address: "Danakil Depression, Afar Region",
+      region: "Afar"
+    },
+    category: "Natural Heritage",
+    significance: "National",
+    isActive: true
+  },
+  {
+    name: "Bale Mountains National Park",
+    description: "High-altitude plateau with endemic wildlife",
+    location: {
+      coordinates: { latitude: 7.0000, longitude: 39.5000 },
+      address: "Bale Mountains, Oromia Region",
+      region: "Oromia"
+    },
+    category: "Natural Heritage",
+    significance: "National",
+    yearEstablished: 1970,
+    isActive: true
+  },
+  {
+    name: "Debre Damo Monastery",
+    description: "Ancient monastery accessible only by rope climb",
+    location: {
+      coordinates: { latitude: 14.3167, longitude: 39.2833 },
+      address: "Debre Damo, Tigray Region",
+      region: "Tigray"
+    },
+    category: "Religious Site",
+    significance: "National",
+    yearEstablished: 500,
+    isActive: true
+  },
+  {
+    name: "National Museum of Ethiopia",
+    description: "Home to Lucy fossil and Ethiopian cultural artifacts",
+    location: {
+      coordinates: { latitude: 9.0300, longitude: 38.7469 },
+      address: "Addis Ababa",
+      region: "Addis Ababa"
+    },
+    category: "Museum",
+    significance: "National",
+    yearEstablished: 1936,
     isActive: true
   }
 ];
