@@ -1,0 +1,76 @@
+{
+  "navigation": {
+    "virtualMuseums": "Mana Yaadannoo Virtual",
+    "heritageMap": "Kaarta Dhaalaa",
+    "liveTours": "Daawwannaa Kallattii",
+    "education": "Barnoota",
+    "signIn": "Seeni",
+    "signOut": "Baahi",
+    "profile": "Unka",
+    "dashboard": "Gabatee Bulchiinsaa",
+    "home": "Mana",
+    "contact": "Quunnamtii"
+  },
+  "common": {
+    "welcome": "Gara EthioHeritage360 baga nagaan dhufte",
+    "loading": "Fe'aa jira...",
+    "error": "Dogoggorri uumameera",
+    "success": "Milkaa'eera",
+    "save": "Olkaa'i",
+    "cancel": "Dhiisi",
+    "delete": "Balleessi",
+    "edit": "Fooyyessi",
+    "view": "Ilaali",
+    "search": "Barbaacha",
+    "filter": "Gingilchii",
+    "sort": "Tartiibii",
+    "language": "Afaan",
+    "english": "English",
+    "amharic": "አማርኛ",
+    "oromo": "Afaan Oromoo"
+  },
+  "home": {
+    "heroTitle": "Dhaalaa Badhaadhaa Itoophiyaa Qoratti",
+    "heroSubtitle": "Yaadannoowwan durii, daawwannaa mana yaadannoo virtual fi muuxannoo aadaa gadi fagoo argadhu",
+    "exploreNow": "Amma Qoratti",
+    "features": {
+      "virtualMuseums": "Mana Yaadannoo Virtual",
+      "virtualMuseumsDesc": "Mana yaadannoo Itoophiyaa bakka kamiyyuu irraa daawwadhaa",
+      "aiTours": "Daawwannaa AI-n Qajeelfamu",
+      "aiToursDesc": "Daawwannaa dhuunfaa fi gorsa sammuu namtolchee argadhu",
+      "heritageMap": "Kaarta Dhaalaa",
+      "heritageMapDesc": "Bakkeewwan seenaa Itoophiyaa keessa jiran argadhu"
+    }
+  },
+  "auth": {
+    "signIn": "Seeni",
+    "signUp": "Galmaa'i",
+    "email": "Imeelii",
+    "password": "Jecha Icciitii",
+    "confirmPassword": "Jecha Icciitii Mirkanaa'i",
+    "name": "Maqaa Guutuu",
+    "rememberMe": "Na Yaadadhu",
+    "forgotPassword": "Jecha icciitii irraanfatte?",
+    "createAccount": "Herrega Uumi",
+    "alreadyHaveAccount": "Duraan herrega qabda?",
+    "dontHaveAccount": "Herrega hin qabdu?",
+    "role": "Gahee",
+    "selectRole": "Gahee Filadhu",
+    "visitor": "Daawwataa",
+    "museum": "Mana Yaadannoo",
+    "organizer": "Qopheessaa",
+    "admin": "Bulchaa"
+  },
+  "dashboard": {
+    "welcome": "Baga nagaan deebi'tan",
+    "overview": "Ilaalcha Waliigalaa",
+    "analytics": "Xiinxala",
+    "users": "Fayyadamtoota",
+    "museums": "Mana Yaadannoo",
+    "artifacts": "Yaadannoowwan",
+    "tours": "Daawwannaa",
+    "settings": "Qindaa'ina",
+    "notifications": "Beeksisa",
+    "profile": "Unka"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "navigation": {
+    "virtualMuseums": "Virtual Museums",
+    "heritageMap": "Heritage Map",
+    "liveTours": "Live Tours",
+    "education": "Education",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "profile": "Profile",
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "contact": "Contact"
+  },
+  "common": {
+    "welcome": "Welcome to EthioHeritage360",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "language": "Language",
+    "english": "English",
+    "amharic": "አማርኛ",
+    "oromo": "Afaan Oromoo"
+  },
+  "home": {
+    "heroTitle": "Explore Ethiopia's Rich Heritage",
+    "heroSubtitle": "Discover ancient artifacts, virtual museum tours, and immersive cultural experiences",
+    "exploreNow": "Explore Now",
+    "features": {
+      "virtualMuseums": "Virtual Museums",
+      "virtualMuseumsDesc": "Experience Ethiopia's museums from anywhere in the world",
+      "aiTours": "AI-Guided Tours",
+      "aiToursDesc": "Get personalized tours with intelligent recommendations",
+      "heritageMap": "Heritage Map",
+      "heritageMapDesc": "Discover historical sites across Ethiopia"
+    }
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot Password?",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "role": "Role",
+    "selectRole": "Select Role",
+    "visitor": "Visitor",
+    "museum": "Museum",
+    "organizer": "Organizer",
+    "admin": "Admin"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "overview": "Overview",
+    "analytics": "Analytics",
+    "users": "Users",
+    "museums": "Museums",
+    "artifacts": "Artifacts",
+    "tours": "Tours",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "profile": "Profile"
+  }
+}

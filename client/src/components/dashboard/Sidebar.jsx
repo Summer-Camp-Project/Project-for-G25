@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
@@ -95,7 +95,8 @@ const menuItems = [
 
 const Sidebar = ({ open, onClose }) => {
   const theme = useTheme();
-  const router = useRouter();
+  const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [openSubMenus, setOpenSubMenus] = useState({});
 
@@ -106,13 +107,13 @@ const Sidebar = ({ open, onClose }) => {
       if (item.subItems && item.subItems.length > 0) {
         // Check if any subitem matches the current path
         const isActive = item.subItems.some(subItem => 
-          router.pathname.startsWith(subItem.path)
+          location.pathname.startsWith(subItem.path)
         );
         initialOpenState[item.path] = isActive;
       }
     });
     setOpenSubMenus(initialOpenState);
-  }, [router.pathname]);
+  }, [location.pathname]);
 
   const handleSubMenuToggle = (path) => {
     setOpenSubMenus(prevState => ({
@@ -122,7 +123,7 @@ const Sidebar = ({ open, onClose }) => {
   };
 
   const handleNavigation = (path) => {
-    router.push(path);
+    navigate(path);
     if (isMobile) {
       onClose();
     }
@@ -157,7 +158,7 @@ const Sidebar = ({ open, onClose }) => {
                 }
               }}
               sx={{
-                backgroundColor: router.pathname === item.path ? theme.palette.action.selected : 'transparent',
+                backgroundColor: location.pathname === item.path ? theme.palette.action.selected : 'transparent',
                 '&:hover': {
                   backgroundColor: theme.palette.action.hover,
                 },
@@ -183,7 +184,7 @@ const Sidebar = ({ open, onClose }) => {
                       onClick={() => handleNavigation(subItem.path)}
                       sx={{
                         pl: 6,
-                        backgroundColor: router.pathname === subItem.path 
+                        backgroundColor: location.pathname === subItem.path 
                           ? theme.palette.action.selected 
                           : 'transparent',
                         '&:hover': {

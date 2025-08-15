@@ -1,1 +1,85 @@
-/* Global styles and Tailwind imports */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 0.625rem;
+  /* Ethiopian Heritage Light Mode Colors - White, Black, Brown only */
+  --background: oklch(98% 0 0); /* Pure White */
+  --foreground: oklch(0.15 0.02 45); /* Dark Brown (almost black) */
+  --card: oklch(100% 0 0); /* Pure White for cards */
+  --card-foreground: oklch(0.15 0.02 45);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(0.15 0.02 45);
+  --primary: oklch(0.35 0.04 45); /* Rich Brown */
+  --primary-foreground: oklch(98% 0 0);
+  --secondary: oklch(0.25 0.03 45); /* Darker Brown */
+  --secondary-foreground: oklch(98% 0 0);
+  --muted: oklch(95% 0 0); /* Light Gray (almost white) */
+  --muted-foreground: oklch(0.4 0.02 45); /* Medium Brown */
+  --accent: oklch(0.30 0.04 45); /* Brown accent */
+  --accent-foreground: oklch(98% 0 0);
+  --destructive: oklch(0.5 0.15 25); /* Brown-tinted red */
+  --destructive-foreground: oklch(98% 0 0); /* White text on destructive */
+  --border: oklch(0.85 0.01 45); /* Light Brown border */
+  --input: oklch(96% 0 0); /* Very Light Gray */
+  --ring: oklch(0.35 0.04 45);
+  --chart-1: oklch(0.35 0.04 45);
+  --chart-2: oklch(0.25 0.03 45);
+  --chart-3: oklch(0.45 0.03 45);
+  --chart-4: oklch(0.55 0.02 45);
+  --chart-5: oklch(0.65 0.02 45);
+  --sidebar: oklch(96% 0 0);
+  --sidebar-foreground: oklch(0.15 0.02 45);
+  --sidebar-primary: oklch(0.35 0.04 45);
+  --sidebar-primary-foreground: oklch(96% 0 0);
+  --sidebar-accent: oklch(92% 0 0);
+  --sidebar-accent-foreground: oklch(0.15 0.02 45);
+  --sidebar-border: oklch(90% 0 0);
+  --sidebar-ring: oklch(0.35 0.04 45);
+}
+
+.dark {
+  /* Ethiopian Heritage Dark Mode Colors (Black, White, Brown) */
+  --background: oklch(0.05 0 0); /* Near Black */
+  --foreground: oklch(0.95 0 0); /* Near White */
+  --card: oklch(0.1 0 0); /* Darker Black for cards */
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.1 0 0);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.25 0.02 45); /* Brown */
+  --primary-foreground: oklch(0.95 0 0);
+  --secondary: oklch(0.15 0 0); /* Lighter Black for secondary */
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.15 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.25 0.02 45); /* Brown accent */
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.95 0 0); /* Light text on dark destructive */
+  --border: oklch(0.2 0 0);
+  --input: oklch(0.15 0 0);
+  --ring: oklch(0.25 0.02 45);
+  --chart-1: oklch(0.25 0.02 45);
+  --chart-2: oklch(0.35 0.02 45);
+  --chart-3: oklch(0.45 0.02 45);
+  --chart-4: oklch(0.55 0.02 45);
+  --chart-5: oklch(0.65 0.02 45);
+  --sidebar: oklch(0.1 0 0);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.25 0.02 45);
+  --sidebar-primary-foreground: oklch(0.95 0 0);
+  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.2 0 0);
+  --sidebar-ring: oklch(0.25 0.02 45);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

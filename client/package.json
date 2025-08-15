@@ -1,5 +1,48 @@
 {
   "name": "ethioheritage360-client",
-  "dependencies": {},
-  "scripts": {}
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.1",
+    "@mui/material": "^7.3.1",
+    "@react-three/drei": "^9.58.0",
+    "@react-three/fiber": "^8.10.0",
+    "@types/mapbox-gl": "^3.4.1",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.11.0",
+    "date-fns": "^4.1.0",
+    "i18next": "^25.3.4",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "lucide-react": "^0.539.0",
+    "mapbox-gl": "^3.14.0",
+    "postcss": "^8.5.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^15.6.1",
+    "react-reconciler": "^0.29.0",
+    "react-router-dom": "^7.8.0",
+    "recharts": "^3.1.2",
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^3.4.0",
+    "three": "^0.144.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "vite": "^7.1.2"
+  }
 }
