@@ -75,8 +75,9 @@ const auth = async (req, res, next) => {
     // 2) Verify token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    // 3) Check if user still exists
-    const currentUser = await User.findById(decoded.id).select('+password');
+    // 3) Check if user still exists - handle both payload structures
+    const userId = decoded.user ? decoded.user.id : decoded.id;
+    const currentUser = await User.findById(userId).select('+password');
     if (!currentUser) {
       return res.status(401).json({
         success: false,
@@ -139,7 +140,8 @@ const optionalAuth = async (req, res, next) => {
     }
 
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    const currentUser = await User.findById(decoded.id);
+    const userId = decoded.user ? decoded.user.id : decoded.id;
+    const currentUser = await User.findById(userId);
     
     if (currentUser && currentUser.isActive && !currentUser.isLocked) {
       req.user = currentUser;
