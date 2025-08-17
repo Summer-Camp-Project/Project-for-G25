@@ -246,7 +246,7 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
               </div>
             </div>
           )}
->>>>>>> home-with-tourO
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Full Name (Sign Up Only) */}
