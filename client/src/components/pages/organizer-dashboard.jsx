@@ -1,9 +1,9 @@
-import { Sidebar } from "./Sidebar";
-import { TopBar } from "./TopBar";
-import { MainContent } from "../MainContent";
-import { CreateTourModal } from "../modals/CreateTourModal";
-import { BookingRequestsModal } from "../modals/BookingRequestsModal";
-import { useDashboard } from "../../../context/DashboardContext";
+import { Sidebar } from "../../layout/Sidebar";
+import { TopBar } from "../../layout/TopBar";
+import { MainContent } from "../../MainContent";
+import { CreateTourModal } from "../../modals/CreateTourModal";
+import { BookingRequestsModal } from "../../modals/BookingRequestsModal";
+import { useDashboard } from "../../context/DashboardContext";
 
 export function DashboardLayout() {
   const { showCreateTourModal, showBookingRequestsModal } = useDashboard();
@@ -31,3 +31,4 @@ export function DashboardLayout() {
     </div>
   );
 }
+
