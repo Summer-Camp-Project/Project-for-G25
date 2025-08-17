@@ -1,12 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import UserTourPage from "../components/pages/UserTourPage";
-import { DashboardLayout } from "../components/dashboard/layout/DashboardLayout";
+import {TourDashboard} from "../components/pages/TourDashboard";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
 import Home from "../pages/Home";
 import Auth from "../pages/Auth";
 import ContactUs from "../pages/ContactUs"; // Fixed import
-
 export default function AppRoutes({ darkMode, toggleDarkMode }) {
   return (
     <Routes>
@@ -40,7 +39,7 @@ export default function AppRoutes({ darkMode, toggleDarkMode }) {
         element={
           <>
             <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-            <DashboardLayout />
+            <TourDashboard />
             <Footer />
           </>
         }
