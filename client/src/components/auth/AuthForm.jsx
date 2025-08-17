@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Building2 } from 'lucide-react';
 
@@ -175,4 +174,3 @@ const AuthForm = ({ mode, onSubmit, loading, error }) => {
 };
 
 export default AuthForm;
-

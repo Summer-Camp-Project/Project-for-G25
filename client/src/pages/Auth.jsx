@@ -139,6 +139,8 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
       setLoading(false);
     }
   };
+    }
+  };
 
   const handleGoogleSignIn = () => {
     // Simulate Google OAuth flow
@@ -244,7 +246,7 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
               </div>
             </div>
           )}
-
+>>>>>>> home-with-tourO
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Full Name (Sign Up Only) */}

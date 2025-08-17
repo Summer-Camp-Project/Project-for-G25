@@ -1,6 +1,18 @@
-<div align="center">
+# EthioHeritage360 - Ethiopian Heritage Platform
 
-# 🏛️ EthioHeritage360
+[![Project Status](https://img.shields.io/badge/Status-Production%20Ready-green)](https://github.com/Summer-Camp-Project/Project-for-G25)
+[![Frontend](https://img.shields.io/badge/Frontend-React%2018-61DAFB?logo=react)](https://reactjs.org/)
+[![Backend](https://img.shields.io/badge/Backend-Node.js-339933?logo=node.js)](https://nodejs.org/)
+[![Database](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb)](https://mongodb.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+
+*A comprehensive digital platform for preserving, exploring, and sharing Ethiopia's rich cultural heritage through immersive virtual experiences, artifact management, and community engagement.*
+
+[🚀 **Live Demo**](https://ethioheritage360.com) • [📖 **Documentation**](./docs) • [🐛 **Report Bug**](https://github.com/Summer-Camp-Project/Project-for-G25/issues) • [✨ **Request Feature**](https://github.com/Summer-Camp-Project/Project-for-G25/issues)
+
+---
+
+<div align="center">
 
 ### *Preserving Ethiopia's Cultural Heritage Through Technology*
 

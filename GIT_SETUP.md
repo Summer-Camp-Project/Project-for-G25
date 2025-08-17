@@ -63,7 +63,9 @@ git checkout -b Petros--b
 ```
 This creates and switches to your development branch.
 
-### 6. Push to Your Bra
+### 6. Push to Your Branch
+```bash
+git push -u origin Petros--b
 ```
 This pushes your branch to the remote repository and sets up tracking.
 
