@@ -20,9 +20,35 @@ const RoleBasedRoute = ({ children, allowedRoles, fallbackRoute = '/' }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  // Check if user role is allowed (support both backend and frontend role names)
+  const hasAccess = allowedRoles.some(allowedRole => {
+    // Direct match
+    if (allowedRole === user.role) return true;
+    
+    // Handle backend to frontend role mapping
+    const roleMap = {
+      'superAdmin': ['super_admin', 'superAdmin'],
+      'museumAdmin': ['museum_admin', 'museumAdmin', 'museum'],
+      'user': ['visitor', 'user'],
+      // Reverse mapping for frontend to backend
+      'super_admin': ['superAdmin', 'super_admin'],
+      'museum_admin': ['museumAdmin', 'museum_admin', 'museum'],
+      'museum': ['museumAdmin', 'museum_admin', 'museum'],
+      'visitor': ['user', 'visitor']
+    };
+    
+    const mappedRoles = roleMap[allowedRole] || [];
+    return mappedRoles.includes(user.role);
+  });
+  
+  if (!hasAccess) {
     // Redirect to appropriate dashboard based on user role
     const redirectRoutes = {
+      // Backend role names
+      superAdmin: '/super-admin',
+      museumAdmin: '/museum-dashboard',
+      user: '/visitor-dashboard',
+      // Frontend role names (fallback)
       super_admin: '/super-admin',
       admin: '/admin',
       museum: '/museum-dashboard',

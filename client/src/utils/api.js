@@ -110,16 +110,34 @@ class ApiClient {
   }
 
   async register(userData) {
+    console.log('🌐 API REGISTER: Starting API registration request')
+    console.log('📊 API REGISTER: User data received:', {
+      ...userData,
+      password: '[HIDDEN]'
+    })
+    
     await this.checkBackendAvailability()
     
     if (this.useMockAPI) {
+      console.log('🔄 API REGISTER: Using mock API')
       return mockApi.register(userData)
     }
     
-    return this.request('/auth/register', {
+    console.log('🔄 API REGISTER: Using real backend')
+    const result = await this.request('/auth/register', {
       method: 'POST',
       body: userData,
     })
+    
+    console.log('✅ API REGISTER: Backend response:', {
+      success: result?.success,
+      hasToken: !!result?.token,
+      hasUser: !!result?.user,
+      userRole: result?.user?.role,
+      userName: result?.user?.name || result?.user?.firstName
+    })
+    
+    return result
   }
 
   async logout() {
@@ -129,6 +147,22 @@ class ApiClient {
     
     return this.request('/auth/logout', {
       method: 'POST',
+    })
+  }
+
+  async refreshToken(refreshToken) {
+    if (this.useMockAPI) {
+      // Mock API doesn't need refresh tokens, return current session
+      const token = localStorage.getItem('token')
+      if (token) {
+        return { token, success: true }
+      }
+      throw new Error('No valid session')
+    }
+    
+    return this.request('/auth/refresh', {
+      method: 'POST',
+      body: { refreshToken }
     })
   }
 

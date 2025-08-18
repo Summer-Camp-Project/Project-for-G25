@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: {
-      values: ['superAdmin', 'museumAdmin', 'user'],
-      message: 'Role must be either superAdmin, museumAdmin, or user'
+      values: ['superAdmin', 'museumAdmin', 'organizer', 'user'],
+      message: 'Role must be either superAdmin, museumAdmin, organizer, or user'
     },
     default: 'user',
     required: true
@@ -298,7 +298,8 @@ userSchema.virtual('fullName').get(function() {
 userSchema.virtual('roleDisplayName').get(function() {
   const roleMap = {
     'superAdmin': 'Super Administrator (Owner)',
-    'museumAdmin': 'Museum Administrator', 
+    'museumAdmin': 'Museum Administrator',
+    'organizer': 'Tour Organizer / Guide',
     'user': 'Visitor'
   };
   return roleMap[this.role] || this.role;
@@ -349,6 +350,12 @@ userSchema.pre('save', function(next) {
           'manage_museum_profile', 'manage_museum_staff', 'manage_artifacts',
           'create_events', 'approve_local_rentals', 'view_museum_analytics',
           'suggest_heritage_sites', 'manage_virtual_museum'
+        ];
+        break;
+      case 'organizer':
+        this.permissions = [
+          'create_events', 'book_events', 'manage_tours', 'view_analytics',
+          'request_rentals', 'view_virtual_museum', 'leave_reviews', 'manage_profile'
         ];
         break;
       case 'user':

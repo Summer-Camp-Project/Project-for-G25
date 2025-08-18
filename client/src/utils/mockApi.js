@@ -399,6 +399,298 @@ const MOCK_USER_BOOKINGS = [
   }
 ];
 
+// Mock tours data
+const MOCK_TOURS = [
+  {
+    _id: '1',
+    id: '1',
+    title: 'Lalibela Rock Churches Historical Tour',
+    description: 'Experience the wonder of Lalibela\'s 11 medieval rock-hewn churches, a UNESCO World Heritage Site. This comprehensive tour covers the history, architecture, and religious significance of these magnificent structures.',
+    organizer: {
+      _id: '11',
+      name: 'Senior Tour Guide',
+      email: 'tourguide@ethioheritage360.com',
+      profile: { company: 'Heritage Tours Ethiopia' }
+    },
+    type: 'religious',
+    duration: {
+      days: 3,
+      hours: 0
+    },
+    groupSize: {
+      min: 4,
+      max: 15
+    },
+    pricing: {
+      adult: 2500,
+      child: 1500,
+      currency: 'ETB'
+    },
+    schedule: [{
+      startDate: new Date('2025-02-15T09:00:00Z'),
+      endDate: new Date('2025-02-17T18:00:00Z'),
+      availableSpots: 12,
+      bookedSpots: 3
+    }],
+    media: {
+      images: [{
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+        caption: 'Church of St. George at Lalibela',
+        isPrimary: true
+      }]
+    },
+    rating: {
+      average: 4.8,
+      count: 24
+    },
+    status: 'published',
+    totalBookings: 156,
+    location: 'Lalibela, Amhara Region',
+    createdAt: new Date('2025-01-10T08:00:00Z').toISOString(),
+    updatedAt: new Date('2025-01-12T10:30:00Z').toISOString()
+  },
+  {
+    _id: '2',
+    id: '2',
+    title: 'Axum Ancient Kingdom Archaeological Tour',
+    description: 'Discover the ancient Kingdom of Axum, exploring the famous obelisks, Queen of Sheba\'s palace ruins, and archaeological treasures that tell the story of one of Africa\'s greatest civilizations.',
+    organizer: {
+      _id: '12',
+      name: 'Cultural Tour Specialist',
+      email: 'culturaltours@ethioheritage360.com',
+      profile: { company: 'Ethiopian Cultural Heritage Tours' }
+    },
+    type: 'archaeological',
+    duration: {
+      days: 2,
+      hours: 0
+    },
+    groupSize: {
+      min: 6,
+      max: 20
+    },
+    pricing: {
+      adult: 1800,
+      child: 1200,
+      currency: 'ETB'
+    },
+    schedule: [{
+      startDate: new Date('2025-02-20T08:00:00Z'),
+      endDate: new Date('2025-02-21T17:00:00Z'),
+      availableSpots: 18,
+      bookedSpots: 7
+    }],
+    media: {
+      images: [{
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+        caption: 'Axum Obelisk',
+        isPrimary: true
+      }]
+    },
+    rating: {
+      average: 4.6,
+      count: 18
+    },
+    status: 'published',
+    totalBookings: 89,
+    location: 'Axum, Tigray Region',
+    createdAt: new Date('2025-01-08T14:20:00Z').toISOString(),
+    updatedAt: new Date('2025-01-11T16:45:00Z').toISOString()
+  },
+  {
+    _id: '3',
+    id: '3',
+    title: 'Addis Ababa City Heritage Walk',
+    description: 'Explore Ethiopia\'s capital city through its historical landmarks, museums, and cultural sites. Visit the National Museum, Ethnological Museum, and traditional markets.',
+    organizer: {
+      _id: '13',
+      name: 'Heritage Tours Ethiopia',
+      email: 'organizer@heritagetours.et',
+      profile: { company: 'Heritage Tours Ethiopia' }
+    },
+    type: 'cultural',
+    duration: {
+      days: 1,
+      hours: 6
+    },
+    groupSize: {
+      min: 2,
+      max: 12
+    },
+    pricing: {
+      adult: 800,
+      child: 500,
+      currency: 'ETB'
+    },
+    schedule: [{
+      startDate: new Date('2025-02-10T09:00:00Z'),
+      endDate: new Date('2025-02-10T15:00:00Z'),
+      availableSpots: 10,
+      bookedSpots: 2
+    }],
+    media: {
+      images: [{
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+        caption: 'National Museum of Ethiopia',
+        isPrimary: true
+      }]
+    },
+    rating: {
+      average: 4.4,
+      count: 31
+    },
+    status: 'published',
+    totalBookings: 203,
+    location: 'Addis Ababa',
+    createdAt: new Date('2025-01-05T11:15:00Z').toISOString(),
+    updatedAt: new Date('2025-01-09T09:30:00Z').toISOString()
+  },
+  {
+    _id: '4',
+    id: '4',
+    title: 'Harar Historic City Cultural Experience',
+    description: 'Immerse yourself in the ancient walled city of Harar, exploring traditional coffee culture, colorful markets, and historic mosques in this UNESCO World Heritage Site.',
+    organizer: {
+      _id: '11',
+      name: 'Senior Tour Guide',
+      email: 'tourguide@ethioheritage360.com',
+      profile: { company: 'Heritage Tours Ethiopia' }
+    },
+    type: 'cultural',
+    duration: {
+      days: 2,
+      hours: 0
+    },
+    groupSize: {
+      min: 4,
+      max: 16
+    },
+    pricing: {
+      adult: 2200,
+      child: 1400,
+      currency: 'ETB'
+    },
+    schedule: [{
+      startDate: new Date('2025-03-01T08:00:00Z'),
+      endDate: new Date('2025-03-02T18:00:00Z'),
+      availableSpots: 14,
+      bookedSpots: 6
+    }],
+    media: {
+      images: [{
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+        caption: 'Harar Old Town',
+        isPrimary: true
+      }]
+    },
+    rating: {
+      average: 4.7,
+      count: 15
+    },
+    status: 'published',
+    totalBookings: 67,
+    location: 'Harar, Eastern Ethiopia',
+    createdAt: new Date('2025-01-12T13:40:00Z').toISOString(),
+    updatedAt: new Date('2025-01-13T15:20:00Z').toISOString()
+  },
+  {
+    _id: '5',
+    id: '5',
+    title: 'Simien Mountains Adventure & Heritage Tour',
+    description: 'Combine natural beauty with cultural heritage in this adventure tour through the Simien Mountains, visiting local villages and learning about highland Ethiopian culture.',
+    organizer: {
+      _id: '12',
+      name: 'Cultural Tour Specialist',
+      email: 'culturaltours@ethioheritage360.com',
+      profile: { company: 'Ethiopian Cultural Heritage Tours' }
+    },
+    type: 'adventure',
+    duration: {
+      days: 4,
+      hours: 0
+    },
+    groupSize: {
+      min: 6,
+      max: 12
+    },
+    pricing: {
+      adult: 3500,
+      child: 2500,
+      currency: 'ETB'
+    },
+    schedule: [{
+      startDate: new Date('2025-03-15T07:00:00Z'),
+      endDate: new Date('2025-03-18T17:00:00Z'),
+      availableSpots: 10,
+      bookedSpots: 4
+    }],
+    media: {
+      images: [{
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+        caption: 'Simien Mountains Landscape',
+        isPrimary: true
+      }]
+    },
+    rating: {
+      average: 4.9,
+      count: 12
+    },
+    status: 'published',
+    totalBookings: 45,
+    location: 'Simien Mountains, Amhara Region',
+    createdAt: new Date('2025-01-14T16:00:00Z').toISOString(),
+    updatedAt: new Date('2025-01-14T16:00:00Z').toISOString()
+  },
+  {
+    _id: '6',
+    id: '6',
+    title: 'Gondar Castle Complex Historical Tour',
+    description: 'Step back in time to explore the royal enclosure of Gondar, featuring 17th and 18th-century castles and palaces of Ethiopian emperors.',
+    organizer: {
+      _id: '13',
+      name: 'Heritage Tours Ethiopia',
+      email: 'organizer@heritagetours.et',
+      profile: { company: 'Heritage Tours Ethiopia' }
+    },
+    type: 'historical',
+    duration: {
+      days: 1,
+      hours: 4
+    },
+    groupSize: {
+      min: 3,
+      max: 20
+    },
+    pricing: {
+      adult: 1200,
+      child: 800,
+      currency: 'ETB'
+    },
+    schedule: [{
+      startDate: new Date('2025-02-25T10:00:00Z'),
+      endDate: new Date('2025-02-25T14:00:00Z'),
+      availableSpots: 15,
+      bookedSpots: 8
+    }],
+    media: {
+      images: [{
+        url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+        caption: 'Gondar Castle',
+        isPrimary: true
+      }]
+    },
+    rating: {
+      average: 4.5,
+      count: 22
+    },
+    status: 'published',
+    totalBookings: 134,
+    location: 'Gondar, Amhara Region',
+    createdAt: new Date('2025-01-11T12:20:00Z').toISOString(),
+    updatedAt: new Date('2025-01-13T14:10:00Z').toISOString()
+  }
+];
+
 // Mixed content store for moderation demo
 const MOCK_CONTENT = [
   {
@@ -593,7 +885,59 @@ class MockApiClient {
   }
 
   async getTours() {
-    return { tours: [] };
+    return { 
+      success: true,
+      data: MOCK_TOURS,
+      tours: MOCK_TOURS,
+      pagination: {
+        page: 1,
+        limit: 50,
+        total: MOCK_TOURS.length,
+        pages: 1
+      }
+    };
+  }
+
+  async createTour(tourData) {
+    await delay(500);
+    
+    const newTour = {
+      ...tourData,
+      _id: (MOCK_TOURS.length + 1).toString(),
+      id: (MOCK_TOURS.length + 1).toString(),
+      status: 'published',
+      totalBookings: 0,
+      rating: {
+        average: 0,
+        count: 0
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      // Ensure organizer is populated
+      organizer: {
+        _id: tourData.organizer || '13',
+        name: 'Heritage Tours Ethiopia',
+        email: 'organizer@heritagetours.et',
+        profile: { company: 'Heritage Tours Ethiopia' }
+      },
+      // Add default media if not provided
+      media: tourData.media || {
+        images: [{
+          url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=400&fit=crop',
+          caption: 'Tour Image',
+          isPrimary: true
+        }]
+      }
+    };
+    
+    MOCK_TOURS.push(newTour);
+    
+    return {
+      success: true,
+      message: 'Tour created successfully',
+      data: newTour,
+      tour: newTour
+    };
   }
 
   async getSites() {

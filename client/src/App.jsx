@@ -66,19 +66,41 @@ function App() {
       return <Navigate to="/auth" replace />
     }
     
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-      // Redirect to appropriate dashboard based on user role
-      const redirectRoutes = {
-        super_admin: '/super-admin',
-        admin: '/admin',
-        museum: '/museum-dashboard',
-        museum_admin: '/museum-dashboard',
-        organizer: '/organizer-dashboard',
-        visitor: '/visitor-dashboard'
-      }
+    if (allowedRoles) {
+      // Check if user role is allowed (support both backend and frontend role names)
+      const hasAccess = allowedRoles.some(allowedRole => {
+        // Direct match
+        if (allowedRole === user.role) return true;
+        
+        // Handle backend to frontend role mapping
+        const roleMap = {
+          'superAdmin': ['super_admin', 'superAdmin'],
+          'museumAdmin': ['museum_admin', 'museumAdmin', 'museum'],
+          'user': ['visitor', 'user'],
+          // Reverse mapping for frontend to backend
+          'super_admin': ['superAdmin', 'super_admin'],
+          'museum_admin': ['museumAdmin', 'museum_admin', 'museum'],
+          'museum': ['museumAdmin', 'museum_admin', 'museum'],
+          'visitor': ['user', 'visitor']
+        };
+        
+        const mappedRoles = roleMap[allowedRole] || [];
+        return mappedRoles.includes(user.role);
+      });
       
-      const redirectTo = redirectRoutes[user.role] || '/'
-      return <Navigate to={redirectTo} replace />
+      if (!hasAccess) {
+        // Redirect to appropriate dashboard based on user role (using backend role names)
+        const redirectRoutes = {
+          superAdmin: '/super-admin',       // Backend uses 'superAdmin'
+          admin: '/admin',
+          museumAdmin: '/museum-dashboard', // Backend uses 'museumAdmin'
+          organizer: '/organizer-dashboard',
+          user: '/visitor-dashboard'        // Backend uses 'user' for visitors
+        }
+        
+        const redirectTo = redirectRoutes[user.role] || '/'
+        return <Navigate to={redirectTo} replace />
+      }
     }
     
     return children
@@ -140,64 +162,64 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/super-admin" element={
-            <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+            <ProtectedRoute allowedRoles={['superAdmin', 'admin']}>
               <SuperAdminDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <MuseumDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             </ProtectedRoute>
           } />
           
           {/* Museum Admin Routes */}
           <Route path="/museum-dashboard/profile/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <MuseumProfile />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/artifacts/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <ArtifactManagement />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/virtual-museum/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <VirtualMuseumManagement />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/staff/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <StaffManagement />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/events/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <EventManagement />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/rentals/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <RentalManagement />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/analytics/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <MuseumAnalytics />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/notifications" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <MuseumNotifications />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/communications/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <MuseumCommunications />
             </ProtectedRoute>
           } />
           <Route path="/museum-dashboard/settings/*" element={
-            <ProtectedRoute allowedRoles={['museum']}>
+            <ProtectedRoute allowedRoles={['museumAdmin']}>
               <MuseumSettings />
             </ProtectedRoute>
           } />
@@ -207,34 +229,34 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/visitor-dashboard" element={
-            <ProtectedRoute allowedRoles={['visitor']}>
+            <ProtectedRoute allowedRoles={['user']}>
               <VisitorDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             </ProtectedRoute>
           } />
           
           {/* Visitor-specific routes */}
           <Route path="/visitor/virtual-museum" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <VisitorVirtualMuseum />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/virtual-museum/*" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <VisitorVirtualMuseum />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/profile" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <ProfileSettings />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/preferences" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <ProfileSettings />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/events" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-4">Events & Exhibitions</h2>
@@ -244,7 +266,7 @@ function App() {
             </RoleBasedRoute>
           } />
           <Route path="/visitor/favorites" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-4">My Favorites</h2>
@@ -254,7 +276,7 @@ function App() {
             </RoleBasedRoute>
           } />
           <Route path="/visitor/recent" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-4">Recently Viewed</h2>
@@ -264,7 +286,7 @@ function App() {
             </RoleBasedRoute>
           } />
           <Route path="/visitor/heritage-sites" element={
-            <RoleBasedRoute allowedRoles={['visitor']}>
+            <RoleBasedRoute allowedRoles={['user']}>
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-4">Heritage Sites</h2>

@@ -4,6 +4,7 @@ class TourService {
   constructor() {
     this.cache = new Map();
     this.cacheExpiry = 5 * 60 * 1000; // 5 minutes
+    this.eventListeners = new Map();
   }
 
   /**
@@ -97,6 +98,9 @@ class TourService {
       
       // Clear cache to force refresh
       this.clearCache();
+      
+      // Emit cache invalidation event for real-time updates
+      this.emitCacheInvalidation('tour-created', response.tour || response.data || response);
       
       return response.tour || response.data || response;
     } catch (error) {
@@ -519,6 +523,151 @@ class TourService {
       keys: Array.from(this.cache.keys()),
       expiry: this.cacheExpiry
     };
+  }
+
+  /**
+   * Real-time cache management methods
+   */
+
+  /**
+   * Emit cache invalidation event
+   * @param {string} event - Event type
+   * @param {Object} data - Event data
+   */
+  emitCacheInvalidation(event, data) {
+    if (this.eventListeners.has(event)) {
+      this.eventListeners.get(event).forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in tour service event listener for ${event}:`, error);
+        }
+      });
+    }
+  }
+
+  /**
+   * Subscribe to cache invalidation events
+   * @param {string} event - Event type
+   * @param {Function} callback - Callback function
+   */
+  on(event, callback) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, new Set());
+    }
+    this.eventListeners.get(event).add(callback);
+  }
+
+  /**
+   * Unsubscribe from cache invalidation events
+   * @param {string} event - Event type
+   * @param {Function} callback - Callback function
+   */
+  off(event, callback) {
+    if (this.eventListeners.has(event)) {
+      this.eventListeners.get(event).delete(callback);
+    }
+  }
+
+  /**
+   * Handle real-time tour creation
+   * @param {Object} tour - New tour data
+   */
+  handleNewTour(tour) {
+    console.log('TourService: Handling new tour', tour.title);
+    
+    // Clear all tours cache to ensure fresh data
+    const keysToDelete = [];
+    for (const key of this.cache.keys()) {
+      if (key.startsWith('tours_')) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => this.cache.delete(key));
+    
+    // Emit event for any subscribers
+    this.emitCacheInvalidation('new-tour', tour);
+  }
+
+  /**
+   * Handle real-time tour update
+   * @param {Object} tour - Updated tour data
+   */
+  handleTourUpdate(tour) {
+    console.log('TourService: Handling tour update', tour.title);
+    
+    // Remove specific tour from cache
+    this.cache.delete(`tour_${tour.id}`);
+    this.cache.delete(`tour_${tour._id}`);
+    
+    // Clear tours list cache
+    const keysToDelete = [];
+    for (const key of this.cache.keys()) {
+      if (key.startsWith('tours_')) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => this.cache.delete(key));
+    
+    // Emit event for any subscribers
+    this.emitCacheInvalidation('tour-updated', tour);
+  }
+
+  /**
+   * Handle real-time tour deletion
+   * @param {string} tourId - Deleted tour ID
+   */
+  handleTourDeletion(tourId) {
+    console.log('TourService: Handling tour deletion', tourId);
+    
+    // Remove specific tour from cache
+    this.cache.delete(`tour_${tourId}`);
+    
+    // Clear tours list cache
+    const keysToDelete = [];
+    for (const key of this.cache.keys()) {
+      if (key.startsWith('tours_')) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => this.cache.delete(key));
+    
+    // Emit event for any subscribers
+    this.emitCacheInvalidation('tour-deleted', { tourId });
+  }
+
+  /**
+   * Force refresh all tours cache
+   */
+  forceRefreshCache() {
+    console.log('TourService: Force refreshing cache');
+    this.clearCache();
+    this.emitCacheInvalidation('cache-refreshed', {});
+  }
+
+  /**
+   * Initialize real-time updates integration
+   * @param {Object} webSocketService - WebSocket service instance
+   */
+  initializeRealTimeUpdates(webSocketService) {
+    console.log('TourService: Initializing real-time updates');
+    
+    // Subscribe to WebSocket events
+    webSocketService.on('tourCreated', (data) => {
+      this.handleNewTour(data.tour);
+    });
+    
+    webSocketService.on('tourUpdated', (data) => {
+      this.handleTourUpdate(data.tour);
+    });
+    
+    webSocketService.on('tourDeleted', (data) => {
+      this.handleTourDeletion(data.tourId);
+    });
+    
+    webSocketService.on('toursRefresh', () => {
+      this.forceRefreshCache();
+    });
   }
 }
 

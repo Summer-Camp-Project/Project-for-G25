@@ -9,6 +9,7 @@ const {
   login,
   getCurrentUser,
   logout,
+  refreshTokens,
   forgotPassword,
   resetPassword,
   updateProfile,
@@ -60,6 +61,11 @@ router.get('/me', auth, getCurrentUser);
 // @desc    Logout user
 // @access  Private
 router.post('/logout', auth, logout);
+
+// @route   POST /api/auth/refresh
+// @desc    Refresh authentication tokens
+// @access  Public (requires valid refresh token)
+router.post('/refresh', refreshTokens);
 
 // @route   POST /api/auth/forgot-password
 // @desc    Forgot password

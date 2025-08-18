@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../utils/api';
+import LogoutButton from '../components/common/LogoutButton';
 import { 
   Users, 
   Building2, 
@@ -35,7 +36,7 @@ import HeritageSiteManager from '../components/HeritageSiteManager';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 
 const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [expandedSections, setExpandedSections] = useState({
     'Platform Overview': true,
@@ -1792,17 +1793,22 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
 
         {/* User Profile */}
         <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 mb-3">
             <img 
               src={superAdminLogo} 
               alt="Super Admin" 
               className="w-10 h-10 rounded-full object-cover"
             />
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Super Admin</p>
-              <p className="text-xs text-gray-600">admin@heritage360.et</p>
+              <p className="text-sm font-medium text-gray-900">{user?.name || 'Super Admin'}</p>
+              <p className="text-xs text-gray-600">{user?.email || 'admin@heritage360.et'}</p>
             </div>
           </div>
+          <LogoutButton 
+            variant="sidebar"
+            className="w-full text-red-600 hover:bg-red-50"
+            showConfirmModal={true}
+          />
         </div>
       </div>
 

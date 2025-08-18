@@ -37,7 +37,7 @@ const MuseumDashboard = () => {
 
   // Redirect if not authenticated or not a museum admin
   useEffect(() => {
-    if (!user || (user.role !== 'museum_admin' && user.role !== 'museum')) {
+    if (!user || user.role !== 'museumAdmin') {
       navigate('/auth');
     }
   }, [user, navigate]);

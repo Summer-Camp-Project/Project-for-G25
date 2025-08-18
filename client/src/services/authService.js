@@ -4,6 +4,101 @@ class AuthService {
   constructor() {
     this.currentUser = null;
     this.token = localStorage.getItem('token');
+    this.refreshToken = localStorage.getItem('refreshToken');
+    this.sessionCheckInterval = null;
+    this.tokenExpiryWarned = false;
+    
+    // Initialize session check
+    this.initializeSessionCheck();
+  }
+
+  /**
+   * Initialize session checking to maintain user login state
+   */
+  initializeSessionCheck() {
+    // Check session every 5 minutes
+    this.sessionCheckInterval = setInterval(() => {
+      this.validateSession();
+    }, 5 * 60 * 1000);
+
+    // Initial session validation if token exists
+    if (this.token) {
+      this.validateSession();
+    }
+  }
+
+  /**
+   * Validate current session and refresh token if needed
+   */
+  async validateSession() {
+    if (!this.token) return false;
+
+    try {
+      // Check if token is about to expire (decode JWT)
+      const tokenPayload = this.decodeToken(this.token);
+      const now = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = tokenPayload.exp - now;
+
+      // If token expires in less than 10 minutes, try to refresh it
+      if (timeUntilExpiry < 600) {
+        await this.refreshTokenIfNeeded();
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Session validation failed:', error);
+      // If session validation fails, logout user
+      this.logout();
+      return false;
+    }
+  }
+
+  /**
+   * Decode JWT token to get payload
+   * @param {string} token - JWT token
+   * @returns {Object} Token payload
+   */
+  decodeToken(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      throw new Error('Invalid token format');
+    }
+  }
+
+  /**
+   * Refresh authentication token
+   */
+  async refreshTokenIfNeeded() {
+    if (!this.refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    try {
+      const response = await api.refreshToken(this.refreshToken);
+      
+      if (response.token) {
+        this.token = response.token;
+        localStorage.setItem('token', response.token);
+        
+        if (response.refreshToken) {
+          this.refreshToken = response.refreshToken;
+          localStorage.setItem('refreshToken', response.refreshToken);
+        }
+        
+        console.log('Token refreshed successfully');
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      throw error;
+    }
   }
 
   /**
@@ -20,6 +115,18 @@ class AuthService {
         this.currentUser = response.user;
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
+        
+        // Store refresh token if provided
+        if (response.refreshToken) {
+          this.refreshToken = response.refreshToken;
+          localStorage.setItem('refreshToken', response.refreshToken);
+        }
+        
+        // Set last login timestamp
+        localStorage.setItem('lastLogin', new Date().toISOString());
+        
+        // Reset token expiry warning flag
+        this.tokenExpiryWarned = false;
       }
       
       return response;
@@ -57,14 +164,29 @@ class AuthService {
    */
   async logout() {
     try {
+      // Clear session check interval
+      if (this.sessionCheckInterval) {
+        clearInterval(this.sessionCheckInterval);
+        this.sessionCheckInterval = null;
+      }
+      
       await api.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       this.currentUser = null;
       this.token = null;
+      this.refreshToken = null;
+      this.tokenExpiryWarned = false;
+      
+      // Clear all stored authentication data
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('lastLogin');
+      
+      // Redirect to login page
+      window.location.href = '/auth';
     }
   }
 
@@ -78,14 +200,45 @@ class AuthService {
     }
 
     try {
+      // Try to get from cache first
+      if (!this.currentUser) {
+        const cachedUser = localStorage.getItem('user');
+        if (cachedUser) {
+          try {
+            this.currentUser = JSON.parse(cachedUser);
+          } catch (e) {
+            // Invalid cached data, fetch fresh
+            localStorage.removeItem('user');
+          }
+        }
+      }
+      
+      // If still no user, fetch from server
       if (!this.currentUser) {
         const response = await api.getCurrentUser();
         this.currentUser = response.user || response;
         localStorage.setItem('user', JSON.stringify(this.currentUser));
       }
+      
       return this.currentUser;
     } catch (error) {
       console.error('Get current user error:', error);
+      
+      // If it's a token error, try to refresh token first
+      if (error.message.includes('expired') || error.message.includes('invalid')) {
+        try {
+          await this.refreshTokenIfNeeded();
+          // Retry getting current user with new token
+          const response = await api.getCurrentUser();
+          this.currentUser = response.user || response;
+          localStorage.setItem('user', JSON.stringify(this.currentUser));
+          return this.currentUser;
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+        }
+      }
+      
+      // If all fails, logout user
       this.logout();
       return null;
     }
@@ -96,7 +249,17 @@ class AuthService {
    * @returns {boolean} Authentication status
    */
   isAuthenticated() {
-    return !!this.token;
+    if (!this.token) return false;
+    
+    try {
+      // Check if token is still valid
+      const tokenPayload = this.decodeToken(this.token);
+      const now = Math.floor(Date.now() / 1000);
+      return tokenPayload.exp > now;
+    } catch (error) {
+      // Invalid token
+      return false;
+    }
   }
 
   /**
@@ -108,7 +271,12 @@ class AuthService {
     if (!this.currentUser) {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
-        this.currentUser = JSON.parse(storedUser);
+        try {
+          this.currentUser = JSON.parse(storedUser);
+        } catch (e) {
+          localStorage.removeItem('user');
+          return false;
+        }
       }
     }
     return this.currentUser?.role === role;
@@ -123,7 +291,12 @@ class AuthService {
     if (!this.currentUser) {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
-        this.currentUser = JSON.parse(storedUser);
+        try {
+          this.currentUser = JSON.parse(storedUser);
+        } catch (e) {
+          localStorage.removeItem('user');
+          return false;
+        }
       }
     }
     return roles.includes(this.currentUser?.role);

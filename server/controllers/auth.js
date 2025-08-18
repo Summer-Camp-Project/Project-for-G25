@@ -20,14 +20,30 @@ const generateToken = (userId, role) => {
   });
 };
 
+// Generate Refresh Token
+const generateRefreshToken = (userId) => {
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_REFRESH_SECRET || config.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+};
+
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
 const register = async (req, res) => {
   try {
+    console.log('🟢 BACKEND REGISTER: Registration request received');
+    console.log('📋 BACKEND REGISTER: Request body:', {
+      ...req.body,
+      password: '[HIDDEN]'
+    });
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ BACKEND REGISTER: Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -36,6 +52,16 @@ const register = async (req, res) => {
     }
 
     const { name, firstName, lastName, email, password, role, museumName, organizerCompany } = req.body;
+    console.log('📝 BACKEND REGISTER: Extracted data:', {
+      name,
+      firstName, 
+      lastName,
+      email,
+      role,
+      password: '[HIDDEN]',
+      museumName,
+      organizerCompany
+    });
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
@@ -55,9 +81,16 @@ const register = async (req, res) => {
       museum_admin: 'museumAdmin',
       super_admin: 'superAdmin',
       superAdmin: 'superAdmin',
-      museumAdmin: 'museumAdmin'
+      museumAdmin: 'museumAdmin',
+      tour_admin: 'organizer',
+      organizer: 'organizer'
     };
     const normalizedRole = roleMap[(role || '').toString()] || 'user';
+    console.log('🔄 BACKEND REGISTER: Role mapping:', {
+      originalRole: role,
+      normalizedRole,
+      roleMap
+    });
 
     // Derive first/last name from single name if needed
     let fName = firstName;
@@ -104,18 +137,25 @@ const register = async (req, res) => {
     user.emailVerificationToken = verificationToken;
     await user.save();
 
-    // Generate JWT token
+    // Generate JWT token and refresh token
     const token = generateToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+    
+    // Store refresh token in user record
+    user.refreshToken = refreshToken;
+    await user.save();
 
     // Remove sensitive data from response
     const userResponse = user.toObject();
     delete userResponse.password;
     delete userResponse.emailVerificationToken;
+    delete userResponse.refreshToken;
 
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
       token,
+      refreshToken,
       user: userResponse
     });
 
@@ -213,8 +253,13 @@ const login = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Generate JWT token
+    // Generate JWT token and refresh token
     const token = generateToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id);
+    
+    // Store refresh token in user record
+    user.refreshToken = refreshToken;
+    await user.save();
 
     // Remove sensitive data from response
     const userResponse = user.toObject();
@@ -224,11 +269,13 @@ const login = async (req, res) => {
     delete userResponse.emailVerificationToken;
     delete userResponse.passwordResetToken;
     delete userResponse.passwordResetExpires;
+    delete userResponse.refreshToken;
 
     res.json({
       success: true,
       message: 'Login successful',
       token,
+      refreshToken,
       user: userResponse
     });
 
@@ -274,10 +321,15 @@ const getCurrentUser = async (req, res) => {
 // @access  Private
 const logout = async (req, res) => {
   try {
-    // In a more advanced implementation, you might want to:
-    // 1. Blacklist the token
-    // 2. Clear refresh tokens
-    // 3. Log the logout event
+    const userId = req.user?.id;
+    
+    // Clear refresh token from user record
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        $unset: { refreshToken: 1 },
+        lastLogout: new Date()
+      });
+    }
     
     res.json({
       success: true,
@@ -288,6 +340,81 @@ const logout = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during logout'
+    });
+  }
+};
+
+// @desc    Refresh authentication tokens
+// @route   POST /api/auth/refresh
+// @access  Public (requires valid refresh token)
+const refreshTokens = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required'
+      });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || config.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token'
+      });
+    }
+
+    // Find user with this refresh token
+    const user = await User.findOne({
+      _id: decoded.id,
+      refreshToken: refreshToken,
+      isActive: true
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token or user not found'
+      });
+    }
+
+    // Generate new tokens
+    const newToken = generateToken(user._id, user.role);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    // Update user's refresh token and last login
+    user.refreshToken = newRefreshToken;
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Remove sensitive data from response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+    delete userResponse.loginAttempts;
+    delete userResponse.lockUntil;
+    delete userResponse.emailVerificationToken;
+    delete userResponse.passwordResetToken;
+    delete userResponse.passwordResetExpires;
+    delete userResponse.refreshToken;
+
+    res.json({
+      success: true,
+      message: 'Tokens refreshed successfully',
+      token: newToken,
+      refreshToken: newRefreshToken,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Token refresh failed',
+      error: error.message
     });
   }
 };
@@ -469,6 +596,7 @@ module.exports = {
   login,
   getCurrentUser,
   logout,
+  refreshTokens,
   forgotPassword,
   resetPassword,
   updateProfile,
