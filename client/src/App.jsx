@@ -25,19 +25,6 @@ function ViewToggle() {
           Organizer
         </Button>
       </Link>
-      <Link to="/customer">
-        <Button
-          variant={location.pathname === "/customer" ? "default" : "outline"}
-          className={`${
-            location.pathname === "/customer"
-              ? "bg-green-600 hover:bg-green-700"
-              : "border-green-300 text-green-700 hover:bg-green-50"
-          }`}
-        >
-          <Users className="w-4 h-4 mr-2" />
-          Customer
-        </Button>
-      </Link>
     </div>
   );
 }
@@ -59,7 +46,6 @@ export default function App() {
     <Router>
       <DashboardProvider>
         <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
-          <ViewToggle />
           <AppRoutes darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
           <Toaster position="top-right" />
         </div>

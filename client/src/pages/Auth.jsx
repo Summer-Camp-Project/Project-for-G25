@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Shield, Users, MapPin, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import heroBg from '../assets/hero-bg.jpg';
 
 const Auth = ({ darkMode, toggleDarkMode }) => {
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -99,7 +101,14 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
     if (validateForm()) {
       // Handle form submission
       console.log('Form submitted:', formData);
-      // Here you would typically send the data to your backend
+      // Conditional redirect
+      if (formData.role === 'visitor') {
+        navigate('/profile');
+      } else if (formData.role === 'tour_admin') {
+        navigate('/organizer');
+      } else {
+        console.warn('No redirect for role:', formData.role);
+      }
     }
   };
 

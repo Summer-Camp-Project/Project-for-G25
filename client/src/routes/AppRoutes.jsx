@@ -7,6 +7,7 @@ import Home from "../pages/Home";
 import Auth from "../pages/Auth";
 import ContactUs from "../pages/ContactUs"; // Fixed import
 import MapPage from "../pages/Map";
+import Profile from "../pages/Profile";
 
 export default function AppRoutes({ darkMode, toggleDarkMode }) {
   return (
@@ -42,6 +43,16 @@ export default function AppRoutes({ darkMode, toggleDarkMode }) {
           <>
             <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <MapPage />
+            <Footer />
+          </>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <>
+            <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            <Profile />
             <Footer />
           </>
         }
