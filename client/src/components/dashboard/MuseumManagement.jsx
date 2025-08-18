@@ -172,7 +172,7 @@ const MuseumManagement = ({ museums, onAdd, onUpdate, onDelete, loading = false,
                     <CardMedia
                       component="img"
                       sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover' }}
-                      image={museum.imageUrl || '/api/placeholder/60/60'}
+                      image={museum.imageUrl || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center'}
                       alt={museum.name}
                     />
                   </TableCell>

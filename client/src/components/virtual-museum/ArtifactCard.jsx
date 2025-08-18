@@ -17,15 +17,16 @@ const ArtifactCard = ({ artifact, onView, onFavorite, onShare }) => {
   };
 
   return (
-    <div className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+    <div className="group bg-card rounded-3xl overflow-hidden border border-border hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2">
       {/* Image Section */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
-          src={artifact.image || '/api/placeholder/300/200'}
-          alt={artifact.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          src={artifact.image || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=300&h=200&fit=crop&crop=center'}
+          alt={artifact.imageTitle || artifact.name}
+          title={artifact.imageTitle || artifact.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           onError={(e) => {
-            e.target.src = '/api/placeholder/300/200';
+            e.target.src = 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=300&h=200&fit=crop&crop=center';
           }}
         />
         
@@ -72,19 +73,19 @@ const ArtifactCard = ({ artifact, onView, onFavorite, onShare }) => {
       </div>
 
       {/* Content Section */}
-      <div className="p-5">
+      <div className="p-6">
         {/* Header with category */}
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-700 transition-colors line-clamp-2">
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-xl font-bold text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
             {artifact.name}
           </h3>
-          <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ml-2">
+          <span className="bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap ml-2">
             {artifact.category}
           </span>
         </div>
 
         {/* Origin and Period */}
-        <div className="flex items-center text-sm text-gray-600 mb-3">
+        <div className="flex items-center text-sm text-muted-foreground mb-4">
           <MapPin className="w-4 h-4 mr-1" />
           <span>{artifact.origin}</span>
           <span className="mx-2">•</span>
@@ -92,23 +93,53 @@ const ArtifactCard = ({ artifact, onView, onFavorite, onShare }) => {
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-3">
+        <p className="text-muted-foreground leading-relaxed mb-4 line-clamp-3">
           {artifact.description}
         </p>
 
+        {/* Additional Information */}
+        {artifact.material && (
+          <div className="bg-muted/50 rounded-lg p-3 mb-4 text-xs">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-muted-foreground">Material:</span>
+                <p className="font-medium text-card-foreground">{artifact.material}</p>
+              </div>
+              {artifact.dimensions && (
+                <div>
+                  <span className="text-muted-foreground">Size:</span>
+                  <p className="font-medium text-card-foreground">{artifact.dimensions}</p>
+                </div>
+              )}
+            </div>
+            {artifact.condition && (
+              <div className="mt-2">
+                <span className="text-muted-foreground">Condition:</span>
+                <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                  artifact.condition === 'Excellent' || artifact.condition === 'Pristine' 
+                    ? 'bg-green-100 text-green-800' 
+                    : artifact.condition === 'Good' || artifact.condition === 'Very Good'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>{artifact.condition}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-6">
           <div className="flex items-center gap-4">
             <span>{artifact.views} views</span>
             <span>{artifact.likes} likes</span>
           </div>
-          <span className="text-gray-400">{artifact.museum}</span>
+          <span className="text-muted-foreground/70">{artifact.museum}</span>
         </div>
 
         {/* Action Button */}
         <button
           onClick={handleViewClick}
-          className="w-full bg-amber-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center group/btn"
+          className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-full font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center group/btn group-hover:translate-x-2 transition-transform duration-300"
         >
           <Eye className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" />
           {artifact.has3DModel ? 'Explore in 3D' : 'View Details'}

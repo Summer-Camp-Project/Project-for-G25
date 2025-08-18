@@ -996,7 +996,7 @@ class MockApiClient {
   async uploadFile(file, type = 'image') {
     await delay(1000);
     return {
-      url: '/api/placeholder/400/300',
+      url: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=300&fit=crop&crop=center',
       filename: file.name,
       type
     };

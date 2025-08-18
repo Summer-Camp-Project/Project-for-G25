@@ -54,7 +54,7 @@ const FeedItem = ({ item }) => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
       <div className="relative h-48 overflow-hidden">
         <img
-          src={item.image || '/api/placeholder/300/200'}
+          src={item.image || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=300&h=200&fit=crop&crop=center'}
           alt={item.title}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
         />

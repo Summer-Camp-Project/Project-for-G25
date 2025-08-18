@@ -40,11 +40,11 @@ const ARVRViewer = ({ artifact, onClose }) => {
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div className="relative">
               <img
-                src={artifact.image || '/api/placeholder/600/400'}
+                src={artifact.image || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=600&h=400&fit=crop&crop=center'}
                 alt={artifact.name}
                 className="w-full h-auto object-cover"
                 onError={(e) => {
-                  e.target.src = '/api/placeholder/600/400';
+                  e.target.src = 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=600&h=400&fit=crop&crop=center';
                 }}
               />
               
@@ -88,11 +88,11 @@ const ARVRViewer = ({ artifact, onClose }) => {
             <div className="bg-gradient-to-br from-white to-gray-100 rounded-3xl shadow-2xl overflow-hidden border-4 border-white/20 backdrop-blur-sm">
               <div className="relative group">
                 <img
-                  src={artifact.image || '/api/placeholder/800/600'}
+                  src={artifact.image || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=800&h=600&fit=crop&crop=center'}
                   alt={artifact.name}
                   className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                   onError={(e) => {
-                    e.target.src = '/api/placeholder/800/600';
+                    e.target.src = 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=800&h=600&fit=crop&crop=center';
                   }}
                 />
                 

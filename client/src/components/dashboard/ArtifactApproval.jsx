@@ -603,7 +603,7 @@ const ArtifactApproval = ({ artifacts, onApprove, onReject, loading = false, set
                     <CardMedia
                       component="img"
                       sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover' }}
-                      image={artifact.imageUrl || '/api/placeholder/60/60'}
+                      image={artifact.imageUrl || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center'}
                       alt={artifact.name}
                     />
                   </TableCell>
@@ -701,7 +701,7 @@ const ArtifactApproval = ({ artifacts, onApprove, onReject, loading = false, set
               <Grid item xs={12} md={6}>
                 <CardMedia
                   component="img"
-                  image={selectedArtifact.imageUrl || '/api/placeholder/400/300'}
+                  image={selectedArtifact.imageUrl || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=300&fit=crop&crop=center'}
                   alt={selectedArtifact.name}
                   sx={{ width: '100%', height: 'auto', borderRadius: 1 }}
                 />

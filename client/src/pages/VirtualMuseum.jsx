@@ -4,6 +4,7 @@ import { Search, Filter, Grid, List, Eye, Heart, Share2, Box, Calendar, Clock, U
 import ArtifactCard from '../components/virtual-museum/ArtifactCard';
 import FilterPanel from '../components/virtual-museum/FilterPanel';
 import ARVRViewer from '../components/virtual-museum/SimpleARVRViewer';
+import ArtifactDetailModal from '../components/virtual-museum/ArtifactDetailModal';
 import { useAuth } from '../hooks/useAuth';
 
 const VirtualMuseum = () => {
@@ -16,6 +17,7 @@ const VirtualMuseum = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedArtifact, setSelectedArtifact] = useState(null);
   const [showARVR, setShowARVR] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedTour, setSelectedTour] = useState(null);
@@ -27,97 +29,217 @@ const VirtualMuseum = () => {
     has3D: false
   });
 
-  // Mock data - replace with API calls
+  // Comprehensive Ethiopian Heritage Artifact Collection
   const mockArtifacts = [
     {
       id: 1,
-      name: 'Ancient Ethiopian Cross',
-      description: 'A beautifully crafted cross from the 12th century, representing the rich Christian heritage of Ethiopia.',
-      image: '/api/placeholder/300/200',
+      name: 'Ancient Ethiopian Orthodox Cross',
+      description: 'A beautifully crafted ancient Ethiopian Orthodox cross made of silver and gold, dating back to the 14th century. Features intricate Ge\'ez inscriptions and traditional Ethiopian religious motifs representing the deep Christian heritage of Ethiopia.',
+      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Ancient Ethiopian Orthodox Cross - 14th Century Religious Artifact',
       category: 'Religious Artifacts',
-      period: '12th Century',
-      origin: 'Lalibela',
+      period: '14th Century',
+      origin: 'Lalibela, Ethiopia',
       museum: 'National Museum of Ethiopia',
       has3DModel: true,
       views: 1250,
       likes: 89,
       rating: 4.8,
-      isFavorited: false
+      isFavorited: false,
+      material: 'Silver, Gold, Copper',
+      dimensions: '25cm x 18cm',
+      weight: '450g',
+      condition: 'Excellent',
+      significance: 'Used in religious ceremonies and represents Ethiopian Orthodox faith'
     },
     {
       id: 2,
       name: 'Traditional Coffee Ceremony Set',
-      description: 'Complete set used in traditional Ethiopian coffee ceremonies, showcasing the cultural significance of coffee.',
-      image: '/api/placeholder/300/200',
-      category: 'Cultural Artifacts',
-      period: '19th Century',
-      origin: 'Kaffa Region',
+      description: 'Complete traditional Ethiopian coffee ceremony set including the iconic jebena (clay coffee pot), cups, roasting pan, and incense burner. Central to Ethiopian hospitality and social culture, the coffee ceremony is a sacred ritual in Ethiopian culture.',
+      image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Traditional Ethiopian Coffee Ceremony Set - Cultural Heritage',
+      category: 'Cultural Heritage',
+      period: 'Traditional (19th Century)',
+      origin: 'Kaffa Region, Ethiopia',
       museum: 'Ethnological Museum',
       has3DModel: true,
       views: 980,
       likes: 67,
       rating: 4.6,
-      isFavorited: true
+      isFavorited: true,
+      material: 'Clay, Wood, Natural Fibers',
+      dimensions: 'Jebena: 30cm height',
+      weight: '2.1kg (complete set)',
+      condition: 'Very Good',
+      significance: 'Ethiopia is the birthplace of coffee, ceremony represents hospitality'
     },
     {
       id: 3,
-      name: 'Ancient Manuscript',
-      description: 'Rare illuminated manuscript written in Ge\'ez, containing religious texts and historical records.',
-      image: '/api/placeholder/300/200',
-      category: 'Manuscripts',
-      period: '15th Century',
-      origin: 'Gondar',
-      museum: 'Institute of Ethiopian Studies',
-      has3DModel: false,
-      views: 756,
-      likes: 45,
-      rating: 4.9,
-      isFavorited: false
-    },
-    {
-      id: 4,
-      name: 'Royal Crown of Menelik II',
-      description: 'Ornate crown worn by Emperor Menelik II, symbolizing the imperial power of Ethiopia.',
-      image: '/api/placeholder/300/200',
-      category: 'Royal Artifacts',
-      period: '19th Century',
-      origin: 'Addis Ababa',
-      museum: 'National Museum of Ethiopia',
+      name: 'Emperor Haile Selassie Imperial Crown',
+      description: 'Ornate ceremonial crown worn by Emperor Haile Selassie I, the last emperor of Ethiopia. Adorned with precious gems, pearls, and intricate Ethiopian imperial designs featuring the Lion of Judah. Symbol of Ethiopian sovereignty and independence.',
+      image: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Emperor Haile Selassie Imperial Crown - Last Crown of Ethiopia',
+      category: 'Royal Heritage',
+      period: '20th Century (1930-1974)',
+      origin: 'Addis Ababa, Ethiopia',
+      museum: 'Imperial Palace Museum',
       has3DModel: true,
       views: 2100,
       likes: 156,
       rating: 4.9,
-      isFavorited: false
+      isFavorited: false,
+      material: 'Gold, Diamonds, Emeralds, Pearls',
+      dimensions: '28cm diameter, 20cm height',
+      weight: '1.8kg',
+      condition: 'Pristine',
+      significance: 'Last imperial crown of Ethiopia, symbol of independence from colonialism'
     },
     {
-      id: 5,
-      name: 'Ancient Stone Tablet',
-      description: 'Stone tablet with inscriptions in ancient Ethiopian script, providing insights into early civilization.',
-      image: '/api/placeholder/300/200',
+      id: 4,
+      name: 'Aksum Obelisk Miniature',
+      description: 'Scale replica of the famous Aksum Obelisks, ancient monuments from the Kingdom of Aksum. These granite stelae are among the tallest single pieces of stone ever quarried by humans, representing the ancient Kingdom of Aksum.',
+      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Aksum Obelisk Miniature - Ancient Kingdom Monument',
       category: 'Archaeological',
-      period: '8th Century',
-      origin: 'Axum',
-      museum: 'Axum Museum',
+      period: '4th Century AD',
+      origin: 'Aksum, Tigray Region',
+      museum: 'Aksum Archaeological Museum',
       has3DModel: true,
       views: 834,
       likes: 72,
       rating: 4.7,
-      isFavorited: true
+      isFavorited: true,
+      material: 'Granite Stone',
+      dimensions: '45cm height (1:50 scale)',
+      weight: '12kg',
+      condition: 'Excellent',
+      significance: 'Represents the ancient Kingdom of Aksum, UNESCO World Heritage site'
+    },
+    {
+      id: 5,
+      name: 'Queen of Sheba Jewelry Collection',
+      description: 'Replica jewelry collection inspired by the legendary Queen of Sheba. Features traditional Ethiopian designs with gold filigree work and precious stones, representing the legendary Queen of Sheba\'s connection to Ethiopia.',
+      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Queen of Sheba Jewelry Collection - Legendary Royal Artifacts',
+      category: 'Royal Jewelry',
+      period: '10th Century BC (Replica)',
+      origin: 'Tigray Region',
+      museum: 'Sheba Heritage Museum',
+      has3DModel: true,
+      views: 756,
+      likes: 45,
+      rating: 4.9,
+      isFavorited: false,
+      material: 'Gold, Silver, Amber, Coral',
+      dimensions: 'Various pieces',
+      weight: '850g (complete set)',
+      condition: 'Mint',
+      significance: 'Represents the legendary Queen of Sheba\'s connection to Ethiopia'
     },
     {
       id: 6,
-      name: 'Traditional Weaving Tools',
-      description: 'Set of traditional tools used for weaving Ethiopian textiles, showcasing ancient craftsmanship.',
-      image: '/api/placeholder/300/200',
+      name: 'Ancient Ge\'ez Manuscript',
+      description: 'A rare manuscript written in ancient Ge\'ez script, containing religious hymns and biblical texts from the 13th century. Features beautiful illuminated letters and represents Ethiopia\'s ancient literary tradition.',
+      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Ancient Ge\'ez Manuscript - 13th Century Religious Text',
+      category: 'Manuscripts',
+      period: '13th Century',
+      origin: 'Gondar',
+      museum: 'Institute of Ethiopian Studies',
+      has3DModel: false,
+      views: 1156,
+      likes: 78,
+      rating: 4.8,
+      isFavorited: true,
+      material: 'Vellum, Natural Pigments',
+      dimensions: '35cm x 25cm',
+      weight: '1.2kg',
+      condition: 'Good',
+      significance: 'Represents ancient Ethiopian literary and religious traditions'
+    },
+    {
+      id: 7,
+      name: 'Lucy Australopithecus Fossil Replica',
+      description: 'Detailed replica of Lucy (Australopithecus afarensis), one of the most complete early human ancestor fossils ever discovered, found in the Afar region of Ethiopia in 1974. A cornerstone of human evolutionary history.',
+      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Lucy Fossil Replica - Human Evolution Milestone',
+      category: 'Fossil Artifacts',
+      period: '3.2 Million Years Ago',
+      origin: 'Hadar, Ethiopia',
+      museum: 'National Museum of Ethiopia',
+      has3DModel: true,
+      views: 3200,
+      likes: 245,
+      rating: 4.9,
+      isFavorited: false,
+      material: 'Fossilized Bone',
+      dimensions: '105cm height (40% complete)',
+      weight: 'Original: ~29kg',
+      condition: 'Museum Quality Replica',
+      significance: 'One of the most important human ancestor discoveries, found in Ethiopia'
+    },
+    {
+      id: 8,
+      name: 'Traditional Ethiopian Weaving Loom',
+      description: 'Complete traditional Ethiopian weaving loom and tools used to create the famous shamma (traditional cotton garments) and other textiles. Showcases ancient craftsmanship and textile traditions.',
+      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Traditional Ethiopian Weaving Loom - Ancient Textile Craft',
       category: 'Tools & Crafts',
-      period: '18th Century',
+      period: 'Traditional',
       origin: 'Dorze',
-      museum: 'Cultural Heritage Museum',
+      museum: 'Ethiopian Craft Museum',
       has3DModel: false,
       views: 567,
       likes: 38,
       rating: 4.4,
-      isFavorited: false
+      isFavorited: false,
+      material: 'Wood, Cotton, Natural Fibers',
+      dimensions: '180cm x 120cm x 60cm',
+      weight: '25kg',
+      condition: 'Good',
+      significance: 'Represents traditional Ethiopian textile craftsmanship'
+    },
+    {
+      id: 9,
+      name: 'Emperor Tewodros II Ceremonial Sword',
+      description: 'Ornate ceremonial sword belonging to Emperor Tewodros II, featuring intricate engravings, royal insignia, and the Lion of Judah emblem. Symbol of Ethiopian imperial power and resistance against colonial forces.',
+      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Emperor Tewodros II Ceremonial Sword - Imperial Weapon',
+      category: 'Royal Artifacts',
+      period: '19th Century (1855-1868)',
+      origin: 'Magdala',
+      museum: 'Imperial Palace Museum',
+      has3DModel: true,
+      views: 1450,
+      likes: 98,
+      rating: 4.7,
+      isFavorited: true,
+      material: 'Steel, Silver, Gold Inlay',
+      dimensions: '95cm length',
+      weight: '1.3kg',
+      condition: 'Excellent',
+      significance: 'Symbol of Ethiopian resistance and imperial authority'
+    },
+    {
+      id: 10,
+      name: 'Lalibela Church Stone Carving',
+      description: 'Intricate stone carving from one of the famous rock-hewn churches of Lalibela. Features traditional Ethiopian Christian motifs and architectural elements representing the New Jerusalem.',
+      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center',
+      imageTitle: 'Lalibela Church Stone Carving - Rock-Hewn Architecture',
+      category: 'Architectural',
+      period: '12th-13th Century',
+      origin: 'Lalibela',
+      museum: 'Lalibela Heritage Site',
+      has3DModel: true,
+      views: 2890,
+      likes: 187,
+      rating: 4.8,
+      isFavorited: false,
+      material: 'Volcanic Rock (Basalt)',
+      dimensions: '120cm x 80cm x 15cm',
+      weight: '450kg',
+      condition: 'Good',
+      significance: 'Part of UNESCO World Heritage rock-hewn churches'
     }
   ];
 
@@ -151,6 +273,8 @@ const VirtualMuseum = () => {
     setSelectedArtifact(artifact);
     if (artifact.has3DModel) {
       setShowARVR(true);
+    } else {
+      setShowDetailModal(true);
     }
   };
 
@@ -206,7 +330,7 @@ const VirtualMuseum = () => {
       price: 15,
       maxParticipants: 20,
       rating: 4.9,
-      image: '/api/placeholder/300/200',
+      image: 'https://images.unsplash.com/photo-1539650116574-75c0c6d4d795?w=300&h=200&fit=crop&crop=center',
       features: ['3D Artifacts', 'Expert Guide', 'Interactive Q&A']
     },
     {
@@ -217,7 +341,7 @@ const VirtualMuseum = () => {
       price: 20,
       maxParticipants: 15,
       rating: 4.8,
-      image: '/api/placeholder/300/200',
+      image: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=300&h=200&fit=crop&crop=center',
       features: ['3D Crown Viewing', 'Historical Context', 'Royal Stories']
     }
   ];
@@ -348,25 +472,41 @@ const VirtualMuseum = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Featured 3D Artifacts Hero Section */}
-      <div className="bg-gradient-to-r from-primary via-secondary to-accent text-primary-foreground py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              Virtual Museum Experience
+      <div className="bg-gradient-to-br from-primary via-secondary to-accent text-primary-foreground py-20 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 border border-current rounded-full"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 border border-current rounded-full"></div>
+          <div className="absolute top-1/2 left-1/4 w-16 h-16 border border-current rounded-full"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            {/* Badge */}
+            <div className="inline-flex items-center bg-primary-foreground/10 text-primary-foreground rounded-full px-4 py-2 mb-6">
+              <Eye className="w-4 h-4 mr-2" />
+              <span className="text-sm font-semibold">Immersive Heritage Experience</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight">
+              <span className="block mb-2">Virtual Museum</span>
+              <span className="block bg-gradient-to-r from-primary-foreground to-primary-foreground/80 bg-clip-text text-transparent">Experience</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-8">
-              Explore Ethiopia's heritage in immersive 3D detail
+            <p className="text-xl md:text-2xl text-primary-foreground/90 mb-10 max-w-4xl mx-auto leading-relaxed">
+              Explore Ethiopia's heritage in stunning 3D detail with virtual and augmented reality support. 
+              Walk through ancient temples and examine artifacts up close.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <div className="flex items-center bg-white/10 px-4 py-2 rounded-full">
+            
+            <div className="flex flex-wrap justify-center gap-6 text-sm mb-8">
+              <div className="flex items-center bg-primary-foreground/20 backdrop-blur-sm px-6 py-3 rounded-full border border-primary-foreground/30">
                 <Box className="w-5 h-5 mr-2" />
                 Interactive 3D Models
               </div>
-              <div className="flex items-center bg-white/10 px-4 py-2 rounded-full">
+              <div className="flex items-center bg-primary-foreground/20 backdrop-blur-sm px-6 py-3 rounded-full border border-primary-foreground/30">
                 <Users className="w-5 h-5 mr-2" />
                 Live Virtual Tours
               </div>
-              <div className="flex items-center bg-white/10 px-4 py-2 rounded-full">
+              <div className="flex items-center bg-primary-foreground/20 backdrop-blur-sm px-6 py-3 rounded-full border border-primary-foreground/30">
                 <Calendar className="w-5 h-5 mr-2" />
                 Book Guided Tours
               </div>
@@ -418,128 +558,65 @@ const VirtualMuseum = () => {
         </div>
       </div>
 
-      {/* Virtual Tours Section */}
-      <div className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Live Virtual Tours
-            </h2>
-            <p className="text-xl text-gray-600">
-              Join expert-guided tours with interactive 3D experiences
-            </p>
+
+      {/* Search Section */}
+      <section className="py-16 bg-gradient-to-b from-background to-muted/30">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-foreground mb-8">
+            Discover Ethiopian Heritage
+          </h2>
+          <div className="relative max-w-2xl mx-auto mb-8">
+            <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-muted-foreground h-6 w-6" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search artifacts, museums, or cultural events..."
+              className="w-full pl-16 pr-32 py-6 rounded-2xl text-lg bg-card border border-border focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all duration-300 shadow-lg"
+            />
+            <button className="absolute right-3 top-3 bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors">
+              Search
+            </button>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {virtualTours.map(tour => (
-              <div key={tour.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border">
-                <img
-                  src={tour.image}
-                  alt={tour.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{tour.title}</h3>
-                  <p className="text-gray-600 mb-4">{tour.description}</p>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {tour.duration}
-                    </div>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                      <span className="text-sm text-gray-600">{tour.rating}</span>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-1">
-                      {tour.features.map((feature, index) => (
-                        <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold text-amber-600">
-                      ${tour.price}
-                    </div>
-                    <button
-                      onClick={() => handleBookTour(tour)}
-                      className="bg-amber-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-amber-700 transition-colors flex items-center"
-                    >
-                      {!isAuthenticated ? (
-                        <>
-                          <Lock className="w-4 h-4 mr-2" />
-                          Login to Book
-                        </>
-                      ) : (
-                        <>
-                          Book Tour
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Virtual Museum</h1>
-              <p className="mt-1 text-gray-600">
-                Explore Ethiopia's rich cultural heritage through our digital collections
-              </p>
-            </div>
+          
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center space-x-2 px-6 py-3 rounded-full font-medium transition-all ${
+                showFilters 
+                  ? 'bg-primary text-primary-foreground shadow-lg' 
+                  : 'bg-card border border-border hover:bg-muted text-muted-foreground'
+              }`}
+            >
+              <Filter className="h-5 w-5" />
+              <span>Filters</span>
+            </button>
             
-            <div className="mt-4 md:mt-0 flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search artifacts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent w-64"
-                />
-              </div>
-              
+            <div className="flex border border-border rounded-full overflow-hidden">
               <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                onClick={() => setViewMode('grid')}
+                className={`p-3 transition-all ${
+                  viewMode === 'grid' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
               >
-                <Filter className="h-5 w-5" />
-                <span>Filters</span>
+                <Grid className="h-5 w-5" />
               </button>
-              
-              <div className="flex border border-gray-300 rounded-lg">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <Grid className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 ${viewMode === 'list' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <List className="h-5 w-5" />
-                </button>
-              </div>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-3 transition-all ${
+                  viewMode === 'list' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <List className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
@@ -611,6 +688,20 @@ const VirtualMuseum = () => {
             setShowARVR(false);
             setSelectedArtifact(null);
           }}
+        />
+      )}
+
+      {/* Artifact Detail Modal */}
+      {showDetailModal && selectedArtifact && (
+        <ArtifactDetailModal
+          artifact={selectedArtifact}
+          isOpen={showDetailModal}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedArtifact(null);
+          }}
+          onFavorite={handleFavorite}
+          onShare={handleShare}
         />
       )}
 

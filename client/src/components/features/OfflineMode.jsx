@@ -84,7 +84,7 @@ const OfflineMode = () => {
           downloadDate: "2024-01-15",
           lastAccessed: "2024-01-20",
           status: "downloaded",
-          thumbnail: "/api/placeholder/60/60",
+          thumbnail: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center",
           description: "Complete 3D virtual tour of the ancient Axum obelisks",
         },
         {
@@ -95,7 +95,7 @@ const OfflineMode = () => {
           downloadDate: "2024-01-18",
           lastAccessed: "2024-01-19",
           status: "downloaded",
-          thumbnail: "/api/placeholder/60/60",
+          thumbnail: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center",
           description: "Documentary about Ethiopian coffee traditions",
         },
         {
@@ -106,7 +106,7 @@ const OfflineMode = () => {
           downloadDate: "2024-01-20",
           lastAccessed: "2024-01-21",
           status: "downloaded",
-          thumbnail: "/api/placeholder/60/60",
+          thumbnail: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center",
           description: "Comprehensive guide to the rock-hewn churches",
         },
         {
@@ -118,7 +118,7 @@ const OfflineMode = () => {
           lastAccessed: "2024-01-22",
           status: "downloading",
           progress: 75,
-          thumbnail: "/api/placeholder/60/60",
+          thumbnail: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center",
           description: "High-resolution images of traditional Ethiopian textiles",
         },
         {
@@ -129,7 +129,7 @@ const OfflineMode = () => {
           downloadDate: null,
           lastAccessed: null,
           status: "queued",
-          thumbnail: "/api/placeholder/60/60",
+          thumbnail: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=60&h=60&fit=crop&crop=center",
           description: "Audio guide explaining ancient Ethiopian scripts",
         },
       ];

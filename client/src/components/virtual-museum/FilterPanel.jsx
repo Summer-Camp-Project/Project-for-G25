@@ -27,16 +27,16 @@ const FilterPanel = ({ filters, onFiltersChange, onClearFilters, artifacts }) =>
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <div className="bg-card rounded-3xl border border-border shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <Sliders className="w-5 h-5 text-gray-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+          <Sliders className="w-5 h-5 text-muted-foreground mr-2" />
+          <h3 className="text-lg font-semibold text-card-foreground">Filters</h3>
         </div>
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="flex items-center text-sm text-red-600 hover:text-red-700 font-medium"
+            className="flex items-center text-sm text-destructive hover:text-destructive/90 font-medium"
           >
             <X className="w-4 h-4 mr-1" />
             Clear All
@@ -47,14 +47,14 @@ const FilterPanel = ({ filters, onFiltersChange, onClearFilters, artifacts }) =>
       <div className="space-y-6">
         {/* Category Filter */}
         <div>
-          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center text-sm font-medium text-muted-foreground mb-2">
             <Filter className="w-4 h-4 mr-1" />
             Category
           </label>
           <select
             value={filters.category}
             onChange={(e) => handleFilterChange('category', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm bg-background"
           >
             <option value="">All Categories</option>
             {categories.map((category) => (
@@ -67,14 +67,14 @@ const FilterPanel = ({ filters, onFiltersChange, onClearFilters, artifacts }) =>
 
         {/* Time Period Filter */}
         <div>
-          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center text-sm font-medium text-muted-foreground mb-2">
             <Calendar className="w-4 h-4 mr-1" />
             Time Period
           </label>
           <select
             value={filters.period}
             onChange={(e) => handleFilterChange('period', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm bg-background"
           >
             <option value="">All Periods</option>
             {periods.map((period) => (
@@ -87,14 +87,14 @@ const FilterPanel = ({ filters, onFiltersChange, onClearFilters, artifacts }) =>
 
         {/* Origin Filter */}
         <div>
-          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center text-sm font-medium text-muted-foreground mb-2">
             <MapPin className="w-4 h-4 mr-1" />
             Origin
           </label>
           <select
             value={filters.origin}
             onChange={(e) => handleFilterChange('origin', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm bg-background"
           >
             <option value="">All Origins</option>
             {origins.map((origin) => (
@@ -107,14 +107,14 @@ const FilterPanel = ({ filters, onFiltersChange, onClearFilters, artifacts }) =>
 
         {/* Museum Filter */}
         <div>
-          <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center text-sm font-medium text-muted-foreground mb-2">
             <Building className="w-4 h-4 mr-1" />
             Museum
           </label>
           <select
             value={filters.museum}
             onChange={(e) => handleFilterChange('museum', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm bg-background"
           >
             <option value="">All Museums</option>
             {museums.map((museum) => (
@@ -132,16 +132,16 @@ const FilterPanel = ({ filters, onFiltersChange, onClearFilters, artifacts }) =>
               type="checkbox"
               checked={filters.has3D}
               onChange={handleToggle3D}
-              className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+              className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
             />
             <div className="ml-3 flex items-center">
-              <Box className="w-4 h-4 text-gray-600 mr-1" />
-              <span className="text-sm font-medium text-gray-700">
+              <Box className="w-4 h-4 text-muted-foreground mr-1" />
+              <span className="text-sm font-medium text-muted-foreground">
                 Has 3D Model
               </span>
             </div>
           </label>
-          <p className="mt-1 text-xs text-gray-500 ml-7">
+          <p className="mt-1 text-xs text-muted-foreground/70 ml-7">
             Show only artifacts with 3D viewing capability
           </p>
         </div>

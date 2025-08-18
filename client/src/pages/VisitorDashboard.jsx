@@ -134,7 +134,7 @@ const VisitorDashboard = () => {
     { 
       id: 3, 
       name: 'Ancient Ge\'ez Manuscript', 
-      image: 'https://via.placeholder.com/400x300/8B4513/FFFFFF?text=Ge\'ez+Manuscript', 
+      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
       type: 'Artifact', 
       viewedAt: '2 hours ago',
       description: 'A rare manuscript written in ancient Ge\'ez script, containing religious hymns and biblical texts from the 13th century. Features beautiful illuminated letters.',
@@ -144,7 +144,7 @@ const VisitorDashboard = () => {
     { 
       id: 4, 
       name: 'Simien Mountains Virtual Tour', 
-      image: 'https://via.placeholder.com/400x300/228B22/FFFFFF?text=Simien+Mountains+Tour', 
+      image: 'https://images.unsplash.com/photo-1564399580075-5dfe19c205f3?w=400&h=300&fit=crop&crop=center',
       type: 'Virtual Tour', 
       viewedAt: '1 day ago',
       description: 'Experience the breathtaking landscapes of the Simien Mountains National Park, home to rare wildlife including the Gelada monkeys and Ethiopian wolves.',
@@ -154,7 +154,7 @@ const VisitorDashboard = () => {
     { 
       id: 5, 
       name: 'Lucy Australopithecus Fossil', 
-      image: 'https://via.placeholder.com/400x300/DEB887/000000?text=Lucy+Fossil+Replica', 
+      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
       type: 'Fossil Artifact', 
       viewedAt: '3 days ago',
       description: 'Detailed replica of Lucy (Australopithecus afarensis), one of the most complete early human ancestor fossils ever discovered, found in the Afar region of Ethiopia.',
@@ -200,7 +200,7 @@ const VisitorDashboard = () => {
     { 
       id: 6, 
       name: 'Ancient Ge\'ez Prayer Book', 
-      image: 'https://via.placeholder.com/400x300/8B4513/FFFFFF?text=Ge\'ez+Prayer+Book', 
+      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
       addedAt: '2 days ago', 
       museum: 'National Library of Ethiopia',
       description: 'Recently digitized ancient prayer book containing religious hymns and liturgical texts in Ge\'ez script, with stunning illuminated initials.',
@@ -210,7 +210,7 @@ const VisitorDashboard = () => {
     { 
       id: 7, 
       name: 'Traditional Ethiopian Weaving Loom', 
-      image: 'https://via.placeholder.com/400x300/CD853F/FFFFFF?text=Traditional+Weaving+Loom', 
+      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center',
       addedAt: '1 week ago', 
       museum: 'Ethiopian Craft Museum',
       description: 'Complete traditional Ethiopian weaving loom and tools used to create the famous shamma (traditional cotton garments) and other textiles.',
@@ -220,7 +220,7 @@ const VisitorDashboard = () => {
     { 
       id: 8, 
       name: 'Emperor Tewodros II Ceremonial Sword', 
-      image: 'https://via.placeholder.com/400x300/C0C0C0/000000?text=Imperial+Ceremonial+Sword', 
+      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
       addedAt: '3 days ago', 
       museum: 'Imperial Palace Museum',
       description: 'Ornate ceremonial sword belonging to Emperor Tewodros II, featuring intricate engravings, royal insignia, and the Lion of Judah emblem.',

@@ -5,7 +5,7 @@ const TourCard = ({ tour, onViewDetails, onBookTour }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105">
       <img
-        src={tour.image || '/api/placeholder/400/250'}
+        src={tour.image || 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=250&fit=crop&crop=center'}
         alt={tour.title}
         className="w-full h-48 object-cover"
       />
