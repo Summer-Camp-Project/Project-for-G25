@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import ArtifactDetailComponent from '../components/virtual-museum/ArtifactDetail';
+import { ArtifactDetailsModal } from '../components/virtual-museum/ArtifactDetail';
 
 const ArtifactDetail = () => {
   const { id } = useParams();
@@ -8,40 +8,51 @@ const ArtifactDetail = () => {
   const [artifact, setArtifact] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   // Mock data - replace with API call to fetch artifact by ID
   const mockArtifacts = [
     {
       id: '1',
-      name: 'Ancient Ethiopian Cross',
+      title: 'Ancient Ethiopian Cross',
       description: 'A beautifully crafted cross from the 12th century, representing the rich Christian heritage of Ethiopia.',
-      image: '/api/placeholder/600/400',
+      longDescription: 'This magnificent cross represents one of the finest examples of Ethiopian religious craftsmanship from the medieval period. Carved from a single piece of wood and adorned with intricate geometric patterns, it showcases the sophisticated artistic traditions that flourished in the Ethiopian highlands during the 12th century.',
+      images: ['/api/placeholder/600/400', '/api/placeholder/600/400'],
       category: 'Religious Artifacts',
       period: '12th Century',
-      origin: 'Lalibela',
-      museum: 'National Museum of Ethiopia',
-      has3DModel: true,
-      views: 1250,
-      likes: 89,
-      rating: 4.8,
-      isFavorited: false,
-      historicalContext: 'This cross is believed to have been used in ancient religious ceremonies in the rock-hewn churches of Lalibela. Its intricate design reflects the advanced craftsmanship of the era.'
+      culture: 'Ethiopian',
+      region: 'Lalibela',
+      materials: ['Wood', 'Silver inlay'],
+      dimensions: '45cm × 30cm × 5cm',
+      condition: 'Good',
+      currentLocation: 'National Museum of Ethiopia',
+      dateDiscovered: '1892',
+      audioGuide: true,
+      featured: true,
+      tags: ['Religious', 'Medieval', 'Craftsmanship', 'Christianity'],
+      significance: 'This cross is believed to have been used in ancient religious ceremonies in the rock-hewn churches of Lalibela. Its intricate design reflects the advanced craftsmanship of the era and the deep religious devotion of Ethiopian Christians.',
+      relatedArtifacts: ['2', '3']
     },
     {
       id: '2',
-      name: 'Traditional Coffee Ceremony Set',
+      title: 'Traditional Coffee Ceremony Set',
       description: 'Complete set used in traditional Ethiopian coffee ceremonies, showcasing the cultural significance of coffee.',
-      image: '/api/placeholder/600/400',
+      longDescription: 'This traditional coffee ceremony set represents the heart of Ethiopian social and cultural life. The jebena (coffee pot), cups, and incense burner are all essential components of the elaborate ritual that brings families and communities together.',
+      images: ['/api/placeholder/600/400'],
       category: 'Cultural Artifacts',
       period: '19th Century',
-      origin: 'Kaffa Region',
-      museum: 'Ethnological Museum',
-      has3DModel: true,
-      views: 980,
-      likes: 67,
-      rating: 4.6,
-      isFavorited: true,
-      historicalContext: 'The coffee ceremony is a fundamental part of Ethiopian social and cultural life. This set includes a jebena (coffee pot), cups, and an incense burner, all essential for the ritual.'
+      culture: 'Ethiopian',
+      region: 'Kaffa Region',
+      materials: ['Clay', 'Wood'],
+      dimensions: '25cm × 15cm × 15cm',
+      condition: 'Excellent',
+      currentLocation: 'Ethnological Museum',
+      dateDiscovered: '1920',
+      audioGuide: true,
+      featured: false,
+      tags: ['Coffee', 'Ceremony', 'Traditional', 'Social'],
+      significance: 'The coffee ceremony is a fundamental part of Ethiopian social and cultural life. This set includes a jebena (coffee pot), cups, and an incense burner, all essential for the ritual that can last several hours and serves as a time for community bonding.',
+      relatedArtifacts: ['1', '6']
     },
     {
       id: '3',
@@ -124,6 +135,25 @@ const ArtifactDetail = () => {
     }, 500);
   }, [id]);
 
+  const handleToggleFavorite = (artifactId) => {
+    setIsFavorited(!isFavorited);
+    // Here you would also update the backend/localStorage
+  };
+
+  const handleShare = (artifact) => {
+    if (navigator.share) {
+      navigator.share({
+        title: artifact.title,
+        text: artifact.description,
+        url: window.location.href,
+      });
+    } else {
+      // Fallback - copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -154,7 +184,14 @@ const ArtifactDetail = () => {
 
   return (
     <div className="py-8">
-      <ArtifactDetailComponent artifact={artifact} onClose={() => navigate('/virtual-museum')} />
+      <ArtifactDetailsModal 
+        artifact={artifact} 
+        isOpen={true} 
+        onClose={() => navigate('/virtual-museum')}
+        onToggleFavorite={handleToggleFavorite}
+        onShare={handleShare}
+        isFavorited={isFavorited}
+      />
     </div>
   );
 };

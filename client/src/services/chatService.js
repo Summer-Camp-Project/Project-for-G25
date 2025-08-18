@@ -6,7 +6,7 @@ let socket = null;
 
 const initializeSocket = () => {
   if (!socket) {
-    socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000');
+    socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.REACT_APP_SOCKET_URL || 'http://localhost:5000');
   }
   return socket;
 };

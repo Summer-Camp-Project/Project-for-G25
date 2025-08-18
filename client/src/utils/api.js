@@ -1,12 +1,12 @@
 import mockApi from './mockApi.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true' || import.meta.env.NODE_ENV === 'development'
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true' || import.meta.env.MODE === 'development'
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL
-    this.useMockAPI = false
+    this.useMockAPI = USE_MOCK_API
     this.backendChecked = false
   }
 
@@ -33,11 +33,11 @@ class ApiClient {
         this.useMockAPI = false
       } else {
         console.warn('Backend health check failed with status:', response.status)
-        this.useMockAPI = false // Still try to use real backend for auth
+        this.useMockAPI = true
       }
     } catch (error) {
-      console.warn('Backend not available, will fall back to mock API for non-auth endpoints:', error.message)
-      this.useMockAPI = false // Keep false for authentication attempts
+      console.warn('Backend not available, enabling mock API:', error.message)
+      this.useMockAPI = true
     }
     
     this.backendChecked = true
@@ -133,23 +133,54 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    if (this.useMockAPI) {
-      const token = localStorage.getItem('token')
-      return mockApi.getCurrentUser(token)
-    }
-    
     try {
-      return await this.request('/auth/me')
+      if (this.useMockAPI) {
+        const token = localStorage.getItem('token')
+        return mockApi.getCurrentUser(token)
+      }
+      
+      const result = await this.request('/auth/me')
+      
+      // Ensure we return the expected structure
+      if (result && typeof result === 'object') {
+        // If the result already has a 'user' property, return as-is
+        if (result.user) {
+          return result
+        }
+        // If the result IS the user object, wrap it
+        if (result.id || result.email) {
+          return { user: result }
+        }
+      }
+      
+      // If we get here, the result is unexpected
+      console.warn('Unexpected response structure from getCurrentUser:', result)
+      return { user: null }
+      
     } catch (error) {
+      console.error('getCurrentUser failed:', error)
+      
       // If token is invalid, clear it and throw error
       if (error.message.includes('Token is not valid') || error.message.includes('invalid token')) {
         console.warn('Invalid token detected, clearing localStorage')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
       }
+      
+      // Try fallback to mock API if real API fails
+      try {
+        const token = localStorage.getItem('token')
+        if (token) {
+          return mockApi.getCurrentUser(token)
+        }
+      } catch (mockError) {
+        console.error('Mock API fallback also failed:', mockError)
+      }
+      
       throw error
     }
   }
+
 
   // Museum endpoints
   async getMuseums() {

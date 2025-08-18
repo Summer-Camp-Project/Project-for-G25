@@ -10,6 +10,7 @@ import lucybone from '../assets/Lucy-Bone.jpg';
 import Aitour from '../assets/Ai-tour.jpg';
 import museum from '../assets/museum.jpg';
 import virtualTour from '../assets/virtual-tour.jpg';
+import VirtualMuseumButton from '../components/virtual-museum/VirtualMuseumButton';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -110,16 +111,46 @@ const Home = () => {
                 </p>
               </div>
 
-              {/* CTA Button */}
-              <div>
-                <button 
-                  onClick={handleStartExploring}
-                  className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl text-lg font-semibold hover:bg-primary/90 transition-colors flex items-center"
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  Start Exploring
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </button>
+              {/* CTA Buttons - Virtual Museum Prominently Featured */}
+              <div className="space-y-6">
+                {/* Virtual Museum Button - Primary CTA */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-3xl border-2 border-amber-200">
+                  <div className="text-center mb-4">
+                    <h3 className="text-2xl font-bold text-amber-900 mb-2">🏛️ Virtual Museum Experience</h3>
+                    <p className="text-amber-700">Interactive 3D artifacts • Live guided tours • AR/VR support</p>
+                  </div>
+                  <VirtualMuseumButton />
+                </div>
+                
+                {/* Heritage Map - Secondary Feature */}
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-3xl border-2 border-blue-200">
+                  <div className="text-center mb-4">
+                    <h3 className="text-2xl font-bold text-blue-900 mb-2">🗺️ Interactive Heritage Map</h3>
+                    <p className="text-blue-700">Discover all Ethiopian heritage sites • UNESCO locations • Museums & landmarks</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <Link
+                      to="/map"
+                      className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-2xl text-lg font-semibold hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center"
+                    >
+                      <MapPin className="w-5 h-5 mr-2" />
+                      Explore Heritage Map
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Link>
+                  </div>
+                </div>
+                
+                {/* Additional Action Button */}
+                <div className="flex justify-center">
+                  <button 
+                    onClick={handleStartExploring}
+                    className="bg-muted text-muted-foreground px-6 py-3 rounded-xl font-medium hover:bg-muted/80 transition-colors flex items-center justify-center border border-border"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Explore All Features
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </button>
+                </div>
               </div>
             </div>
 

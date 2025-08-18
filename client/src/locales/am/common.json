@@ -1,76 +1,14 @@
 {
   "navigation": {
-    "virtualMuseums": "ምናባዊ ሙዚየሞች",
-    "heritageMap": "ቅርስ ካርታ",
-    "liveTours": "ቀጥታ ጉብኝቾች",
+    "virtualMuseums": "የተራ ሙዚየሞች",
+    "heritageMap": "የዘርፍ ካርታ",
+    "liveTours": "የቀጥታ ጉዞዎች",
     "education": "ትምህርት",
-    "signIn": "ግባ",
-    "signOut": "ውጣ",
-    "profile": "መገለጫ",
-    "dashboard": "መቆጣጠሪያ ሰሌዳ",
-    "home": "ቤት",
-    "contact": "ግንኙነት"
+    "signIn": "ግባ"
   },
   "common": {
-    "welcome": "እንኳን ወደ ኢትዮሄሪቴጅ360 በደህና መጡ",
     "loading": "በመጫን ላይ...",
-    "error": "ስህተት ተከስቷል",
-    "success": "ተሳክቷል",
-    "save": "አስቀምጥ",
-    "cancel": "ሰርዝ",
-    "delete": "ሰርዝ",
-    "edit": "አርም",
-    "view": "ተመልከት",
-    "search": "ፈልግ",
-    "filter": "ማጣሪያ",
-    "sort": "ደርደር",
-    "language": "ቋንቋ",
-    "english": "English",
-    "amharic": "አማርኛ",
-    "oromo": "Afaan Oromoo"
-  },
-  "home": {
-    "heroTitle": "የኢትዮጵያን ሀብታም ቅርስ ያስሱ",
-    "heroSubtitle": "የጥንታዊ ቅርሶች፣ ምናባዊ ሙዚየም ጉብኝቶች እና የመጥለቅያ ባህላዊ ተሞክሮዎች ያግኙ",
-    "exploreNow": "አሁን ያስሱ",
-    "features": {
-      "virtualMuseums": "ምናባዊ ሙዚየሞች",
-      "virtualMuseumsDesc": "የኢትዮጵያ ሙዚየሞችን ከየትኛውም ቦታ ይለምዱ",
-      "aiTours": "AI-ተመራሂ ጉብኝቶች",
-      "aiToursDesc": "ከቴክኖሎጂ ጋር የተመጣጠነ ጉብኝት ያግኙ",
-      "heritageMap": "ቅርስ ካርታ",
-      "heritageMapDesc": "በኢትዮጵያ ውስጥ ያሉ ታሪካዊ ቦታዎችን ያግኙ"
-    }
-  },
-  "auth": {
-    "signIn": "ግባ",
-    "signUp": "መዝገብ",
-    "email": "ኢሜይል",
-    "password": "የይለፍ ቃል",
-    "confirmPassword": "የይለፍ ቃል አረጋግጥ",
-    "name": "ሙሉ ስም",
-    "rememberMe": "አስታውሰኝ",
-    "forgotPassword": "የይለፍ ቃልዎን ረሳዎት?",
-    "createAccount": "ሂሳብ ፍጠር",
-    "alreadyHaveAccount": "ቀደም ሲል ሂሳብ አለዎት?",
-    "dontHaveAccount": "ሂሳብ የለዎትም?",
-    "role": "ሚና",
-    "selectRole": "ሚና ይምረጡ",
-    "visitor": "ጎብኚ",
-    "museum": "ሙዚየም",
-    "organizer": "አዘጋጅ",
-    "admin": "አስተዳዳሪ"
-  },
-  "dashboard": {
-    "welcome": "እንኳን ደሃን ተመለሱ",
-    "overview": "አጠቃላይ እይታ",
-    "analytics": "ትንተና",
-    "users": "ተጠቃሚዎች",
-    "museums": "ሙዚየሞች",
-    "artifacts": "ቅርሶች",
-    "tours": "ጉብኝቶች",
-    "settings": "ማስተካከያዎች",
-    "notifications": "ማሳወቂያዎች",
-    "profile": "መገለጫ"
+    "error": "ስህተት",
+    "success": "ተሳክቷል"
   }
 }

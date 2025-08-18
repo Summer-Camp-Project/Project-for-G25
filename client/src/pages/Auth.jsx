@@ -139,8 +139,6 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
       setLoading(false);
     }
   };
-    }
-  };
 
   const handleGoogleSignIn = () => {
     // Simulate Google OAuth flow

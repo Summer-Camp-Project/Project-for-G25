@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Grid, List, Eye, Heart, Share2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter, Grid, List, Eye, Heart, Share2, Box, Calendar, Clock, Users, Star, Play, ArrowRight, Lock } from 'lucide-react';
 import ArtifactCard from '../components/virtual-museum/ArtifactCard';
 import FilterPanel from '../components/virtual-museum/FilterPanel';
-import ARVRViewer from '../components/virtual-museum/ARVRViewer';
+import ARVRViewer from '../components/virtual-museum/SimpleARVRViewer';
+import { useAuth } from '../hooks/useAuth';
 
 const VirtualMuseum = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [artifacts, setArtifacts] = useState([]);
   const [filteredArtifacts, setFilteredArtifacts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +17,8 @@ const VirtualMuseum = () => {
   const [selectedArtifact, setSelectedArtifact] = useState(null);
   const [showARVR, setShowARVR] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedTour, setSelectedTour] = useState(null);
   const [filters, setFilters] = useState({
     category: '',
     period: '',
@@ -190,8 +196,301 @@ const VirtualMuseum = () => {
     );
   }
 
+  // Virtual Tours Data
+  const virtualTours = [
+    {
+      id: 1,
+      title: "Ancient Ethiopia: Aksum to Lalibela",
+      description: "Journey through 3000 years of Ethiopian civilization",
+      duration: "45 minutes",
+      price: 15,
+      maxParticipants: 20,
+      rating: 4.9,
+      image: '/api/placeholder/300/200',
+      features: ['3D Artifacts', 'Expert Guide', 'Interactive Q&A']
+    },
+    {
+      id: 2,
+      title: "Royal Treasures of Ethiopia",
+      description: "Explore the imperial collections and royal regalia",
+      duration: "30 minutes", 
+      price: 20,
+      maxParticipants: 15,
+      rating: 4.8,
+      image: '/api/placeholder/300/200',
+      features: ['3D Crown Viewing', 'Historical Context', 'Royal Stories']
+    }
+  ];
+
+  const handleBookTour = (tour) => {
+    if (!isAuthenticated) {
+      sessionStorage.setItem('redirectAfterLogin', '/virtual-museum');
+      navigate('/auth');
+      return;
+    }
+    setSelectedTour(tour);
+    setShowBookingModal(true);
+  };
+
+  // Booking Modal Component
+  const BookingModal = ({ tour, isOpen, onClose }) => {
+    const [bookingData, setBookingData] = useState({
+      date: '',
+      time: '',
+      participants: 1,
+      email: user?.email || '',
+      phone: '',
+      specialRequests: ''
+    });
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      // Process booking
+      alert(`Booking confirmed for ${tour.title}!\nDate: ${bookingData.date}\nTime: ${bookingData.time}\nParticipants: ${bookingData.participants}`);
+      onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Book Virtual Tour</h2>
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{tour.title}</h3>
+              <p className="text-gray-600">{tour.description}</p>
+              <div className="flex items-center mt-2 text-sm text-gray-500">
+                <Clock className="w-4 h-4 mr-1" />
+                {tour.duration} • ${tour.price} per person
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={bookingData.date}
+                    onChange={(e) => setBookingData({...bookingData, date: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                  <select
+                    required
+                    value={bookingData.time}
+                    onChange={(e) => setBookingData({...bookingData, time: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Select time</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="16:00">4:00 PM</option>
+                    <option value="19:00">7:00 PM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Participants</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={tour.maxParticipants}
+                  required
+                  value={bookingData.participants}
+                  onChange={(e) => setBookingData({...bookingData, participants: parseInt(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={bookingData.phone}
+                  onChange={(e) => setBookingData({...bookingData, phone: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center text-lg font-semibold">
+                  <span>Total:</span>
+                  <span>${(tour.price * bookingData.participants).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-amber-700 transition-colors"
+              >
+                Confirm Booking
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Featured 3D Artifacts Hero Section */}
+      <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              Virtual Museum Experience
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 mb-8">
+              Explore Ethiopia's heritage in immersive 3D detail
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-sm">
+              <div className="flex items-center bg-white/10 px-4 py-2 rounded-full">
+                <Box className="w-5 h-5 mr-2" />
+                Interactive 3D Models
+              </div>
+              <div className="flex items-center bg-white/10 px-4 py-2 rounded-full">
+                <Users className="w-5 h-5 mr-2" />
+                Live Virtual Tours
+              </div>
+              <div className="flex items-center bg-white/10 px-4 py-2 rounded-full">
+                <Calendar className="w-5 h-5 mr-2" />
+                Book Guided Tours
+              </div>
+            </div>
+          </div>
+
+          {/* Featured 3D Artifacts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {artifacts.filter(artifact => artifact.has3DModel).slice(0, 3).map(artifact => (
+              <div key={artifact.id} className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden hover:bg-white/20 transition-all duration-300 group">
+                <div className="relative">
+                  <img
+                    src={artifact.image}
+                    alt={artifact.name}
+                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                      <Box className="w-4 h-4 mr-1" />
+                      3D View
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                    <button
+                      onClick={() => handleArtifactView(artifact)}
+                      className="opacity-0 group-hover:opacity-100 bg-white text-gray-900 px-6 py-3 rounded-full font-semibold transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex items-center"
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      Explore in 3D
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-2">{artifact.name}</h3>
+                  <p className="text-white/80 mb-4 line-clamp-2">{artifact.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/70">{artifact.origin}</span>
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                      <span className="text-sm text-white/80">{artifact.rating}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Virtual Tours Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Live Virtual Tours
+            </h2>
+            <p className="text-xl text-gray-600">
+              Join expert-guided tours with interactive 3D experiences
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {virtualTours.map(tour => (
+              <div key={tour.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border">
+                <img
+                  src={tour.image}
+                  alt={tour.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{tour.title}</h3>
+                  <p className="text-gray-600 mb-4">{tour.description}</p>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {tour.duration}
+                    </div>
+                    <div className="flex items-center">
+                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                      <span className="text-sm text-gray-600">{tour.rating}</span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      {tour.features.map((feature, index) => (
+                        <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-amber-600">
+                      ${tour.price}
+                    </div>
+                    <button
+                      onClick={() => handleBookTour(tour)}
+                      className="bg-amber-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-amber-700 transition-colors flex items-center"
+                    >
+                      {!isAuthenticated ? (
+                        <>
+                          <Lock className="w-4 h-4 mr-2" />
+                          Login to Book
+                        </>
+                      ) : (
+                        <>
+                          Book Tour
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -314,6 +613,16 @@ const VirtualMuseum = () => {
           }}
         />
       )}
+
+      {/* Booking Modal */}
+      <BookingModal
+        tour={selectedTour}
+        isOpen={showBookingModal}
+        onClose={() => {
+          setShowBookingModal(false);
+          setSelectedTour(null);
+        }}
+      />
     </div>
   );
 };

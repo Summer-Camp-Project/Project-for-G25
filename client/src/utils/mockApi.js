@@ -456,7 +456,7 @@ const MOCK_CONTENT = [
 
 class MockApiClient {
   constructor() {
-    this.baseURL = 'http://localhost:5000/api';
+    this.baseURL = '/api';
   }
 
   async request(endpoint, options = {}) {

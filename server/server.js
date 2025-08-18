@@ -20,8 +20,8 @@ const authRoutes = require('./routes/auth');
 // const organizerRoutes = require('./routes/organizer');
 // const visitorRoutes = require('./routes/visitor');
 // const toursRoutes = require('./routes/tours');
-// const virtualMuseumRoutes = require('./routes/virtual-museum');
-// const mapRoutes = require('./routes/map');
+const virtualMuseumRoutes = require('./routes/virtualMuseum');
+const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
 // const learningRoutes = require('./routes/learning');
 // const usersRoutes = require('./routes/users');
@@ -58,8 +58,10 @@ app.use(limiter);
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:5175',
   'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174'
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175'
 ];
 app.use(cors({
   origin: function (origin, callback) {
@@ -121,8 +123,8 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/organizer', organizerRoutes);
 // app.use('/api/visitor', visitorRoutes);
 // app.use('/api/tours', toursRoutes);
-// app.use('/api/virtual-museum', virtualMuseumRoutes);
-// app.use('/api/map', mapRoutes);
+app.use('/api/virtual-museum', virtualMuseumRoutes);
+app.use('/api/map', mapRoutes);
 // app.use('/api/chat', chatRoutes);
 // app.use('/api/learning', learningRoutes);
 

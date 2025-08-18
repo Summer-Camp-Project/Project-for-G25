@@ -27,18 +27,18 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+              <Link to="/virtual-museum" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 {t('navigation.virtualMuseums')}
-              </a>
-              <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+              </Link>
+              <Link to="/map" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 {t('navigation.heritageMap')}
-              </a>
-              <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+              </Link>
+              <Link to="/tours" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 {t('navigation.liveTours')}
-              </a>
-              <a href="#" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
+              </Link>
+              <Link to="/virtual-museum" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 {t('navigation.education')}
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -74,18 +74,18 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t border-border">
-              <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
+              <Link to="/virtual-museum" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                 {t('navigation.virtualMuseums')}
-              </a>
-              <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
+              </Link>
+              <Link to="/map" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                 {t('navigation.heritageMap')}
-              </a>
-              <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
+              </Link>
+              <Link to="/tours" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                 {t('navigation.liveTours')}
-              </a>
-              <a href="#" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium">
+              </Link>
+              <Link to="/virtual-museum" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                 {t('navigation.education')}
-              </a>
+              </Link>
               <div className="flex items-center justify-between px-3 py-2">
                 <button
                   onClick={toggleDarkMode}

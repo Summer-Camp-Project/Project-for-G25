@@ -41,6 +41,13 @@ export default {
         input: 'var(--input)',
         ring: 'var(--ring)',
       },
+      borderColor: {
+        DEFAULT: 'var(--border)',
+        border: 'var(--border)',
+      },
+      outlineColor: {
+        ring: 'var(--ring)',
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

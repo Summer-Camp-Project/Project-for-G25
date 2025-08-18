@@ -15,7 +15,16 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const userData = await api.getCurrentUser()
-          setUser(userData.user)
+          // Add null check for userData and userData.user
+          if (userData && userData.user) {
+            setUser(userData.user)
+          } else {
+            console.warn('No user data received from API')
+            // Clear invalid tokens
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            setUser(null)
+          }
         } catch (error) {
           console.error('Failed to get user data:', error)
           // Clear invalid tokens
@@ -38,7 +47,15 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token)
       setUser(user)
       
-      // Redirect based on role
+      // Check if there's a redirect URL stored
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin')
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirectAfterLogin')
+        navigate(redirectUrl)
+        return { success: true }
+      }
+      
+      // Default redirect based on role
       switch (user.role) {
         case 'super_admin':
           navigate('/super-admin')
