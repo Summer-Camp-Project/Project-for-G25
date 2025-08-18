@@ -189,8 +189,8 @@ const VirtualMuseum = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading virtual museum...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading virtual museum...</p>
         </div>
       </div>
     );
@@ -346,9 +346,9 @@ const VirtualMuseum = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Featured 3D Artifacts Hero Section */}
-      <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white py-16">
+      <div className="bg-gradient-to-r from-primary via-secondary to-accent text-primary-foreground py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">

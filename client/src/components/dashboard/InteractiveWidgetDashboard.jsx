@@ -87,7 +87,7 @@ const MetricWidget = ({
   const isPositive = change >= 0;
 
   const formatValue = (val) => {
-    if (format === 'currency') return `$${val.toLocaleString()}`;
+    if (format === 'currency') return `ETB ${val.toLocaleString()}`;
     if (format === 'percentage') return `${val}%`;
     return val.toLocaleString();
   };

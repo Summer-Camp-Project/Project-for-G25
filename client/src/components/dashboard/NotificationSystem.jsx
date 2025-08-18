@@ -65,7 +65,7 @@ const mockNotifications = [
     type: 'success',
     category: 'payment',
     title: 'Payment Received',
-    message: 'Rental payment of $500 received from University Museum',
+    message: 'Rental payment of ETB 500 received from University Museum',
     timestamp: new Date(Date.now() - 60 * 60 * 1000),
     read: true,
     priority: 'medium',

@@ -79,7 +79,7 @@ export function TopBar() {
             placeholder="Search tours, bookings..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-80 bg-gray-50 border-gray-200 focus:border-green-400 focus:ring-green-300"
+            className="pl-10 w-80 bg-gray-50 border-gray-200 focus:border-yellow-700 focus:ring-yellow-300"
           />
         </div>
       </div>
@@ -124,7 +124,7 @@ export function TopBar() {
                     <div
                       key={notification.id}
                       className={`p-3 rounded-lg border cursor-pointer hover:bg-gray-50 ${
-                        !notification.read ? "bg-blue-50 border-blue-200" : "border-gray-200"
+                        !notification.read ? "bg-yellow-50 border-yellow-700" : "border-gray-200"
                       }`}
                       onClick={() => handleNotificationClick(notification.id)}
                     >
@@ -137,7 +137,7 @@ export function TopBar() {
                           </p>
                         </div>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                          <div className="w-2 h-2 bg-yellow-700 rounded-full flex-shrink-0 mt-1"></div>
                         )}
                       </div>
                     </div>
@@ -154,7 +154,7 @@ export function TopBar() {
             <Button variant="ghost" className="flex items-center gap-3 hover:bg-gray-100">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={currentUser.avatar} />
-                <AvatarFallback className="bg-primary text-green-700">
+                <AvatarFallback className="bg-yellow-900 text-white">
                   {currentUser.name
                     .split(" ")
                     .map((n) => n[0])

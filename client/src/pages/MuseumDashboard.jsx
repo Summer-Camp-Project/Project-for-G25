@@ -65,7 +65,7 @@ const MuseumDashboard = () => {
           {/* Quick Stats Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #8B5A3C 0%, #A67C5A 100%)', color: 'white' }}>
                 <ArtTrackIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">Total Artifacts</Typography>
@@ -75,7 +75,7 @@ const MuseumDashboard = () => {
               </Paper>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #A67C5A 0%, #8B5A3C 100%)', color: 'white' }}>
                 <EventAvailableIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">Active Rentals</Typography>
@@ -87,7 +87,7 @@ const MuseumDashboard = () => {
               </Paper>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #92775A 0%, #8B5A3C 100%)', color: 'white' }}>
                 <StorageIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">In Storage</Typography>
@@ -99,7 +99,7 @@ const MuseumDashboard = () => {
               </Paper>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', background: 'linear-gradient(135deg, #A67C5A 0%, #D2B48C 100%)', color: 'white' }}>
                 <TrendingUpIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">Monthly Visitors</Typography>
@@ -132,13 +132,19 @@ const MuseumDashboard = () => {
                           <TableCell>
                             <Chip
                               label={artifact.status.replace('_', ' ')}
-                              color={artifact.status === 'on_display' ? 'success' : 'default'}
+                              sx={{
+                                backgroundColor: artifact.status === 'on_display' ? '#8B5A3C' : '#A67C5A',
+                                color: 'white',
+                                '&:hover': {
+                                  backgroundColor: artifact.status === 'on_display' ? '#A67C5A' : '#8B5A3C'
+                                }
+                              }}
                               size="small"
                             />
                           </TableCell>
                           <TableCell>{artifact.lastUpdated}</TableCell>
                           <TableCell>
-                            <IconButton size="small">
+                          <IconButton size="small" sx={{ color: '#8B5A3C', '&:hover': { backgroundColor: '#F5F5DC' } }}>
                               <EditIcon />
                             </IconButton>
                           </TableCell>
@@ -148,7 +154,13 @@ const MuseumDashboard = () => {
                   </Table>
                 </TableContainer>
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
-                  <Button variant="outlined" onClick={() => navigate('/museum-dashboard/artifacts')}>View All Artifacts</Button>
+                  <Button 
+                    variant="outlined" 
+                    onClick={() => navigate('/museum-dashboard/artifacts')}
+                    sx={{ borderColor: '#8B5A3C', color: '#8B5A3C', '&:hover': { borderColor: '#A67C5A', backgroundColor: '#F5F5DC' } }}
+                  >
+                    View All Artifacts
+                  </Button>
                 </Box>
               </Paper>
             </Grid>
@@ -161,6 +173,7 @@ const MuseumDashboard = () => {
                     startIcon={<AddIcon />} 
                     fullWidth
                     onClick={() => navigate('/museum-dashboard/artifacts/new')}
+                    sx={{ backgroundColor: '#8B5A3C', '&:hover': { backgroundColor: '#A67C5A' } }}
                   >
                     Add New Artifact
                   </Button>
@@ -168,6 +181,7 @@ const MuseumDashboard = () => {
                     variant="outlined" 
                     fullWidth
                     onClick={() => navigate('/museum-dashboard/virtual-museum/create')}
+                    sx={{ borderColor: '#8B5A3C', color: '#8B5A3C', '&:hover': { borderColor: '#A67C5A', backgroundColor: '#F5F5DC' } }}
                   >
                     Create Exhibition
                   </Button>
@@ -175,6 +189,7 @@ const MuseumDashboard = () => {
                     variant="outlined" 
                     fullWidth
                     onClick={() => navigate('/museum-dashboard/events/new')}
+                    sx={{ borderColor: '#8B5A3C', color: '#8B5A3C', '&:hover': { borderColor: '#A67C5A', backgroundColor: '#F5F5DC' } }}
                   >
                     Schedule Event
                   </Button>
@@ -183,9 +198,9 @@ const MuseumDashboard = () => {
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>Pending Tasks</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography variant="body2" color="warning.main">• 3 Rental requests awaiting approval</Typography>
-                  <Typography variant="body2" color="info.main">• 2 Virtual museum submissions in review</Typography>
-                  <Typography variant="body2" color="success.main">• 1 New staff member to onboard</Typography>
+                  <Typography variant="body2" sx={{ color: '#A67C5A' }}>• 3 Rental requests awaiting approval</Typography>
+                  <Typography variant="body2" sx={{ color: '#8B5A3C' }}>• 2 Virtual museum submissions in review</Typography>
+                  <Typography variant="body2" sx={{ color: '#92775A' }}>• 1 New staff member to onboard</Typography>
                 </Box>
               </Paper>
             </Grid>

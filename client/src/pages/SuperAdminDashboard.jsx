@@ -312,7 +312,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       status: 'pending',
       type: 'rental',
       duration: '30 days',
-      fee: '₹20,000'
+      fee: 'ETB 20,000'
     },
     {
       _id: '5',
@@ -339,23 +339,32 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
     });
   };
 
-  const StatCard = ({ title, value, growth, subtitle, icon: Icon, color = 'blue' }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mb-1">{value.toLocaleString()}</p>
-          <div className="flex items-center">
-            <span className="text-sm text-green-600 font-medium">+{growth}% from last month</span>
+  const StatCard = ({ title, value, growth, subtitle, icon: Icon, color = 'brown' }) => {
+    const colorClasses = {
+      brown: 'bg-amber-50 text-amber-800',
+      darkBrown: 'bg-amber-100 text-amber-900',
+      lightBrown: 'bg-stone-50 text-stone-700',
+      neutral: 'bg-stone-100 text-stone-800'
+    };
+    
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-stone-600 mb-1">{title}</p>
+            <p className="text-3xl font-bold text-stone-900 mb-1">{value.toLocaleString()}</p>
+            <div className="flex items-center">
+              <span className="text-sm text-amber-700 font-medium">+{growth}% from last month</span>
+            </div>
+            <p className="text-sm text-stone-500 mt-1">{subtitle}</p>
           </div>
-          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-        </div>
-        <div className={`p-3 rounded-lg bg-${color}-50`}>
-          <Icon className={`h-6 w-6 text-${color}-600`} />
+          <div className={`p-3 rounded-lg ${colorClasses[color] || colorClasses.brown}`}>
+            <Icon className="h-6 w-6" />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderDashboardContent = () => (
     <div className="space-y-6">
@@ -371,7 +380,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           growth={stats.userGrowth}
           subtitle="Active platform users"
           icon={Users}
-          color="blue"
+          color="brown"
         />
         <StatCard
           title="Museums"
@@ -379,7 +388,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           growth={stats.museumGrowth}
           subtitle="Registered museums"
           icon={Building2}
-          color="green"
+          color="darkBrown"
         />
         <StatCard
           title="Heritage Sites"
@@ -387,7 +396,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           growth={stats.siteGrowth}
           subtitle="Mapped heritage locations"
           icon={MapPin}
-          color="purple"
+          color="lightBrown"
         />
         <StatCard
           title="Active Tours"
@@ -395,62 +404,62 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           growth={stats.tourGrowth}
           subtitle="Ongoing tour experiences"
           icon={Calendar}
-          color="orange"
+          color="neutral"
         />
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Platform Activity</h3>
+      <div className="bg-white rounded-lg shadow-sm border border-stone-200">
+        <div className="px-6 py-4 border-b border-stone-200">
+          <h3 className="text-lg font-semibold text-stone-900">Recent Platform Activity</h3>
         </div>
         <div className="p-6">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">New museum "Addis Ababa Museum" registered</span>
-              <span className="text-xs text-gray-400">2 hours ago</span>
+              <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
+              <span className="text-sm text-stone-600">New museum "Addis Ababa Museum" registered</span>
+              <span className="text-xs text-stone-400">2 hours ago</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">15 new artifacts uploaded for approval</span>
-              <span className="text-xs text-gray-400">4 hours ago</span>
+              <div className="w-2 h-2 bg-amber-700 rounded-full"></div>
+              <span className="text-sm text-stone-600">15 new artifacts uploaded for approval</span>
+              <span className="text-xs text-stone-400">4 hours ago</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Heritage site "Lalibela Churches" updated</span>
-              <span className="text-xs text-gray-400">6 hours ago</span>
+              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+              <span className="text-sm text-stone-600">Heritage site "Lalibela Churches" updated</span>
+              <span className="text-xs text-stone-400">6 hours ago</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">New tour "Ancient Axum" created</span>
-              <span className="text-xs text-gray-400">8 hours ago</span>
+              <div className="w-2 h-2 bg-stone-500 rounded-full"></div>
+              <span className="text-sm text-stone-600">New tour "Ancient Axum" created</span>
+              <span className="text-xs text-stone-400">8 hours ago</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+      <div className="bg-white rounded-lg shadow-sm border border-stone-200">
+        <div className="px-6 py-4 border-b border-stone-200">
+          <h3 className="text-lg font-semibold text-stone-900">Quick Actions</h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
-              <FileCheck className="h-6 w-6 text-blue-600 mb-2" />
-              <h4 className="font-medium text-gray-900">Review Pending Approvals</h4>
-              <p className="text-sm text-gray-600">12 items waiting for review</p>
+            <button className="p-4 border border-stone-200 rounded-lg hover:bg-stone-50 text-left">
+              <FileCheck className="h-6 w-6 text-amber-700 mb-2" />
+              <h4 className="font-medium text-stone-900">Review Pending Approvals</h4>
+              <p className="text-sm text-stone-600">12 items waiting for review</p>
             </button>
-            <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
-              <Users className="h-6 w-6 text-green-600 mb-2" />
-              <h4 className="font-medium text-gray-900">Manage Users</h4>
-              <p className="text-sm text-gray-600">View and manage user accounts</p>
+            <button className="p-4 border border-stone-200 rounded-lg hover:bg-stone-50 text-left">
+              <Users className="h-6 w-6 text-amber-700 mb-2" />
+              <h4 className="font-medium text-stone-900">Manage Users</h4>
+              <p className="text-sm text-stone-600">View and manage user accounts</p>
             </button>
-            <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
-              <BarChart3 className="h-6 w-6 text-purple-600 mb-2" />
-              <h4 className="font-medium text-gray-900">View Analytics</h4>
-              <p className="text-sm text-gray-600">Platform performance insights</p>
+            <button className="p-4 border border-stone-200 rounded-lg hover:bg-stone-50 text-left">
+              <BarChart3 className="h-6 w-6 text-amber-700 mb-2" />
+              <h4 className="font-medium text-stone-900">View Analytics</h4>
+              <p className="text-sm text-stone-600">Platform performance insights</p>
             </button>
           </div>
         </div>
@@ -1065,7 +1074,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
                   <h4 className="font-medium text-green-800">Total Revenue</h4>
-                  <p className="text-2xl font-bold text-green-900">₹2,85,000</p>
+                  <p className="text-2xl font-bold text-green-900">ETB 2,85,000</p>
                 </div>
                 <div className="bg-yellow-50 p-4 rounded-lg">
                   <h4 className="font-medium text-yellow-800">Pending Approvals</h4>
@@ -1093,7 +1102,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                       <td className="px-4 py-2 text-sm text-gray-900">Ancient Vase</td>
                       <td className="px-4 py-2 text-sm text-gray-600">University of Addis</td>
                       <td className="px-4 py-2 text-sm text-gray-600">30 days</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">₹15,000</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">ETB 15,000</td>
                       <td className="px-4 py-2">
                         <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Active</span>
                       </td>
@@ -1106,7 +1115,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                       <td className="px-4 py-2 text-sm text-gray-900">Historical Manuscript</td>
                       <td className="px-4 py-2 text-sm text-gray-600">Ethiopian Heritage Foundation</td>
                       <td className="px-4 py-2 text-sm text-gray-600">14 days</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">₹25,000</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">ETB 25,000</td>
                       <td className="px-4 py-2">
                         <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Overdue</span>
                       </td>

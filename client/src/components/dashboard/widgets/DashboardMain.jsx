@@ -7,9 +7,9 @@ export function DashboardMain() {
   return (
     <div className="p-6 space-y-6">
       {/* Welcome Message */}
-      <div className="bg-primary bg-primary bg-primary rounded-xl p-6 text-white">
+      <div className="bg-yellow-900 rounded-xl p-6 text-white">
         <h2 className="text-2xl font-semibold mb-2">Welcome back, Abebe!</h2>
-        <p className="bg-primary">
+        <p className="text-yellow-100">
           You have 3 new booking requests and 2 upcoming tours this week.
         </p>
       </div>

@@ -167,7 +167,7 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
                 <Logo showText={false} className="w-12 h-12" />
               </div>
               <span className="text-2xl font-bold">
-                EthioHeritage<span className="text-yellow-400">360</span>
+EthioHeritage<span className="text-primary">360</span>
               </span>
             </div>
             
@@ -184,19 +184,19 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
 
           <div className="space-y-4">
             <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+              <CheckCircle className="w-5 h-5 text-primary mr-3" />
               <span>Explore 500+ digitized artifacts</span>
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+              <CheckCircle className="w-5 h-5 text-primary mr-3" />
               <span>Join live virtual tours</span>
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+              <CheckCircle className="w-5 h-5 text-primary mr-3" />
               <span>Learn with AI guidance</span>
             </div>
             <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+              <CheckCircle className="w-5 h-5 text-primary mr-3" />
               <span>Access multilingual content</span>
             </div>
           </div>
@@ -237,7 +237,7 @@ const Auth = ({ darkMode, toggleDarkMode }) => {
 
           {/* General Error Message */}
           {errors.general && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600">
+            <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
               <div className="flex items-center">
                 <AlertCircle className="w-5 h-5 mr-2" />
                 <span>{errors.general}</span>

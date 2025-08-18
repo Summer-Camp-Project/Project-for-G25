@@ -98,12 +98,12 @@ const Map = () => {
   const getCategoryIcon = (category) => {
     switch (category) {
       case 'UNESCO World Heritage':
-        return <Star className="w-4 h-4 text-yellow-500" />;
+        return <Star className="w-4 h-4 text-primary" />;
       case 'Natural Heritage':
-        return <Layers className="w-4 h-4 text-green-500" />;
+        return <Layers className="w-4 h-4 text-secondary" />;
       case 'National Museum':
       case 'Museum':
-        return <Eye className="w-4 h-4 text-blue-500" />;
+        return <Eye className="w-4 h-4 text-accent" />;
       default:
         return <MapPin className="w-4 h-4 text-primary" />;
     }
@@ -114,7 +114,7 @@ const Map = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading Ethiopian Heritage Map...</p>
+          <p className="mt-4 text-muted-foreground">Loading Ethiopian Heritage Map...</p>
         </div>
       </div>
     );
@@ -198,10 +198,10 @@ const Map = () => {
                 <div className="flex gap-2">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     selectedSite.category === 'UNESCO World Heritage'
-                      ? 'bg-yellow-100 text-yellow-800'
+                      ? 'bg-primary/20 text-primary'
                       : selectedSite.category === 'Natural Heritage'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-blue-100 text-blue-800'
+                      ? 'bg-secondary/20 text-secondary'
+                      : 'bg-accent/20 text-accent'
                   }`}>
                     {selectedSite.category}
                   </span>
