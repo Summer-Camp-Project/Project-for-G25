@@ -336,8 +336,8 @@ export default function AppRoutes({ darkMode, toggleDarkMode }) {
           </>
         }
       />
-            <Route
-        path="/customer/*"
+          <Route
+        path="/tours/"
         element={
           <>
             <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />

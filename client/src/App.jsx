@@ -15,6 +15,7 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import MuseumDashboard from './pages/MuseumDashboard'
 import OrganizerDashboard from './pages/OrganizerDashboard'
 import VisitorDashboard from './pages/VisitorDashboard'
+import UserTourPage from './components/pages/UserTourPage'
 import UserProfile from './pages/UserProfile'
 // Visitor specific pages
 import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
@@ -33,6 +34,7 @@ import MuseumSettings from './components/museum/MuseumSettings'
 import RoleBasedRoute from './components/auth/RoleBasedRoute'
 import { useAuth } from './hooks/useAuth'
 import './styles/global.css'
+import {DashboardProvider } from './context/DashboardContext'
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
@@ -84,6 +86,8 @@ function App() {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
+            <DashboardProvider>
+
       <Routes>
           <Route path="/" element={
             <>
@@ -110,7 +114,7 @@ function App() {
           <Route path="/tours" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              <Tours />
+             <UserTourPage />
               <Footer />
             </>
           } />
@@ -280,6 +284,7 @@ function App() {
             </ProtectedRoute>
           } />
       </Routes>
+      </DashboardProvider>
     </div>
   )
 }
