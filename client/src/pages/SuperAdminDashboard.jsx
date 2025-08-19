@@ -31,7 +31,7 @@ import {
   Filter,
   Archive
 } from 'lucide-react';
-import superAdminLogo from '../assets/super-admin-logo.jpg';
+import logo from '../assets/Logo.jpg';
 import HeritageSiteManager from '../components/HeritageSiteManager';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 
@@ -110,7 +110,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       items: [
         { id: 'user-management', label: 'User Management', icon: Users, description: 'Create, edit, delete, approve/reject users across all roles' },
         { id: 'museum-oversight', label: 'Museum Oversight', icon: Building2, description: 'Approve or reject museum registrations and updates' },
-        { id: 'artifact-approval', label: 'Content Moderation', icon: FileCheck, description: 'Review artifacts, virtual museums, events, rentals' },
         { id: 'heritage-sites', label: 'Heritage Sites', icon: MapPin, description: 'Add and manage Ethiopian cultural/heritage sites' }
       ]
     },
@@ -118,7 +117,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       category: 'Business Operations',
       items: [
         { id: 'rental-oversight', label: 'Rental System', icon: DollarSign, description: 'Manage artifact rental requests from users' },
-        { id: 'event-management', label: 'Event Listings', icon: Calendar, description: 'Review and approve/reject event listings' },
         { id: 'approval-feedback', label: 'Approval Feedback', icon: MessageSquare, description: 'Send comments/clarifications to Museum Admins' }
       ]
     },
@@ -126,7 +124,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       category: 'System Administration',
       items: [
         { id: 'system-settings', label: 'System Settings', icon: Settings, description: 'Global branding, themes, languages, API keys, security rules' },
-        { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Smart notification system and alerts' },
         { id: 'security', label: 'Security Center', icon: Shield, description: 'Security rules, access control, and monitoring' }
       ]
     }
@@ -399,14 +396,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           icon={MapPin}
           color="lightBrown"
         />
-        <StatCard
-          title="Active Tours"
-          value={stats.activeTours}
-          growth={stats.tourGrowth}
-          subtitle="Ongoing tour experiences"
-          icon={Calendar}
-          color="neutral"
-        />
       </div>
 
       {/* Recent Activity */}
@@ -418,24 +407,10 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-amber-600 rounded-full"></div>
-              <span className="text-sm text-stone-600">New museum "Addis Ababa Museum" registered</span>
-              <span className="text-xs text-stone-400">2 hours ago</span>
+              <span className="text-sm text-stone-600">Recent Activities</span>
+              <span className="text-xs text-stone-400">- hours ago</span>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-amber-700 rounded-full"></div>
-              <span className="text-sm text-stone-600">15 new artifacts uploaded for approval</span>
-              <span className="text-xs text-stone-400">4 hours ago</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-              <span className="text-sm text-stone-600">Heritage site "Lalibela Churches" updated</span>
-              <span className="text-xs text-stone-400">6 hours ago</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-stone-500 rounded-full"></div>
-              <span className="text-sm text-stone-600">New tour "Ancient Axum" created</span>
-              <span className="text-xs text-stone-400">8 hours ago</span>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -707,359 +682,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
             </div>
           </div>
         );
-      case 'artifact-approval':
-        const filteredContent = getFilteredContent();
-        const contentStats = {
-          total: mockContentData.length,
-          pending: mockContentData.filter(item => item.status === 'pending').length,
-          approved: mockContentData.filter(item => item.status === 'approved').length,
-          rejected: mockContentData.filter(item => item.status === 'rejected').length
-        };
-        
-        return (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Content Moderation</h3>
-                  <p className="text-sm text-gray-600">Review and approve/reject all museum submissions</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search content..."
-                      className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={contentModerationState.searchTerm}
-                      onChange={(e) => setContentModerationState(prev => ({ ...prev, searchTerm: e.target.value, page: 1 }))}
-                    />
-                  </div>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    value={contentModerationState.typeFilter}
-                    onChange={(e) => setContentModerationState(prev => ({ ...prev, typeFilter: e.target.value, page: 1 }))}
-                  >
-                    <option value="all">All Types</option>
-                    <option value="artifact">Artifact</option>
-                    <option value="virtualMuseum">Virtual Museum</option>
-                    <option value="event">Event</option>
-                    <option value="rental">Rental</option>
-                  </select>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    value={contentModerationState.filterStatus}
-                    onChange={(e) => setContentModerationState(prev => ({ ...prev, filterStatus: e.target.value, page: 1 }))}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    value={contentModerationState.museumFilter}
-                    onChange={(e) => setContentModerationState(prev => ({ ...prev, museumFilter: e.target.value, page: 1 }))}
-                  >
-                    <option value="all">All Museums</option>
-                    {Array.from(new Set((contentModerationState.items.length ? contentModerationState.items : mockContentData).map(i => i.museum))).map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                  <select
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                    value={contentModerationState.limit}
-                    onChange={(e) => setContentModerationState(prev => ({ ...prev, limit: Number(e.target.value), page: 1 }))}
-                  >
-                    <option value={10}>10 / page</option>
-                    <option value={20}>20 / page</option>
-                    <option value={50}>50 / page</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              {/* Stats Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-blue-800">Total Items</h4>
-                      <p className="text-2xl font-bold text-blue-900">{contentStats.total}</p>
-                    </div>
-                    <FileCheck className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-yellow-800">Pending Review</h4>
-                      <p className="text-2xl font-bold text-yellow-900">{contentStats.pending}</p>
-                    </div>
-                    <Clock className="h-6 w-6 text-yellow-600" />
-                  </div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-green-800">Approved</h4>
-                      <p className="text-2xl font-bold text-green-900">{contentStats.approved}</p>
-                    </div>
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-red-800">Rejected</h4>
-                      <p className="text-2xl font-bold text-red-900">{contentStats.rejected}</p>
-                    </div>
-                    <XCircle className="h-6 w-6 text-red-600" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Content List */}
-              {contentModerationState.error && (
-                <div className="mb-3 text-sm text-red-600">{contentModerationState.error}</div>
-              )}
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Museum</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {contentModerationState.loading ? (
-                      <tr>
-                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500">Loading...</td>
-                      </tr>
-                    ) : filteredContent.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500">No content found</td>
-                      </tr>
-                    ) : (
-                      filteredContent.map(item => (
-                        <tr key={item._id}>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {item.name || item.artifactName}
-                            {item.feedback && (
-                              <div className="text-xs text-red-600 mt-1">Has feedback</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-600 capitalize">{item.type}</td>
-                          <td className="px-4 py-2 text-sm text-gray-600">{item.museum}</td>
-                          <td className="px-4 py-2 text-sm text-gray-600">{item.submittedAt}</td>
-                          <td className="px-4 py-2">
-                            <span className={`px-2 py-1 text-xs rounded ${
-                              item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              item.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status === 'pending' ? 'Pending' : 
-                               item.status === 'approved' ? 'Approved' : 'Rejected'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 space-x-2">
-                            <button 
-                              className="text-blue-600 hover:text-blue-700 text-sm"
-                              onClick={() => setSelectedContentItem(item)}
-                            >
-                              <Eye className="h-4 w-4 inline mr-1" />
-                              View
-                            </button>
-                            {item.status === 'pending' && (
-                              <>
-                                <button 
-                                  className="text-green-600 hover:text-green-700 text-sm"
-                                  onClick={() => handleContentApprove(item)}
-                                >
-                                  <CheckCircle className="h-4 w-4 inline mr-1" />
-                                  Approve
-                                </button>
-                                <button 
-                                  className="text-red-600 hover:text-red-700 text-sm"
-                                  onClick={() => handleContentReject(item)}
-                                >
-                                  <XCircle className="h-4 w-4 inline mr-1" />
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                            {item.feedback && (
-                              <button className="text-purple-600 hover:text-purple-700 text-sm">
-                                <MessageSquare className="h-4 w-4 inline mr-1" />
-                                Feedback
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-gray-600">
-                  Page {contentModerationState.page} of {Math.max(1, Math.ceil((contentModerationState.total || filteredContent.length) / contentModerationState.limit))}
-                </div>
-                <div className="space-x-2">
-                  <button
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50"
-                    disabled={contentModerationState.page <= 1}
-                    onClick={() => setContentModerationState(prev => ({ ...prev, page: prev.page - 1 }))}
-                  >
-                    Prev
-                  </button>
-                  <button
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50"
-                    disabled={contentModerationState.page >= Math.ceil((contentModerationState.total || filteredContent.length) / contentModerationState.limit)}
-                    onClick={() => setContentModerationState(prev => ({ ...prev, page: prev.page + 1 }))}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Feedback Modal */}
-            {feedbackModal.open && (
-              <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
-                  <h3 className="text-lg font-semibold mb-4">Reject Content with Feedback</h3>
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600">
-                      <strong>Item:</strong> {feedbackModal.item?.name || feedbackModal.item?.artifactName}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Museum:</strong> {feedbackModal.item?.museum}
-                    </p>
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Feedback for Museum Admin
-                    </label>
-                    <textarea
-                      className="w-full border rounded-lg px-3 py-2 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Provide detailed feedback explaining why this content is being rejected and what changes are needed for resubmission..."
-                      value={feedbackModal.feedback}
-                      onChange={(e) => setFeedbackModal(prev => ({ ...prev, feedback: e.target.value }))}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                      onClick={() => setFeedbackModal({ open: false, item: null, feedback: '', submitting: false })}
-                      disabled={feedbackModal.submitting}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-                      onClick={submitContentRejection}
-                      disabled={!feedbackModal.feedback.trim() || feedbackModal.submitting}
-                    >
-                      {feedbackModal.submitting ? 'Rejecting...' : 'Reject with Feedback'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Detail View Modal */}
-            {selectedContentItem && (
-              <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Content Details</h3>
-                    <button
-                      className="text-gray-500 hover:text-gray-700"
-                      onClick={() => setSelectedContentItem(null)}
-                    >
-                      <XCircle className="h-6 w-6" />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Basic Information</h4>
-                      <div className="space-y-2 text-sm">
-                        <p><strong>Name:</strong> {selectedContentItem.name || selectedContentItem.artifactName}</p>
-                        <p><strong>Museum:</strong> {selectedContentItem.museum}</p>
-                        <p><strong>Type:</strong> {selectedContentItem.type}</p>
-                        <p><strong>Status:</strong> <span className={`capitalize ${
-                          selectedContentItem.status === 'approved' ? 'text-green-600' : 
-                          selectedContentItem.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'
-                        }`}>{selectedContentItem.status}</span></p>
-                        <p><strong>Submitted:</strong> {selectedContentItem.submittedAt}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Additional Details</h4>
-                      <div className="space-y-2 text-sm">
-                        {selectedContentItem.description && <p><strong>Description:</strong> {selectedContentItem.description}</p>}
-                        {selectedContentItem.category && <p><strong>Category:</strong> {selectedContentItem.category}</p>}
-                        {selectedContentItem.date && <p><strong>Event Date:</strong> {selectedContentItem.date}</p>}
-                        {selectedContentItem.duration && <p><strong>Duration:</strong> {selectedContentItem.duration}</p>}
-                        {selectedContentItem.fee && <p><strong>Fee:</strong> {selectedContentItem.fee}</p>}
-                        {selectedContentItem.renter && <p><strong>Renter:</strong> {selectedContentItem.renter}</p>}
-                        {selectedContentItem.artifacts && <p><strong>Artifacts:</strong> {selectedContentItem.artifacts}</p>}
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedContentItem.feedback && (
-                    <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <h4 className="font-medium text-red-800 mb-2">Rejection Feedback</h4>
-                      <p className="text-red-700 text-sm">{selectedContentItem.feedback}</p>
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex justify-end space-x-2">
-                    {selectedContentItem.status === 'pending' && (
-                      <>
-                        <button
-                          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                          onClick={() => {
-                            handleContentApprove(selectedContentItem);
-                            setSelectedContentItem(null);
-                          }}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                          onClick={() => {
-                            setSelectedContentItem(null);
-                            handleContentReject(selectedContentItem);
-                          }}
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-                      onClick={() => setSelectedContentItem(null)}
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
       case 'rental-oversight':
         return (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -1223,75 +845,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       case 'heritage-sites':
         return <HeritageSiteManager />;
       
-      case 'event-management':
-        return (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Event Listings Management</h3>
-              <p className="text-sm text-gray-600">Review and approve/reject event listings from museums</p>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-yellow-800">Pending Approval</h4>
-                  <p className="text-2xl font-bold text-yellow-900">7</p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-green-800">Approved Events</h4>
-                  <p className="text-2xl font-bold text-green-900">15</p>
-                </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-800">Upcoming Events</h4>
-                  <p className="text-2xl font-bold text-blue-900">23</p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-purple-800">This Month</h4>
-                  <p className="text-2xl font-bold text-purple-900">12</p>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Event Name</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Museum</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-4 py-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    <tr>
-                      <td className="px-4 py-2 text-sm text-gray-900">Ethiopian Coffee Ceremony Workshop</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">Ethnological Museum</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">2025-08-20</td>
-                      <td className="px-4 py-2">
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">Pending</span>
-                      </td>
-                      <td className="px-4 py-2 space-x-2">
-                        <button className="text-green-600 hover:text-green-700 text-sm">Approve</button>
-                        <button className="text-red-600 hover:text-red-700 text-sm">Reject</button>
-                        <button className="text-blue-600 hover:text-blue-700 text-sm">View Details</button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-2 text-sm text-gray-900">Ancient Artifacts Exhibition</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">National Museum</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">2025-08-25</td>
-                      <td className="px-4 py-2">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Approved</span>
-                      </td>
-                      <td className="px-4 py-2 space-x-2">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm">View Details</button>
-                        <button className="text-yellow-600 hover:text-yellow-700 text-sm">Modify</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
       
       case 'approval-feedback':
         return (
@@ -1378,116 +931,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           </div>
         );
       
-      case 'notifications':
-        return (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Smart Notification System</h3>
-              <p className="text-sm text-gray-600">Manage platform notifications and alerts</p>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-red-800">High Priority</h4>
-                  <p className="text-2xl font-bold text-red-900">3</p>
-                  <p className="text-sm text-red-700">Urgent notifications</p>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-yellow-800">Medium Priority</h4>
-                  <p className="text-2xl font-bold text-yellow-900">12</p>
-                  <p className="text-sm text-yellow-700">Standard alerts</p>
-                </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-800">Low Priority</h4>
-                  <p className="text-2xl font-bold text-blue-900">25</p>
-                  <p className="text-sm text-blue-700">Information updates</p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-green-800">Sent Today</h4>
-                  <p className="text-2xl font-bold text-green-900">8</p>
-                  <p className="text-sm text-green-700">Total notifications</p>
-                </div>
-              </div>
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-4">Send New Notification</h4>
-                <div className="border rounded-lg p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Recipients</label>
-                      <select className="w-full border rounded px-3 py-2">
-                        <option>All Users</option>
-                        <option>Museum Admins Only</option>
-                        <option>Visitors Only</option>
-                        <option>Specific Museum</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                      <select className="w-full border rounded px-3 py-2">
-                        <option>Low</option>
-                        <option>Medium</option>
-                        <option>High</option>
-                        <option>Urgent</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                    <input type="text" className="w-full border rounded px-3 py-2" placeholder="Notification title" />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                    <textarea className="w-full border rounded px-3 py-2 h-24" placeholder="Notification message content..."></textarea>
-                  </div>
-                  <div className="flex items-center space-x-4 mb-4">
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span className="text-sm text-gray-700">Send Email</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" defaultChecked />
-                      <span className="text-sm text-gray-700">In-App Notification</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" />
-                      <span className="text-sm text-gray-700">SMS Alert</span>
-                    </label>
-                  </div>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Send Notification</button>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900 mb-4">Recent Notifications</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">System Maintenance Scheduled</p>
-                      <p className="text-xs text-gray-600">Sent to all users • 2 hours ago</p>
-                    </div>
-                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">High</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <Bell className="h-5 w-5 text-blue-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">New Feature: Virtual Reality Tours</p>
-                      <p className="text-xs text-gray-600">Sent to museum admins • 1 day ago</p>
-                    </div>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">Medium</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Monthly Platform Report Available</p>
-                      <p className="text-xs text-gray-600">Sent to all admins • 3 days ago</p>
-                    </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Low</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       
       case 'security':
         return (
@@ -1734,8 +1177,8 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3 mb-4">
             <img 
-              src={superAdminLogo} 
-              alt="Super Admin" 
+              src={logo} 
+              alt="Heritage 360 Logo" 
               className="w-12 h-12 rounded-lg object-cover"
             />
             <div>
@@ -1795,7 +1238,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center space-x-3 mb-3">
             <img 
-              src={superAdminLogo} 
+              src={logo} 
               alt="Super Admin" 
               className="w-10 h-10 rounded-full object-cover"
             />

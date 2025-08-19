@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Eye, Calendar, MapPin, MessageSquare, Star, Play, Image, BookOpen } from 'lucide-react';
+import { Heart, Eye, Calendar, MapPin, MessageSquare, Star, Play, Image, BookOpen, RefreshCw } from 'lucide-react';
 import VisitorSidebar from '../components/dashboard/VisitorSidebar';
 import { useAuth } from '../hooks/useAuth';
+import bookingService from '../services/bookingService';
+import { toast } from 'sonner';
 
 // Import actual images
 import museumImg from '../assets/museum.jpg';
@@ -13,7 +15,7 @@ import lucyBoneImg from '../assets/Lucy-Bone.jpg';
 import virtualTourImg from '../assets/virtual-tour.jpg';
 
 const VisitorDashboard = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [favoriteArtifacts, setFavoriteArtifacts] = useState([]);
   const [bookedTours, setBookedTours] = useState([]);
@@ -31,6 +33,15 @@ const VisitorDashboard = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [achievements, setAchievements] = useState([]);
+  
+  // Booking related state
+  const [bookingStats, setBookingStats] = useState({
+    total: 0,
+    confirmed: 0,
+    pending: 0,
+    upcoming: 0
+  });
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   // Navigation handlers
   const handle3DTourClick = () => {
@@ -57,31 +68,106 @@ const VisitorDashboard = () => {
     navigate('/map');
   };
 
-  // Empty arrays since database is currently empty
-  const mockFavoriteArtifacts = [];
-
-  const mockBookedTours = [];
-
-  const mockRecentViews = [];
-
-  const mockFeaturedMuseums = [];
-
-  const mockNewArtifacts = [];
-
-  const mockUpcomingEvents = [];
-
-  useEffect(() => {
-    // Simulate API calls to fetch user data
-    setTimeout(() => {
-      setFavoriteArtifacts(mockFavoriteArtifacts);
-      setBookedTours(mockBookedTours);
-      setRecentViews(mockRecentViews);
-      setFeaturedMuseums(mockFeaturedMuseums);
-      setNewArtifacts(mockNewArtifacts);
-      setUpcomingEvents(mockUpcomingEvents);
+  // Load booking data function
+  const loadBookingData = async () => {
+    if (!isAuthenticated) {
       setLoading(false);
-    }, 1000);
-  }, []);
+      return;
+    }
+    
+    setBookingLoading(true);
+    try {
+      // Load user bookings
+      const bookings = await bookingService.getUserBookings();
+      console.log('Loaded user bookings:', bookings);
+      
+      // Format bookings for display
+      const formattedBookings = bookings.map(booking => ({
+        id: booking.id || booking._id,
+        title: booking.tour?.title || 'Tour Booking',
+        date: booking.selectedDate ? new Date(booking.selectedDate).toLocaleDateString() : 'Date TBD',
+        time: booking.selectedDate ? new Date(booking.selectedDate).toLocaleTimeString() : '',
+        status: booking.status === 'pending' ? 'Pending' : 'Confirmed',
+        numberOfGuests: booking.numberOfGuests || 1,
+        totalAmount: booking.totalAmount || 0,
+        tour: booking.tour
+      }));
+      
+      setBookedTours(formattedBookings);
+      
+      // Get booking statistics
+      const stats = await bookingService.getBookingStats();
+      setBookingStats(stats);
+      
+    } catch (error) {
+      console.error('Error loading booking data:', error);
+      toast.error('Failed to load booking data');
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+  
+  // Refresh booking data
+  const refreshBookingData = async () => {
+    await loadBookingData();
+    toast.success('Booking data refreshed');
+  };
+
+  // Load initial data
+  useEffect(() => {
+    const loadInitialData = async () => {
+      // Load static data (mocked for now)
+      setFavoriteArtifacts([]);
+      setRecentViews([]);
+      setFeaturedMuseums([]);
+      setNewArtifacts([]);
+      setUpcomingEvents([]);
+      
+      // Load real booking data
+      await loadBookingData();
+      
+      setLoading(false);
+    };
+    
+    loadInitialData();
+  }, [isAuthenticated]);
+  
+  // Set up real-time booking updates
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    // Listen for booking events
+    const handleBookingCreated = (booking) => {
+      console.log('New booking created:', booking);
+      loadBookingData(); // Refresh booking data
+    };
+    
+    const handleBookingUpdated = (booking) => {
+      console.log('Booking updated:', booking);
+      loadBookingData(); // Refresh booking data
+    };
+    
+    const handleCounterUpdated = (count) => {
+      console.log('Booking counter updated:', count);
+      // Update the booking count in stats
+      setBookingStats(prev => ({ ...prev, total: count }));
+    };
+    
+    // Subscribe to booking service events
+    bookingService.on('booking-created', handleBookingCreated);
+    bookingService.on('booking-updated', handleBookingUpdated);
+    bookingService.on('counter-updated', handleCounterUpdated);
+    
+    // Initial counter refresh
+    bookingService.refreshBookingCounter();
+    
+    // Cleanup
+    return () => {
+      bookingService.off('booking-created', handleBookingCreated);
+      bookingService.off('booking-updated', handleBookingUpdated);
+      bookingService.off('counter-updated', handleCounterUpdated);
+    };
+  }, [isAuthenticated]);
 
   if (loading) {
     return (
@@ -294,7 +380,17 @@ const VisitorDashboard = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-gray-900">Your Bookings</h2>
-              <button className="text-amber-600 hover:text-amber-700 font-medium">Manage Bookings</button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={refreshBookingData}
+                  disabled={bookingLoading}
+                  className="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  <RefreshCw className={`h-4 w-4 ${bookingLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+                <button className="text-amber-600 hover:text-amber-700 font-medium">Manage Bookings</button>
+              </div>
             </div>
             {bookedTours.length === 0 ? (
               <div className="text-center py-8">
