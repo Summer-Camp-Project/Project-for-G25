@@ -1,3 +1,5 @@
+import { useAuth } from '../../hooks/useAuth';
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -28,7 +30,8 @@ import {
   ExpandLess,
   ExpandMore,
   EventNote as EventsIcon,
-  Security as SecurityIcon
+  Security as SecurityIcon,
+  Logout as LogoutIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -94,6 +97,7 @@ const menuItems = [
 ];
 
 const Sidebar = ({ open, onClose }) => {
+  const { user, logout } = useAuth();
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -200,7 +204,18 @@ const Sidebar = ({ open, onClose }) => {
             )}
           </div>
         ))}
-      </List>
+        </List>
+        <Divider />
+        <List>
+          <ListItem disablePadding onClick={logout}>
+            <ListItemButton>
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
+          </ListItem>
+        </List>
     </>
   );
 

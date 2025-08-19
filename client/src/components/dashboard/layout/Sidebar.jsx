@@ -8,10 +8,12 @@ import {
   Settings,
   Mountain,
   Users,
-  BarChart3
+  BarChart3,
+  LogOut
 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { useDashboard } from "../../../context/DashboardContext";
+import { useAuth } from "../../../hooks/useAuth";
 
 const navigationItems = [
   { icon: Home, label: "Dashboard", page: "dashboard" },
@@ -26,6 +28,7 @@ const navigationItems = [
 
 export function Sidebar() {
   const { currentPage, setCurrentPage, messages } = useDashboard();
+  const { user, logout } = useAuth();
 
   const unreadMessages = messages.filter((m) => m.status === "unread").length;
 
@@ -76,9 +79,29 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom Section */}
+      {/* User Info and Logout */}
       <div className="p-4 border-t border-gray-200">
-        <div className="bg-stone-50 border border-stone-200 rounded-lg p-4">
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+            <User className="h-5 w-5 text-yellow-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">{user?.name || 'Organizer'}</p>
+            <p className="text-xs text-gray-600">{user?.email}</p>
+          </div>
+        </div>
+        
+        <Button 
+          onClick={logout}
+          variant="outline"
+          size="sm"
+          className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign Out
+        </Button>
+
+        <div className="bg-stone-50 border border-stone-200 rounded-lg p-4 mt-4">
           <h4 className="text-sm font-medium text-stone-800 mb-2">
             Need Help?
           </h4>
