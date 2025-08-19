@@ -1,0 +1,14 @@
+{
+  "name": "project-for-g25",
+  "private": true,
+  "version": "1.0.0",
+  "description": "EthioHeritage360 Project",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "dependencies": {
+    "mongodb": "^6.18.0",
+    "mongoose": "^8.17.1"
+  }
+}

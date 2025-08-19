@@ -1,1 +1,11 @@
-{ "welcome": "እንቋዕ ብደሓን መጻእኩም" }
+{
+  "common": {
+    "welcome": "ሰላም እንቋዕ",
+    "dashboard": "Dashboard",
+    "tours": "Tours",
+    "bookings": "Bookings",
+    "customers": "Customers",
+    "settings": "Settings"
+  }
+}
+
