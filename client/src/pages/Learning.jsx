@@ -23,6 +23,7 @@ const Learning = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('courses');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     loadLearningData();
@@ -37,12 +38,164 @@ const Learning = () => {
         learningService.getRecommendations()
       ]);
 
-      setCourses(coursesData);
+      // Add Muslim heritage courses to the default courses
+      const muslimHeritageCourses = [
+        {
+          id: 'muslim-1',
+          title: 'Islamic History of Ethiopia',
+          description: 'Explore the rich Islamic heritage of Ethiopia from the arrival of Islam in the 7th century to the modern era.',
+          category: 'Islamic Heritage',
+          difficulty: 'Intermediate',
+          duration: '6 weeks',
+          lessons: 24,
+          rating: 4.8,
+          enrolled: 1250,
+          image: 'https://picsum.photos/400/200?random=islamic1'
+        },
+        {
+          id: 'muslim-2',
+          title: 'Harar: The Fourth Holy City of Islam',
+          description: 'Discover the sacred city of Harar, its 99 mosques, Islamic architecture, and role in Islamic scholarship.',
+          category: 'Islamic Architecture',
+          difficulty: 'Beginner',
+          duration: '4 weeks',
+          lessons: 16,
+          rating: 4.9,
+          enrolled: 890,
+          image: 'https://picsum.photos/400/200?random=harar1'
+        },
+        {
+          id: 'muslim-3',
+          title: 'Islamic Manuscripts and Calligraphy',
+          description: 'Learn about the beautiful Islamic manuscripts, Arabic calligraphy, and scholarly traditions in Ethiopian Islam.',
+          category: 'Islamic Arts',
+          difficulty: 'Advanced',
+          duration: '8 weeks',
+          lessons: 32,
+          rating: 4.7,
+          enrolled: 675,
+          image: 'https://picsum.photos/400/200?random=calligraphy1'
+        },
+        {
+          id: 'muslim-4',
+          title: 'Muslim Traders and the Trade Routes',
+          description: 'Understand the role of Muslim merchants in establishing trade routes and spreading Islamic culture across Ethiopia.',
+          category: 'Islamic History',
+          difficulty: 'Intermediate',
+          duration: '5 weeks',
+          lessons: 20,
+          rating: 4.6,
+          enrolled: 980,
+          image: 'https://picsum.photos/400/200?random=trade1'
+        },
+        {
+          id: 'muslim-5',
+          title: 'Sufi Traditions in Ethiopia',
+          description: 'Explore the mystical traditions of Sufism in Ethiopia, including shrines, practices, and spiritual teachings.',
+          category: 'Islamic Spirituality',
+          difficulty: 'Intermediate',
+          duration: '6 weeks',
+          lessons: 18,
+          rating: 4.8,
+          enrolled: 720,
+          image: 'https://picsum.photos/400/200?random=sufi1'
+        },
+        {
+          id: 'muslim-6',
+          title: 'Islamic Festivals and Celebrations',
+          description: 'Learn about Islamic festivals, traditions, and cultural celebrations in Ethiopian Muslim communities.',
+          category: 'Islamic Culture',
+          difficulty: 'Beginner',
+          duration: '3 weeks',
+          lessons: 12,
+          rating: 4.9,
+          enrolled: 1100,
+          image: 'https://picsum.photos/400/200?random=festival1'
+        }
+      ];
+
+      setCourses([...coursesData, ...muslimHeritageCourses]);
       setProgress(progressData);
       setAchievements(achievementsData);
       setRecommendations(recommendationsData);
     } catch (error) {
       console.error('Failed to load learning data:', error);
+      // Fallback to Muslim heritage courses only if service fails
+      const fallbackCourses = [
+        {
+          id: 'muslim-1',
+          title: 'Islamic History of Ethiopia',
+          description: 'Explore the rich Islamic heritage of Ethiopia from the arrival of Islam in the 7th century to the modern era.',
+          category: 'Islamic Heritage',
+          difficulty: 'Intermediate',
+          duration: '6 weeks',
+          lessons: 24,
+          rating: 4.8,
+          enrolled: 1250,
+          image: 'https://picsum.photos/400/200?random=islamic1'
+        },
+        {
+          id: 'muslim-2',
+          title: 'Harar: The Fourth Holy City of Islam',
+          description: 'Discover the sacred city of Harar, its 99 mosques, Islamic architecture, and role in Islamic scholarship.',
+          category: 'Islamic Architecture',
+          difficulty: 'Beginner',
+          duration: '4 weeks',
+          lessons: 16,
+          rating: 4.9,
+          enrolled: 890,
+          image: 'https://picsum.photos/400/200?random=harar1'
+        },
+        {
+          id: 'muslim-3',
+          title: 'Islamic Manuscripts and Calligraphy',
+          description: 'Learn about the beautiful Islamic manuscripts, Arabic calligraphy, and scholarly traditions in Ethiopian Islam.',
+          category: 'Islamic Arts',
+          difficulty: 'Advanced',
+          duration: '8 weeks',
+          lessons: 32,
+          rating: 4.7,
+          enrolled: 675,
+          image: 'https://picsum.photos/400/200?random=calligraphy1'
+        },
+        {
+          id: 'muslim-4',
+          title: 'Muslim Traders and the Trade Routes',
+          description: 'Understand the role of Muslim merchants in establishing trade routes and spreading Islamic culture across Ethiopia.',
+          category: 'Islamic History',
+          difficulty: 'Intermediate',
+          duration: '5 weeks',
+          lessons: 20,
+          rating: 4.6,
+          enrolled: 980,
+          image: 'https://picsum.photos/400/200?random=trade1'
+        },
+        {
+          id: 'muslim-5',
+          title: 'Sufi Traditions in Ethiopia',
+          description: 'Explore the mystical traditions of Sufism in Ethiopia, including shrines, practices, and spiritual teachings.',
+          category: 'Islamic Spirituality',
+          difficulty: 'Intermediate',
+          duration: '6 weeks',
+          lessons: 18,
+          rating: 4.8,
+          enrolled: 720,
+          image: 'https://picsum.photos/400/200?random=sufi1'
+        },
+        {
+          id: 'muslim-6',
+          title: 'Islamic Festivals and Celebrations',
+          description: 'Learn about Islamic festivals, traditions, and cultural celebrations in Ethiopian Muslim communities.',
+          category: 'Islamic Culture',
+          difficulty: 'Beginner',
+          duration: '3 weeks',
+          lessons: 12,
+          rating: 4.9,
+          enrolled: 1100,
+          image: 'https://picsum.photos/400/200?random=festival1'
+        }
+      ];
+      setCourses(fallbackCourses);
     } finally {
       setLoading(false);
     }
@@ -180,9 +333,30 @@ const Learning = () => {
           {/* Course Grid */}
           {activeTab === 'courses' && (
             <div>
-              <h2 className="text-3xl font-bold text-foreground mb-8">Featured Courses</h2>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <h2 className="text-3xl font-bold text-foreground mb-4 md:mb-0">Featured Courses</h2>
+                
+                {/* Category Filter */}
+                <div className="flex flex-wrap gap-2">
+                  {['all', 'Islamic Heritage', 'Islamic Architecture', 'Islamic Arts', 'Islamic History', 'Islamic Spirituality', 'Islamic Culture'].map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                        selectedCategory === category
+                          ? 'bg-primary text-primary-foreground shadow-lg'
+                          : 'bg-card text-card-foreground hover:bg-muted border border-border'
+                      }`}
+                    >
+                      {category === 'all' ? 'All Categories' : category}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {courses.map((course) => (
+                {courses
+                  .filter(course => selectedCategory === 'all' || course.category === selectedCategory)
+                  .map((course) => (
                   <div key={course.id} className="group bg-card rounded-3xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                     <div className="relative h-48 overflow-hidden">
                       <img 
