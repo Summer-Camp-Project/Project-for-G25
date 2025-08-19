@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '../contexts/AuthContext';
-import Sidebar from '../components/dashboard/Sidebar';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import UserManagement from '../components/dashboard/UserManagement';
 import {
   Box, Typography, Tabs, Tab, Container, Grid, Paper,
@@ -9,7 +8,7 @@ import {
   Button, IconButton, Chip, Dialog, DialogTitle,
   DialogContent, DialogActions, Card, CardContent, 
   CircularProgress, Alert, AppBar, Toolbar, CssBaseline, useTheme,
-  useMediaQuery
+  useMediaQuery, Snackbar, LinearProgress
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import {
@@ -20,7 +19,8 @@ import {
   ArtTrack as ArtTrackIcon,
   Delete as DeleteIcon,
   Dashboard as DashboardIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 
 // Mock data
@@ -174,87 +174,6 @@ const DashboardOverview = () => {
   );
 };
 
-// User Management Component
-const UserManagement = ({ users, onApprove, onReject }) => {
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleViewUser = (user) => {
-    setSelectedUser(user);
-    setIsDialogOpen(true);
-  };
-
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">User Management</Typography>
-        <Button variant="contained" startIcon={<AddIcon />}>
-          Add User
-        </Button>
-      </Box>
-      
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.status} 
-                    color={user.status === 'approved' ? 'success' : 'warning'}
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleViewUser(user)}>
-                    <EditIcon />
-                  </IconButton>
-                  {user.status === 'pending' && (
-                    <>
-                      <IconButton onClick={() => onApprove(user.id)}>
-                        <CheckCircleIcon color="success" />
-                      </IconButton>
-                      <IconButton onClick={() => onReject(user.id)}>
-                        <PersonRemoveIcon color="error" />
-                      </IconButton>
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
-        <DialogTitle>User Details</DialogTitle>
-        <DialogContent>
-          {selectedUser && (
-            <Box>
-              <Typography><strong>Name:</strong> {selectedUser.name}</Typography>
-              <Typography><strong>Email:</strong> {selectedUser.email}</Typography>
-              <Typography><strong>Role:</strong> {selectedUser.role}</Typography>
-              <Typography><strong>Status:</strong> {selectedUser.status}</Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-};
-
 // Artifact Approval Component
 const ArtifactApproval = ({ artifacts, onApprove, onReject }) => {
   const [selectedArtifact, setSelectedArtifact] = useState(null);
@@ -344,7 +263,8 @@ const AdminDashboard = () => {
     severity: 'success',
   });
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -357,17 +277,17 @@ const AdminDashboard = () => {
     if (isMobile) {
       setMobileOpen(false);
     }
-  }, [router.pathname, isMobile]);
+  }, [location.pathname, isMobile]);
 
   // Redirect if not authenticated or not a super admin
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      navigate('/auth');
       return;
     }
     
-    if (user.role !== 'super_admin') {
-      router.push('/');
+    if (!(user.role === 'admin' || user.role === 'super_admin')) {
+      navigate('/');
       return;
     }
 
@@ -377,7 +297,7 @@ const AdminDashboard = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [user, router]);
+  }, [user, navigate]);
 
   const handleApproveUser = (userId) => {
     setUsers(users.map(u => 
