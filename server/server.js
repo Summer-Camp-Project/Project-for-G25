@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+<<<<<<< HEAD
 const http = require('http');
 
 // Simple config
@@ -7,6 +8,18 @@ const config = {
   PORT: process.env.PORT || 5000,
   NODE_ENV: process.env.NODE_ENV || 'development'
 };
+=======
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const http = require('http');
+const socketIo = require('socket.io');
+
+const connectDB = require('./config/database');
+const config = require('./config/env');
+const NotificationSocketService = require('./services/notificationSocket');
+>>>>>>> d7f6e0de95454e46759b42a12f85eb23c59cfb38
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -23,7 +36,11 @@ const messageRoutes = require('./routes/Message');
 const virtualMuseumRoutes = require('./routes/virtualMuseum');
 const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
+<<<<<<< HEAD
 const learningRoutes = require('./routes/learning');
+=======
+// const learningRoutes = require('./routes/learning');
+>>>>>>> d7f6e0de95454e46759b42a12f85eb23c59cfb38
 // const usersRoutes = require('./routes/users');
 // const rentalsRoutes = require('./routes/rentals');
 
@@ -129,7 +146,11 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/virtual-museum', virtualMuseumRoutes);
 app.use('/api/map', mapRoutes);
 // app.use('/api/chat', chatRoutes);
+<<<<<<< HEAD
 app.use('/api/learning', learningRoutes);
+=======
+// app.use('/api/learning', learningRoutes);
+>>>>>>> d7f6e0de95454e46759b42a12f85eb23c59cfb38
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
