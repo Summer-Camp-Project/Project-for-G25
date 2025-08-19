@@ -40,10 +40,10 @@ const VisitorSidebar = () => {
       path: '/visitor/virtual-museum',
       description: 'Explore 3D artifacts and collections',
       subItems: [
-        { label: 'Browse All', path: '/visitor/virtual-museum' },
-        { label: '3D Artifacts', path: '/visitor/virtual-museum/3d' },
-        { label: 'Image Gallery', path: '/visitor/virtual-museum/gallery' },
-        { label: 'Video Tours', path: '/visitor/virtual-museum/videos' }
+        { label: 'Browse All', path: '/virtual-museum' },
+        { label: '3D Artifacts', path: '/virtual-museum/3d-artifacts' },
+        { label: 'Image Gallery', path: '/virtual-museum/gallery' },
+        { label: 'Video Tours', path: '/virtual-museum/videos' }
       ]
     },
     {
@@ -77,7 +77,7 @@ const VisitorSidebar = () => {
       id: 'heritage-sites',
       label: 'Heritage Sites',
       icon: MapPin,
-      path: '/visitor/heritage-sites',
+      path: '/map',
       description: 'Explore Ethiopian heritage locations'
     }
   ];
@@ -190,7 +190,7 @@ const VisitorSidebar = () => {
           />
           <div>
             <h2 className="text-xl font-bold text-gray-900">Heritage 360</h2>
-            <p className="text-sm text-gray-600">Visitor Portal</p>
+            <p className="text-sm text-gray-600">Welcome, {user?.name || 'Visitor'}</p>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, Eye, Calendar, MapPin, MessageSquare, Star, Play, Image, BookOpen } from 'lucide-react';
 import VisitorSidebar from '../components/dashboard/VisitorSidebar';
 import { useAuth } from '../hooks/useAuth';
@@ -13,6 +14,7 @@ import virtualTourImg from '../assets/virtual-tour.jpg';
 
 const VisitorDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [favoriteArtifacts, setFavoriteArtifacts] = useState([]);
   const [bookedTours, setBookedTours] = useState([]);
   const [recentViews, setRecentViews] = useState([]);
@@ -30,210 +32,43 @@ const VisitorDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [achievements, setAchievements] = useState([]);
 
-  // Mock data with reliable online images and extensive descriptions
-  const mockFavoriteArtifacts = [
-    { 
-      id: 1, 
-      name: 'Ancient Ethiopian Orthodox Cross', 
-      image: 'https://picsum.photos/400/300?random=1', 
-      category: 'Religious Artifacts', 
-      museum: 'National Museum of Ethiopia',
-      description: 'A beautifully crafted ancient Ethiopian Orthodox cross made of silver and gold, dating back to the 14th century. Features intricate Ge\'ez inscriptions and traditional Ethiopian religious motifs. This cross represents the deep Christian heritage of Ethiopia.',
-      period: '14th Century',
-      material: 'Silver, Gold, Copper',
-      origin: 'Lalibela, Ethiopia',
-      dimensions: '25cm x 18cm',
-      weight: '450g',
-      condition: 'Excellent',
-      significance: 'Used in religious ceremonies and represents Ethiopian Orthodox faith'
-    },
-    { 
-      id: 2, 
-      name: 'Traditional Coffee Ceremony Set', 
-      image: 'https://picsum.photos/400/300?random=2', 
-      category: 'Cultural Heritage', 
-      museum: 'Ethnological Museum',
-      description: 'Complete traditional Ethiopian coffee ceremony set including the iconic jebena (clay coffee pot), cups, roasting pan, and incense burner. Central to Ethiopian hospitality and social culture. Coffee ceremony is a sacred ritual in Ethiopian culture.',
-      period: 'Traditional (19th Century)',
-      material: 'Clay, Wood, Natural Fibers',
-      origin: 'Kaffa Region, Ethiopia',
-      dimensions: 'Jebena: 30cm height',
-      weight: '2.1kg (complete set)',
-      condition: 'Very Good',
-      significance: 'Ethiopia is the birthplace of coffee, ceremony represents hospitality'
-    },
-    { 
-      id: 3, 
-      name: 'Emperor Haile Selassie Crown', 
-      image: 'https://picsum.photos/400/300?random=3', 
-      category: 'Royal Heritage', 
-      museum: 'Imperial Palace Museum',
-      description: 'Ornate ceremonial crown worn by Emperor Haile Selassie I, the last emperor of Ethiopia. Adorned with precious gems, pearls, and intricate Ethiopian imperial designs featuring the Lion of Judah. Symbol of Ethiopian sovereignty.',
-      period: '20th Century (1930-1974)',
-      material: 'Gold, Diamonds, Emeralds, Pearls',
-      origin: 'Addis Ababa, Ethiopia',
-      dimensions: '28cm diameter, 20cm height',
-      weight: '1.8kg',
-      condition: 'Pristine',
-      significance: 'Last imperial crown of Ethiopia, symbol of independence from colonialism'
-    },
-    {
-      id: 4,
-      name: 'Aksum Obelisk Miniature',
-      image: 'https://picsum.photos/400/300?random=4',
-      category: 'Archaeological',
-      museum: 'Aksum Archaeological Museum',
-      description: 'Scale replica of the famous Aksum Obelisks, ancient monuments from the Kingdom of Aksum. These granite stelae are among the tallest single pieces of stone ever quarried by humans.',
-      period: '4th Century AD',
-      material: 'Granite Stone',
-      origin: 'Aksum, Tigray Region',
-      dimensions: '45cm height (1:50 scale)',
-      weight: '12kg',
-      condition: 'Excellent',
-      significance: 'Represents the ancient Kingdom of Aksum, UNESCO World Heritage site'
-    },
-    {
-      id: 5,
-      name: 'Queen of Sheba Jewelry',
-      image: 'https://picsum.photos/400/300?random=5',
-      category: 'Royal Jewelry',
-      museum: 'Sheba Heritage Museum',
-      description: 'Replica jewelry collection inspired by the legendary Queen of Sheba. Features traditional Ethiopian designs with gold filigree work and precious stones.',
-      period: '10th Century BC (Replica)',
-      material: 'Gold, Silver, Amber, Coral',
-      origin: 'Tigray Region',
-      dimensions: 'Various pieces',
-      weight: '850g (complete set)',
-      condition: 'Mint',
-      significance: 'Represents the legendary Queen of Sheba\'s connection to Ethiopia'
-    }
-  ];
+  // Navigation handlers
+  const handle3DTourClick = () => {
+    navigate('/virtual-museum');
+  };
 
-  const mockBookedTours = [
-    { 
-      id: 1, 
-      title: 'Historic Addis Ababa Tour', 
-      date: '2025-01-15', 
-      status: 'Confirmed', 
-      time: '10:00 AM',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop&crop=center',
-      description: 'Explore the rich history of Ethiopia\'s capital city with expert guides.'
-    },
-    { 
-      id: 2, 
-      title: 'Lalibela Churches Expedition', 
-      date: '2025-02-20', 
-      status: 'Pending', 
-      time: '2:00 PM',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop&crop=center',
-      description: 'Visit the magnificent rock-hewn churches of Lalibela, a UNESCO World Heritage site.'
-    },
-  ];
+  const handleGalleryClick = () => {
+    navigate('/virtual-museum');
+  };
 
-  const mockRecentViews = [
-    { 
-      id: 3, 
-      name: 'Ancient Ge\'ez Manuscript', 
-      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
-      type: 'Artifact', 
-      viewedAt: '2 hours ago',
-      description: 'A rare manuscript written in ancient Ge\'ez script, containing religious hymns and biblical texts from the 13th century. Features beautiful illuminated letters.',
-      period: '13th Century',
-      material: 'Vellum, Natural Pigments'
-    },
-    { 
-      id: 4, 
-      name: 'Simien Mountains Virtual Tour', 
-      image: 'https://images.unsplash.com/photo-1564399580075-5dfe19c205f3?w=400&h=300&fit=crop&crop=center',
-      type: 'Virtual Tour', 
-      viewedAt: '1 day ago',
-      description: 'Experience the breathtaking landscapes of the Simien Mountains National Park, home to rare wildlife including the Gelada monkeys and Ethiopian wolves.',
-      location: 'Simien Mountains, Ethiopia',
-      duration: '45 minutes'
-    },
-    { 
-      id: 5, 
-      name: 'Lucy Australopithecus Fossil', 
-      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
-      type: 'Fossil Artifact', 
-      viewedAt: '3 days ago',
-      description: 'Detailed replica of Lucy (Australopithecus afarensis), one of the most complete early human ancestor fossils ever discovered, found in the Afar region of Ethiopia.',
-      period: '3.2 Million Years Ago',
-      discoveredIn: 'Hadar, Ethiopia (1974)'
-    },
-  ];
+  const handleEventsClick = () => {
+    navigate('/tours');
+  };
 
-  const mockFeaturedMuseums = [
-    { 
-      id: 1, 
-      name: 'National Museum of Ethiopia', 
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=300&fit=crop&crop=center', 
-      artifacts: 1247, 
-      rating: 4.8, 
-      type: 'National Heritage',
-      description: 'Ethiopia\'s premier museum showcasing the country\'s rich cultural and historical heritage, including Lucy fossil.',
-      location: 'Addis Ababa'
-    },
-    { 
-      id: 2, 
-      name: 'Ethnological Museum', 
-      image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=500&h=300&fit=crop&crop=center', 
-      artifacts: 892, 
-      rating: 4.7, 
-      type: 'Cultural Heritage',
-      description: 'Dedicated to Ethiopian cultures, traditions, and way of life across different ethnic groups.',
-      location: 'Addis Ababa University'
-    },
-    { 
-      id: 3, 
-      name: 'Red Terror Martyrs Museum', 
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=300&fit=crop&crop=center', 
-      artifacts: 324, 
-      rating: 4.9, 
-      type: 'Historical Memorial',
-      description: 'Memorial museum documenting the history of political repression during the Red Terror period.',
-      location: 'Addis Ababa'
-    },
-  ];
+  const handleExploreArtifactsClick = () => {
+    navigate('/virtual-museum');
+  };
 
-  const mockNewArtifacts = [
-    { 
-      id: 6, 
-      name: 'Ancient Ge\'ez Prayer Book', 
-      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&crop=center',
-      addedAt: '2 days ago', 
-      museum: 'National Library of Ethiopia',
-      description: 'Recently digitized ancient prayer book containing religious hymns and liturgical texts in Ge\'ez script, with stunning illuminated initials.',
-      period: '15th Century',
-      material: 'Vellum, Gold Leaf'
-    },
-    { 
-      id: 7, 
-      name: 'Traditional Ethiopian Weaving Loom', 
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&crop=center',
-      addedAt: '1 week ago', 
-      museum: 'Ethiopian Craft Museum',
-      description: 'Complete traditional Ethiopian weaving loom and tools used to create the famous shamma (traditional cotton garments) and other textiles.',
-      period: 'Traditional',
-      material: 'Wood, Cotton, Natural Fibers'
-    },
-    { 
-      id: 8, 
-      name: 'Emperor Tewodros II Ceremonial Sword', 
-      image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=400&h=300&fit=crop&crop=center',
-      addedAt: '3 days ago', 
-      museum: 'Imperial Palace Museum',
-      description: 'Ornate ceremonial sword belonging to Emperor Tewodros II, featuring intricate engravings, royal insignia, and the Lion of Judah emblem.',
-      period: '19th Century (1855-1868)',
-      material: 'Steel, Silver, Gold Inlay'
-    },
-  ];
+  const handleBrowseEventsClick = () => {
+    navigate('/tours');
+  };
 
-  const mockUpcomingEvents = [
-    { id: 1, title: 'Ethiopian Heritage Week', date: '2025-02-01', type: 'Exhibition', location: 'National Museum' },
-    { id: 2, title: 'Coffee Culture Workshop', date: '2025-02-15', type: 'Workshop', location: 'Cultural Center' },
-    { id: 3, title: 'Ancient Music Concert', date: '2025-03-01', type: 'Event', location: 'Hager Fikir Theatre' },
-  ];
+  const handleLaunchMapClick = () => {
+    navigate('/map');
+  };
+
+  // Empty arrays since database is currently empty
+  const mockFavoriteArtifacts = [];
+
+  const mockBookedTours = [];
+
+  const mockRecentViews = [];
+
+  const mockFeaturedMuseums = [];
+
+  const mockNewArtifacts = [];
+
+  const mockUpcomingEvents = [];
 
   useEffect(() => {
     // Simulate API calls to fetch user data
@@ -320,7 +155,7 @@ const VisitorDashboard = () => {
             />
             <StatCard
               title="Museums Visited"
-              value={5}
+              value={0}
               icon={MapPin}
               description="Virtual explorations"
               color="purple"
@@ -404,15 +239,15 @@ const VisitorDashboard = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <button onClick={handle3DTourClick} className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 <Play className="h-8 w-8 text-blue-600 mb-2" />
                 <span className="text-sm font-medium text-gray-900">3D Tours</span>
               </button>
-              <button className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <button onClick={handleGalleryClick} className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 <Image className="h-8 w-8 text-green-600 mb-2" />
                 <span className="text-sm font-medium text-gray-900">Gallery</span>
               </button>
-              <button className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <button onClick={handleEventsClick} className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 <Calendar className="h-8 w-8 text-purple-600 mb-2" />
                 <span className="text-sm font-medium text-gray-900">Events</span>
               </button>
@@ -433,7 +268,7 @@ const VisitorDashboard = () => {
               <div className="text-center py-8">
                 <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">You haven't favorited any artifacts yet.</p>
-                <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                <button onClick={handleExploreArtifactsClick} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
                   Explore Artifacts
                 </button>
               </div>
@@ -465,7 +300,7 @@ const VisitorDashboard = () => {
               <div className="text-center py-8">
                 <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">You don't have any upcoming bookings.</p>
-                <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                <button onClick={handleBrowseEventsClick} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
                   Browse Events
                 </button>
               </div>
@@ -558,58 +393,6 @@ const VisitorDashboard = () => {
             </div>
           </div>
 
-          {/* Learning Path Progress - NEW SECTION */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Your Learning Journey</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Ethiopian History</span>
-                  <span className="text-sm text-gray-500">75%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{width: '75%'}}></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Cultural Traditions</span>
-                  <span className="text-sm text-gray-500">60%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{width: '60%'}}></div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Archaeological Sites</span>
-                  <span className="text-sm text-gray-500">40%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-yellow-600 h-2 rounded-full" style={{width: '40%'}}></div>
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-2">Next Recommended</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center">
-                      <BookOpen className="w-4 h-4 text-amber-800" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Queen of Sheba Legend</p>
-                      <p className="text-xs text-gray-600">15 min read</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center">
-                      <Play className="w-4 h-4 text-amber-800" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Virtual Aksum Tour</p>
-                      <p className="text-xs text-gray-600">30 min experience</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Interactive Map Section - NEW SECTION */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
@@ -637,54 +420,6 @@ const VisitorDashboard = () => {
             </div>
           </div>
 
-          {/* Achievements & Badges - NEW SECTION */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Your Achievements</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <div className="text-center p-3 bg-gradient-to-b from-yellow-100 to-yellow-200 rounded-lg">
-                <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Star className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-xs font-medium text-gray-900">First Visit</p>
-                <p className="text-xs text-gray-600">Explorer</p>
-              </div>
-              <div className="text-center p-3 bg-gradient-to-b from-blue-100 to-blue-200 rounded-lg">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <BookOpen className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-xs font-medium text-gray-900">History Buff</p>
-                <p className="text-xs text-gray-600">5 Articles Read</p>
-              </div>
-              <div className="text-center p-3 bg-gradient-to-b from-green-100 to-green-200 rounded-lg">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-xs font-medium text-gray-900">Artifact Hunter</p>
-                <p className="text-xs text-gray-600">10 Items Viewed</p>
-              </div>
-              <div className="text-center p-3 bg-gradient-to-b from-purple-100 to-purple-200 rounded-lg">
-                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-xs font-medium text-gray-900">Event Goer</p>
-                <p className="text-xs text-gray-600">3 Events Attended</p>
-              </div>
-              <div className="text-center p-3 bg-gray-100 rounded-lg opacity-50">
-                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <MessageSquare className="w-6 h-6 text-gray-500" />
-                </div>
-                <p className="text-xs font-medium text-gray-600">Community Member</p>
-                <p className="text-xs text-gray-500">Join Discussions</p>
-              </div>
-              <div className="text-center p-3 bg-gray-100 rounded-lg opacity-50">
-                <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Heart className="w-6 h-6 text-gray-500" />
-                </div>
-                <p className="text-xs font-medium text-gray-600">Collector</p>
-                <p className="text-xs text-gray-500">Save 20 Items</p>
-              </div>
-            </div>
-          </div>
 
           {/* Recommended for You - NEW SECTION */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
@@ -720,61 +455,6 @@ const VisitorDashboard = () => {
             </div>
           </div>
 
-          {/* Community & Social Features - NEW SECTION */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Community Highlights</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Discussions</h3>
-                <div className="space-y-3">
-                  <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">A</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Ahmed K.</p>
-                      <p className="text-xs text-gray-600">"The Lucy exhibit was incredible! Any plans for more fossil displays?"</p>
-                      <p className="text-xs text-gray-500 mt-1">2 hours ago • 5 replies</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">S</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Sara M.</p>
-                      <p className="text-xs text-gray-600">"Loved the coffee ceremony workshop! When's the next one?"</p>
-                      <p className="text-xs text-gray-500 mt-1">4 hours ago • 8 replies</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Popular This Week</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
-                    <img src="https://picsum.photos/60/60?random=40" alt="Popular Content" className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Rock Churches Virtual Tour</p>
-                      <p className="text-xs text-gray-600">1.2K views this week</p>
-                    </div>
-                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">Trending</span>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-                    <img src="https://picsum.photos/60/60?random=41" alt="Popular Content" className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Ancient Script Decoder</p>
-                      <p className="text-xs text-gray-600">856 participants</p>
-                    </div>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Interactive</span>
-                  </div>
-                </div>
-                <button className="w-full mt-4 px-4 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
-                  Join Community Discussions
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
