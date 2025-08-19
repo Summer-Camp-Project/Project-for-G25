@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import axios from 'axios';
 import UserManagement from '../components/dashboard/UserManagement';
 import {
   Box, Typography, Tabs, Tab, Container, Grid, Paper,
@@ -39,17 +40,57 @@ import AnalyticsCard from '../components/dashboard/AnalyticsCard';
 
 // Dashboard Component
 const DashboardOverview = () => {
-  // Mock data for the analytics cards
-  const stats = {
-    totalUsers: 1247,
-    activeUsers: 892,
-    totalMuseums: 45,
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalMuseums: 0,
+    totalHeritageSites: 0,
     pendingArtifacts: 23,
     approvedArtifacts: 342,
     totalEvents: 18,
-    userGrowth: 12.5, // percentage
-    artifactGrowth: 8.2, // percentage
-    eventGrowth: -3.1, // percentage
+    userGrowth: 0,
+    artifactGrowth: 8.2,
+    eventGrowth: -3.1,
+  });
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get('/api/super-admin/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        const { systemOverview } = response.data.dashboard;
+        setStats({
+          totalUsers: systemOverview.users.total || 0,
+          activeUsers: systemOverview.users.active || 0,
+          totalMuseums: systemOverview.museums.total || 0,
+          totalHeritageSites: systemOverview.heritageSites?.total || 0,
+          pendingArtifacts: systemOverview.content.pendingApprovals || 0,
+          approvedArtifacts: systemOverview.content.publishedArtifacts || 0,
+          totalEvents: 18, // Keep mock for now
+          userGrowth: parseFloat(systemOverview.users.growthRate) || 0,
+          artifactGrowth: parseFloat(systemOverview.content.publishRate) || 0,
+          eventGrowth: -3.1, // Keep mock for now
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      // Keep default values on error
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,12 +104,12 @@ const DashboardOverview = () => {
         <Grid item xs={12} sm={6} md={3}>
           <AnalyticsCard
             title="Total Users"
-            value={stats.totalUsers.toLocaleString()}
+            value={loading ? "..." : stats.totalUsers.toLocaleString()}
             icon="users"
             color="primary"
             trend={stats.userGrowth >= 0 ? 'up' : 'down'}
             trendValue={`${Math.abs(stats.userGrowth)}%`}
-            progress={Math.min(100, (stats.activeUsers / stats.totalUsers) * 100)}
+            progress={stats.totalUsers > 0 ? Math.min(100, (stats.activeUsers / stats.totalUsers) * 100) : 0}
             subtitle={`${stats.activeUsers} active users`}
             tooltip="Total number of registered users in the system"
           />
@@ -78,7 +119,7 @@ const DashboardOverview = () => {
         <Grid item xs={12} sm={6} md={3}>
           <AnalyticsCard
             title="Museums"
-            value={stats.totalMuseums}
+            value={loading ? "..." : stats.totalMuseums}
             icon="museums"
             color="secondary"
             trend="up"
@@ -86,6 +127,21 @@ const DashboardOverview = () => {
             progress={85}
             subtitle="Registered in the platform"
             tooltip="Total number of museums registered in the system"
+          />
+        </Grid>
+
+        {/* Heritage Sites Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <AnalyticsCard
+            title="Heritage Sites"
+            value={loading ? "..." : stats.totalHeritageSites}
+            icon="landmarks"
+            color="info"
+            trend="up"
+            trendValue="3.8%"
+            progress={92}
+            subtitle="Cultural and natural sites"
+            tooltip="Total number of heritage sites in the database"
           />
         </Grid>
 

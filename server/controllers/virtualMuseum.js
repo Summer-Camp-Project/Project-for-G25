@@ -290,15 +290,32 @@ const getUserBookings = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // In a real app, fetch from database
-    // const bookings = await Booking.find({ user: userId }).sort({ createdAt: -1 });
+    // Fetch actual user bookings from database
+    const bookings = await Booking.find({ 
+      $or: [
+        { customerId: userId },
+        { user: userId }
+      ]
+    })
+    .populate('tourPackageId', 'title description price images')
+    .populate('organizerId', 'firstName lastName email')
+    .sort({ createdAt: -1 });
     
-    // Mock response
-    const bookings = [];
+    // Calculate booking statistics
+    const stats = {
+      total: bookings.length,
+      pending: bookings.filter(b => b.status === 'pending').length,
+      confirmed: bookings.filter(b => b.status === 'confirmed').length,
+      completed: bookings.filter(b => b.status === 'completed').length,
+      cancelled: bookings.filter(b => b.status === 'cancelled').length
+    };
     
     res.json({
       success: true,
-      data: bookings
+      data: {
+        bookings,
+        stats
+      }
     });
   } catch (error) {
     console.error('Error fetching user bookings:', error);

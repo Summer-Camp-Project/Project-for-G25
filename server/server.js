@@ -1,5 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+<<<<<<< HEAD
+const http = require('http');
+
+// Simple config
+const config = {
+  PORT: process.env.PORT || 5000,
+  NODE_ENV: process.env.NODE_ENV || 'development'
+};
+=======
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
@@ -10,11 +19,12 @@ const socketIo = require('socket.io');
 const connectDB = require('./config/database');
 const config = require('./config/env');
 const NotificationSocketService = require('./services/notificationSocket');
+>>>>>>> d7f6e0de95454e46759b42a12f85eb23c59cfb38
 
 // Import routes
 const authRoutes = require('./routes/auth');
 // const adminRoutes = require('./routes/admin');
-// const superAdminRoutes = require('./routes/superAdmin');
+const superAdminRoutes = require('./routes/superAdmin');
 // const museumAdminRoutes = require('./routes/museumAdmin');
 // const museumRoutes = require('./routes/museum');
 const organizerRoutes = require('./routes/organizer');
@@ -26,7 +36,11 @@ const messageRoutes = require('./routes/Message');
 const virtualMuseumRoutes = require('./routes/virtualMuseum');
 const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
+<<<<<<< HEAD
+const learningRoutes = require('./routes/learning');
+=======
 // const learningRoutes = require('./routes/learning');
+>>>>>>> d7f6e0de95454e46759b42a12f85eb23c59cfb38
 // const usersRoutes = require('./routes/users');
 // const rentalsRoutes = require('./routes/rentals');
 
@@ -120,7 +134,7 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/users', usersRoutes);
 // app.use('/api/rentals', rentalsRoutes);
 // app.use('/api/admin', adminRoutes);
-// app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 // app.use('/api/museum', museumRoutes);
 app.use('/api/organizer', organizerRoutes);
@@ -132,7 +146,11 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/virtual-museum', virtualMuseumRoutes);
 app.use('/api/map', mapRoutes);
 // app.use('/api/chat', chatRoutes);
+<<<<<<< HEAD
+app.use('/api/learning', learningRoutes);
+=======
 // app.use('/api/learning', learningRoutes);
+>>>>>>> d7f6e0de95454e46759b42a12f85eb23c59cfb38
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
