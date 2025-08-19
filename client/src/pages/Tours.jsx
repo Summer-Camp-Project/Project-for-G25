@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import TourCard from '../components/tours/TourCard';
+import BookingModal from '../components/tours/BookingModal';
 import tourService from '../services/tourService';
+import bookingService from '../services/bookingService';
 import tourWebSocket from '../services/tourWebSocket';
 import { Search, Filter, MapPin, Calendar, Users, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../hooks/useAuth';
 
 const Tours = () => {
+  const { isAuthenticated } = useAuth();
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,6 +22,10 @@ const Tours = () => {
   });
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Booking modal state
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedTour, setSelectedTour] = useState(null);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -166,9 +174,32 @@ const Tours = () => {
 
   // Handle book tour
   const handleBookTour = useCallback((tour) => {
-    console.log('Book tour:', tour);
-    // Navigate to booking page or open booking modal
-    toast.info(`Booking tour: ${tour.title}`);
+    if (!isAuthenticated) {
+      toast.error('Please sign in to book a tour');
+      return;
+    }
+    
+    console.log('Opening booking modal for tour:', tour.title);
+    setSelectedTour(tour);
+    setShowBookingModal(true);
+  }, [isAuthenticated]);
+  
+  // Handle booking success
+  const handleBookingSuccess = useCallback((booking) => {
+    console.log('Booking created successfully:', booking);
+    setShowBookingModal(false);
+    setSelectedTour(null);
+    
+    // Refresh booking counter
+    bookingService.refreshBookingCounter();
+    
+    toast.success('Tour booked successfully! Check your dashboard for booking details.');
+  }, []);
+  
+  // Handle booking modal close
+  const handleBookingModalClose = useCallback(() => {
+    setShowBookingModal(false);
+    setSelectedTour(null);
   }, []);
 
   if (loading) {
@@ -352,6 +383,16 @@ const Tours = () => {
           </div>
         )}
       </div>
+      
+      {/* Booking Modal */}
+      {showBookingModal && selectedTour && (
+        <BookingModal
+          tour={selectedTour}
+          isOpen={showBookingModal}
+          onClose={handleBookingModalClose}
+          onSuccess={handleBookingSuccess}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../utils/api';
+import LogoutButton from '../components/common/LogoutButton';
 import { 
   Building2, 
   Users, 
@@ -33,6 +34,7 @@ import {
   Send,
   RefreshCw
 } from 'lucide-react';
+import logo from '../assets/Logo.jpg';
 
 const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
   const { user } = useAuth();
@@ -246,36 +248,14 @@ const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
             ...response.museum, 
             loading: false 
           }));
+        } else {
+          setMuseumProfile(prev => ({ ...prev, loading: false }));
         }
       } catch (error) {
-        // Use mock data if API fails
-        const mockProfile = {
-          name: 'National Museum of Ethiopia',
-          description: 'The premier cultural institution showcasing Ethiopian heritage.',
-          address: 'King George VI St, Addis Ababa, Ethiopia',
-          phone: '+251-11-117-150',
-          email: 'info@nationalmuseum.et',
-          website: 'https://nationalmuseum.ethiopia.gov.et',
-          openingHours: {
-            monday: { open: '09:00', close: '17:00', closed: false },
-            tuesday: { open: '09:00', close: '17:00', closed: false },
-            wednesday: { open: '09:00', close: '17:00', closed: false },
-            thursday: { open: '09:00', close: '17:00', closed: false },
-            friday: { open: '09:00', close: '17:00', closed: false },
-            saturday: { open: '10:00', close: '16:00', closed: false },
-            sunday: { open: '10:00', close: '16:00', closed: true }
-          },
-          socialMedia: {
-            facebook: 'https://facebook.com/nationalmuseumethiopia',
-            twitter: 'https://twitter.com/nationalmuseumet',
-            instagram: 'https://instagram.com/nationalmuseumethiopia'
-          }
-        };
         setMuseumProfile(prev => ({ 
           ...prev, 
-          ...mockProfile, 
           loading: false,
-          error: 'Using demo data - API not available'
+          error: 'Failed to load museum profile. Please check your connection and try again.'
         }));
       }
     };
@@ -302,57 +282,12 @@ const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           loading: false
         }));
       } catch (error) {
-        // Mock data fallback
-        const mockArtifacts = [
-          {
-            _id: '1',
-            name: 'Ancient Ethiopian Crown',
-            description: 'A royal crown from the 15th century Solomonic dynasty',
-            category: 'Royal Artifacts',
-            period: '15th Century',
-            images: ['crown1.jpg'],
-            isAvailableForRental: true,
-            rentalPrice: 50000,
-            status: 'approved'
-          },
-          {
-            _id: '2',
-            name: 'Traditional Coffee Set',
-            description: 'Complete traditional Ethiopian coffee ceremony set',
-            category: 'Cultural Artifacts',
-            period: '19th Century',
-            images: ['coffee1.jpg'],
-            isAvailableForRental: true,
-            rentalPrice: 15000,
-            status: 'pending'
-          },
-          {
-            _id: '3',
-            name: 'Manuscripts Collection',
-            description: 'Ancient Ge\'ez manuscripts and religious texts',
-            category: 'Documents',
-            period: '14th-16th Century',
-            images: ['manuscript1.jpg'],
-            isAvailableForRental: false,
-            rentalPrice: 0,
-            status: 'approved'
-          }
-        ];
-        
-        const filtered = mockArtifacts.filter(item => {
-          const matchesCategory = !artifactsState.category || item.category === artifactsState.category;
-          const matchesSearch = !artifactsState.searchTerm || 
-            item.name.toLowerCase().includes(artifactsState.searchTerm.toLowerCase()) ||
-            item.description.toLowerCase().includes(artifactsState.searchTerm.toLowerCase());
-          return matchesCategory && matchesSearch;
-        });
-
         setArtifactsState(prev => ({
           ...prev,
-          items: filtered,
-          total: filtered.length,
+          items: [],
+          total: 0,
           loading: false,
-          error: 'Using demo data - API not available'
+          error: 'Failed to load artifacts. Please check your connection and try again.'
         }));
       }
     };
@@ -368,23 +303,21 @@ const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
         const response = await api.getMuseumAnalytics();
         if (response.analytics) {
           setAnalytics(response.analytics);
+        } else {
+          setAnalytics({
+            visitors: { total: 0, growth: 0 },
+            artifacts: { total: 0, popular: [] },
+            revenue: { total: 0, growth: 0 },
+            events: { upcoming: 0, total: 0 }
+          });
         }
       } catch (error) {
-        // Mock analytics data
-        const mockAnalytics = {
-          visitors: { total: 12543, growth: 15.2 },
-          artifacts: { 
-            total: 247, 
-            popular: [
-              { name: 'Ancient Ethiopian Crown', views: 1234 },
-              { name: 'Traditional Coffee Set', views: 987 },
-              { name: 'Manuscripts Collection', views: 765 }
-            ]
-          },
-          revenue: { total: 450000, growth: 22.8 },
-          events: { upcoming: 3, total: 28 }
-        };
-        setAnalytics(mockAnalytics);
+        setAnalytics({
+          visitors: { total: 0, growth: 0 },
+          artifacts: { total: 0, popular: [] },
+          revenue: { total: 0, growth: 0 },
+          events: { upcoming: 0, total: 0 }
+        });
       }
     };
 

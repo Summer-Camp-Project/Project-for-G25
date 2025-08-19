@@ -17,6 +17,7 @@ import OrganizerDashboard from './pages/OrganizerDashboard'
 import VisitorDashboard from './pages/VisitorDashboard'
 import UserTourPage from './components/pages/UserTourPage'
 import UserProfile from './pages/UserProfile'
+import Learning from './pages/Learning'
 // Visitor specific pages
 import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
 import ProfileSettings from './pages/visitor/ProfileSettings'
@@ -144,6 +145,20 @@ function App() {
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
               <VirtualMuseum />
+              <Footer />
+            </>
+          } />
+          <Route path="/learning" element={
+            <>
+              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <Learning />
+              <Footer />
+            </>
+          } />
+          <Route path="/education" element={
+            <>
+              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <Learning />
               <Footer />
             </>
           } />

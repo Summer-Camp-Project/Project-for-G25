@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Museum = require('../models/Museum');
+const HeritageSite = require('../models/HeritageSite');
 const Artifact = require('../models/Artifact');
 const Site = require('../models/Site');
 const Rental = require('../models/Rental');
@@ -26,6 +27,9 @@ async function getDashboard(req, res) {
       totalMuseums,
       activeMuseums,
       pendingMuseumApprovals,
+      totalHeritageSites,
+      activeHeritageSites,
+      unescoSites,
       totalArtifacts,
       publishedArtifacts,
       pendingContentApprovals,
@@ -47,6 +51,11 @@ async function getDashboard(req, res) {
       Museum.countDocuments({ isActive: true }),
       Museum.countDocuments({ isActive: true, status: 'approved' }),
       Museum.countDocuments({ status: 'pending' }),
+      
+      // Heritage Sites statistics
+      HeritageSite.countDocuments({}),
+      HeritageSite.countDocuments({ status: 'active', verified: true }),
+      HeritageSite.countDocuments({ designation: 'UNESCO World Heritage' }),
       
       // Content statistics
       Artifact.countDocuments({}),
@@ -78,6 +87,12 @@ async function getDashboard(req, res) {
         active: activeMuseums,
         pendingApprovals: pendingMuseumApprovals,
         approvalRate: totalMuseums > 0 ? ((activeMuseums / totalMuseums) * 100).toFixed(1) : 0
+      },
+      heritageSites: {
+        total: totalHeritageSites,
+        active: activeHeritageSites,
+        unesco: unescoSites,
+        activationRate: totalHeritageSites > 0 ? ((activeHeritageSites / totalHeritageSites) * 100).toFixed(1) : 0
       },
       content: {
         totalArtifacts,
@@ -1578,6 +1593,556 @@ function convertToCSV(data) {
   return [csvHeaders, ...csvRows].join('\n');
 }
 
+// ======================
+// CONTENT MANAGEMENT
+// ======================
+
+// GET /api/super-admin/content/pending
+async function getPendingContent(req, res) {
+  try {
+    const { 
+      page = 1, 
+      limit = 20, 
+      type = 'all', 
+      status = 'pending'
+    } = req.query;
+
+    const results = {};
+    
+    if (type === 'all' || type === 'museums') {
+      const [museums, museumTotal] = await Promise.all([
+        Museum.find({ status: 'pending' })
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(Number(limit))
+          .populate('admin', 'name email'),
+        Museum.countDocuments({ status: 'pending' })
+      ]);
+      results.museums = { data: museums, total: museumTotal };
+    }
+    
+    if (type === 'all' || type === 'artifacts') {
+      const [artifacts, artifactTotal] = await Promise.all([
+        Artifact.find({ status: 'pending-review' })
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(Number(limit))
+          .populate('museum', 'name')
+          .populate('submittedBy', 'name email'),
+        Artifact.countDocuments({ status: 'pending-review' })
+      ]);
+      results.artifacts = { data: artifacts, total: artifactTotal };
+    }
+    
+    if (type === 'all' || type === 'rentals') {
+      const [rentals, rentalTotal] = await Promise.all([
+        Rental.find({ 'approvals.superAdmin.status': 'pending' })
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(Number(limit))
+          .populate('artifact', 'name')
+          .populate('museum', 'name')
+          .populate('renter', 'name email'),
+        Rental.countDocuments({ 'approvals.superAdmin.status': 'pending' })
+      ]);
+      results.rentals = { data: rentals, total: rentalTotal };
+    }
+
+    res.json({
+      success: true,
+      pendingContent: results,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get pending content error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending content',
+      error: error.message
+    });
+  }
+}
+
+// PUT /api/super-admin/content/artifacts/:id/approve
+async function approveArtifact(req, res) {
+  try {
+    const { id } = req.params;
+    const { status, feedback } = req.body; // 'approved' or 'rejected'
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be approved or rejected'
+      });
+    }
+
+    const artifact = await Artifact.findByIdAndUpdate(
+      id,
+      {
+        status: status === 'approved' ? 'published' : 'rejected',
+        'moderation.status': status,
+        'moderation.reviewedBy': req.user._id,
+        'moderation.reviewedAt': new Date(),
+        'moderation.feedback': feedback
+      },
+      { new: true }
+    )
+    .populate('museum', 'name')
+    .populate('submittedBy', 'name email');
+
+    if (!artifact) {
+      return res.status(404).json({
+        success: false,
+        message: 'Artifact not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Artifact ${status} successfully`,
+      artifact
+    });
+  } catch (error) {
+    console.error('Approve artifact error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process artifact approval',
+      error: error.message
+    });
+  }
+}
+
+// ======================
+// HERITAGE SITES MANAGEMENT
+// ======================
+
+// GET /api/super-admin/heritage-sites
+async function getHeritageSites(req, res) {
+  try {
+    const { 
+      page = 1, 
+      limit = 20, 
+      status, 
+      designation,
+      region,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+    
+    if (status && status !== 'all') query.status = status;
+    if (designation && designation !== 'all') query.designation = designation;
+    if (region && region !== 'all') query['location.region'] = region;
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { localName: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { significance: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [sites, total] = await Promise.all([
+      HeritageSite.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('createdBy', 'name email')
+        .populate('updatedBy', 'name email'),
+      HeritageSite.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      sites,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get heritage sites error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch heritage sites',
+      error: error.message
+    });
+  }
+}
+
+// POST /api/super-admin/heritage-sites
+async function createHeritageSite(req, res) {
+  try {
+    const siteData = {
+      ...req.body,
+      createdBy: req.user._id,
+      updatedBy: req.user._id
+    };
+
+    const site = new HeritageSite(siteData);
+    await site.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Heritage site created successfully',
+      site
+    });
+  } catch (error) {
+    console.error('Create heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create heritage site',
+      error: error.message
+    });
+  }
+}
+
+// PUT /api/super-admin/heritage-sites/:id
+async function updateHeritageSite(req, res) {
+  try {
+    const { id } = req.params;
+    const updateData = {
+      ...req.body,
+      updatedBy: req.user._id
+    };
+
+    const site = await HeritageSite.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).populate('createdBy', 'name email')
+     .populate('updatedBy', 'name email');
+
+    if (!site) {
+      return res.status(404).json({
+        success: false,
+        message: 'Heritage site not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Heritage site updated successfully',
+      site
+    });
+  } catch (error) {
+    console.error('Update heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update heritage site',
+      error: error.message
+    });
+  }
+}
+
+// DELETE /api/super-admin/heritage-sites/:id
+async function deleteHeritageSite(req, res) {
+  try {
+    const { id } = req.params;
+
+    const site = await HeritageSite.findById(id);
+    if (!site) {
+      return res.status(404).json({
+        success: false,
+        message: 'Heritage site not found'
+      });
+    }
+
+    // Soft delete
+    await site.softDelete();
+
+    res.json({
+      success: true,
+      message: 'Heritage site deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete heritage site',
+      error: error.message
+    });
+  }
+}
+
+// POST /api/super-admin/heritage-sites/migrate-mock-data
+async function migrateMockDataToDatabase(req, res) {
+  try {
+    // Mock heritage sites data from the map
+    const mockSites = [
+      {
+        name: 'Rock-Hewn Churches of Lalibela',
+        localName: 'የላሊበላ ተንሳኤ ቤተ ክርስቲያናት',
+        description: 'Eleven medieval monolithic cave churches carved from volcanic rock in the 12th and 13th centuries. These churches are among the finest examples of Ethiopian architecture and are still active places of worship.',
+        significance: 'Represents the New Jerusalem of Ethiopia and demonstrates outstanding universal value as a masterpiece of human creative genius in religious architecture.',
+        type: 'Religious',
+        category: 'Churches & Monasteries',
+        designation: 'UNESCO World Heritage',
+        unescoId: 'ET-001',
+        location: {
+          region: 'Amhara',
+          zone: 'North Wollo',
+          woreda: 'Lalibela',
+          city: 'Lalibela',
+          coordinates: {
+            latitude: 12.0309,
+            longitude: 39.0406
+          },
+          altitude: 2630
+        },
+        history: {
+          established: '12th-13th Century',
+          period: 'Zagwe (900-1270 AD)',
+          civilization: 'Ethiopian Orthodox Christian',
+          dynasty: 'Zagwe Dynasty'
+        },
+        features: {
+          structures: ['Churches', 'Rock Carvings'],
+          materials: ['Rock-hewn', 'Natural Rock'],
+          condition: 'Good'
+        },
+        visitorInfo: {
+          isOpen: true,
+          visitingHours: 'Daily 6:00 AM - 6:00 PM',
+          entryFee: {
+            local: 50,
+            foreign: 500,
+            student: 25,
+            currency: 'ETB'
+          },
+          guidedTours: {
+            available: true,
+            languages: ['Amharic', 'English'],
+            duration: '2-3 hours'
+          }
+        },
+        media: {
+          coverImage: 'https://picsum.photos/800/600?random=101'
+        },
+        status: 'active',
+        verified: true,
+        featured: true,
+        createdBy: req.user._id
+      },
+      {
+        name: 'Aksum Archaeological Site',
+        localName: 'የአክሱም አርኪዮሎጂካል ቦታ',
+        description: 'Ancient capital of the Kingdom of Aksum featuring towering granite obelisks, royal tombs, and palace ruins that showcase the power of this ancient trading empire.',
+        significance: 'Center of ancient Ethiopian civilization and testimony to the ancient Kingdom of Aksum, one of the four great powers of its time alongside Persia, Rome, and China.',
+        type: 'Archaeological',
+        category: 'Archaeological Sites',
+        designation: 'UNESCO World Heritage',
+        unescoId: 'ET-002',
+        location: {
+          region: 'Tigray',
+          zone: 'Central Tigray',
+          woreda: 'Aksum',
+          city: 'Aksum',
+          coordinates: {
+            latitude: 14.1319,
+            longitude: 38.7166
+          },
+          altitude: 2131
+        },
+        history: {
+          established: '1st-8th Century AD',
+          period: 'Aksumite (100-900 AD)',
+          civilization: 'Kingdom of Aksum',
+          dynasty: 'Aksumite Dynasty'
+        },
+        features: {
+          structures: ['Obelisks', 'Tombs', 'Palaces', 'Foundations'],
+          materials: ['Stone', 'Fired Brick'],
+          condition: 'Good'
+        },
+        visitorInfo: {
+          isOpen: true,
+          visitingHours: 'Daily 8:00 AM - 5:00 PM',
+          entryFee: {
+            local: 30,
+            foreign: 300,
+            student: 15,
+            currency: 'ETB'
+          },
+          guidedTours: {
+            available: true,
+            languages: ['Amharic', 'English', 'Tigrinya'],
+            duration: '1-2 hours'
+          }
+        },
+        media: {
+          coverImage: 'https://picsum.photos/800/600?random=102'
+        },
+        status: 'active',
+        verified: true,
+        featured: true,
+        createdBy: req.user._id
+      },
+      {
+        name: 'Harar Jugol',
+        localName: 'የሀረር ጁጎል',
+        description: 'Fortified historic town known as the fourth holiest city of Islam, featuring traditional architecture and serving as a cultural crossroads between Africa and Arabia.',
+        significance: 'Outstanding example of cultural interchange between Africa and Arabia, representing a traditional Islamic town with remarkable architectural heritage.',
+        type: 'Cultural',
+        category: 'Historical Cities',
+        designation: 'UNESCO World Heritage',
+        unescoId: 'ET-003',
+        location: {
+          region: 'Harari',
+          zone: 'Harari Zone',
+          woreda: 'Harar',
+          city: 'Harar',
+          coordinates: {
+            latitude: 9.3147,
+            longitude: 42.1184
+          },
+          altitude: 1885
+        },
+        history: {
+          established: '10th Century onwards',
+          period: 'Multiple Periods',
+          civilization: 'Islamic Harari',
+          dynasty: 'Various Islamic Rulers'
+        },
+        features: {
+          structures: ['Walls', 'Traditional Architecture'],
+          materials: ['Stone', 'Mud Brick'],
+          condition: 'Good'
+        },
+        visitorInfo: {
+          isOpen: true,
+          visitingHours: 'Daily 8:00 AM - 6:00 PM',
+          entryFee: {
+            local: 20,
+            foreign: 200,
+            student: 10,
+            currency: 'ETB'
+          },
+          guidedTours: {
+            available: true,
+            languages: ['Amharic', 'English', 'Arabic'],
+            duration: '2-3 hours'
+          }
+        },
+        media: {
+          coverImage: 'https://picsum.photos/800/600?random=103'
+        },
+        status: 'active',
+        verified: true,
+        featured: true,
+        createdBy: req.user._id
+      },
+      {
+        name: 'Simien Mountains National Park',
+        localName: 'የስሜን ተራሮች ብሔራዊ ፓርክ',
+        description: 'Spectacular landscapes with rare wildlife including Gelada baboons, Walia ibex, and Ethiopian wolves in a dramatic mountain setting.',
+        significance: 'Biodiversity hotspot and endemic species sanctuary representing outstanding natural beauty and ecological importance.',
+        type: 'Natural',
+        category: 'National Parks',
+        designation: 'UNESCO World Heritage',
+        unescoId: 'ET-004',
+        location: {
+          region: 'Amhara',
+          zone: 'North Gondar',
+          woreda: 'Janamora',
+          city: 'Debark',
+          coordinates: {
+            latitude: 13.1833,
+            longitude: 38.0167
+          },
+          altitude: 4550
+        },
+        history: {
+          established: '1969 (as National Park)',
+          period: 'Modern (1974-present)',
+          civilization: 'Natural Formation'
+        },
+        features: {
+          area: 41200,
+          structures: ['Natural Formations'],
+          materials: ['Natural Rock'],
+          condition: 'Excellent'
+        },
+        visitorInfo: {
+          isOpen: true,
+          visitingHours: 'Daily sunrise to sunset',
+          entryFee: {
+            local: 90,
+            foreign: 900,
+            student: 45,
+            currency: 'ETB'
+          },
+          guidedTours: {
+            available: true,
+            languages: ['Amharic', 'English'],
+            duration: '1-7 days (various options)'
+          }
+        },
+        media: {
+          coverImage: 'https://picsum.photos/800/600?random=104'
+        },
+        status: 'active',
+        verified: true,
+        featured: true,
+        createdBy: req.user._id
+      }
+    ];
+
+    const results = {
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: []
+    };
+
+    for (const siteData of mockSites) {
+      try {
+        // Check if site already exists
+        const existingSite = await HeritageSite.findOne({ name: siteData.name });
+        
+        if (existingSite) {
+          results.skipped++;
+          continue;
+        }
+
+        const site = new HeritageSite(siteData);
+        await site.save();
+        results.created++;
+        
+      } catch (error) {
+        results.errors.push({
+          site: siteData.name,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Mock data migration completed. ${results.created} sites created, ${results.updated} updated, ${results.skipped} skipped.`,
+      results
+    });
+    
+  } catch (error) {
+    console.error('Migrate mock data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to migrate mock data',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   // Dashboard & Analytics
   getDashboard,
@@ -1598,6 +2163,13 @@ module.exports = {
   getAllMuseums,
   updateMuseumStatus,
   
+  // Heritage Sites Management
+  getHeritageSites,
+  createHeritageSite,
+  updateHeritageSite,
+  deleteHeritageSite,
+  migrateMockDataToDatabase,
+  
   // Rental System
   getAllRentals,
   approveRental,
@@ -1605,5 +2177,9 @@ module.exports = {
   // System Settings
   getSystemSettings,
   updateSystemSetting,
-  createSystemSetting
+  createSystemSetting,
+  
+  // Content Management
+  getPendingContent,
+  approveArtifact
 };
