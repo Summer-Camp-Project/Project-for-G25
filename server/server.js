@@ -24,7 +24,7 @@ const NotificationSocketService = require('./services/notificationSocket');
 // Import routes
 const authRoutes = require('./routes/auth');
 // const adminRoutes = require('./routes/admin');
-// const superAdminRoutes = require('./routes/superAdmin');
+const superAdminRoutes = require('./routes/superAdmin');
 // const museumAdminRoutes = require('./routes/museumAdmin');
 // const museumRoutes = require('./routes/museum');
 const organizerRoutes = require('./routes/organizer');
@@ -134,7 +134,7 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/users', usersRoutes);
 // app.use('/api/rentals', rentalsRoutes);
 // app.use('/api/admin', adminRoutes);
-// app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 // app.use('/api/museum', museumRoutes);
 app.use('/api/organizer', organizerRoutes);
