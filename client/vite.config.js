@@ -23,10 +23,20 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+        chunkFileNames: 'assets/[name].[hash].js'
+      }
+    }
+  },
   esbuild: {
     loader: 'jsx',
     include: /src\/.*\.[jt]sx?$/,
-    exclude: []
+    exclude: [],
+    sourcemap: true
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
@@ -34,9 +44,13 @@ export default defineConfig({
       loader: {
         '.js': 'jsx',
       },
+      sourcemap: true
     },
   },
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx']
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
   }
 })

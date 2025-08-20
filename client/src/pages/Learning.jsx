@@ -16,6 +16,32 @@ import {
 } from 'lucide-react';
 import learningService from '../services/learningService';
 
+// Import educational images (working ones)
+import fourthHolyCityImg from '../assets/The Fourth Holy City of Islam.jpg';
+import ethiopianHistoryImg from '../assets/Ethiopian History Fundamentals.jpg';
+
+// Fallback images for undefined imports
+const traditionalCraftsImg = 'https://images.unsplash.com/photo-1594736797933-d0801ba2fe65?w=400&h=300&fit=crop&q=80';
+const meskelFestivalImg = 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80';
+const traditionalDanceImg = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80';
+const ethiopianCuisineImg = 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80';
+
+// Fallback images for better display
+const getEducationImage = (category, fallbackId) => {
+  const fallbackImages = {
+    'Islamic Heritage': 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400&h=300&fit=crop&q=80',
+    'Islamic Architecture': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
+    'Ethiopian Scripts': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80',
+    'Traditional Arts': 'https://images.unsplash.com/photo-1594736797933-d0801ba2fe65?w=400&h=300&fit=crop&q=80',
+    'Religious Heritage': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&q=80',
+    'Cultural Festivals': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80',
+    'Culinary Heritage': 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80',
+    'Musical Heritage': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
+    'default': 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=400&h=300&fit=crop&q=80'
+  };
+  return fallbackImages[category] || fallbackImages.default;
+};
+
 const Learning = () => {
   const [courses, setCourses] = useState([]);
   const [progress, setProgress] = useState(null);
@@ -38,10 +64,10 @@ const Learning = () => {
         learningService.getRecommendations()
       ]);
 
-      // Add Muslim heritage courses to the default courses
-      const muslimHeritageCourses = [
+      // Add comprehensive heritage courses with working images
+      const heritageCourses = [
         {
-          id: 'muslim-1',
+          id: 'heritage-1',
           title: 'Islamic History of Ethiopia',
           description: 'Explore the rich Islamic heritage of Ethiopia from the arrival of Islam in the 7th century to the modern era.',
           category: 'Islamic Heritage',
@@ -50,10 +76,10 @@ const Learning = () => {
           lessons: 24,
           rating: 4.8,
           enrolled: 1250,
-          image: 'https://picsum.photos/400/200?random=islamic1'
+          image: ethiopianHistoryImg
         },
         {
-          id: 'muslim-2',
+          id: 'heritage-2',
           title: 'Harar: The Fourth Holy City of Islam',
           description: 'Discover the sacred city of Harar, its 99 mosques, Islamic architecture, and role in Islamic scholarship.',
           category: 'Islamic Architecture',
@@ -62,68 +88,195 @@ const Learning = () => {
           lessons: 16,
           rating: 4.9,
           enrolled: 890,
-          image: 'https://picsum.photos/400/200?random=harar1'
+          image: fourthHolyCityImg
         },
         {
-          id: 'muslim-3',
-          title: 'Islamic Manuscripts and Calligraphy',
-          description: 'Learn about the beautiful Islamic manuscripts, Arabic calligraphy, and scholarly traditions in Ethiopian Islam.',
-          category: 'Islamic Arts',
+          id: 'heritage-3',
+          title: 'Ancient Ge\'ez Script and Manuscripts',
+          description: 'Learn about the ancient Ge\'ez script, manuscripts, and scholarly traditions in Ethiopian Christianity and Islam.',
+          category: 'Ethiopian Scripts',
           difficulty: 'Advanced',
           duration: '8 weeks',
           lessons: 32,
           rating: 4.7,
           enrolled: 675,
-          image: 'https://picsum.photos/400/200?random=calligraphy1'
+          image: getEducationImage('Ethiopian Scripts', 'geez')
         },
         {
-          id: 'muslim-4',
-          title: 'Muslim Traders and the Trade Routes',
-          description: 'Understand the role of Muslim merchants in establishing trade routes and spreading Islamic culture across Ethiopia.',
-          category: 'Islamic History',
+          id: 'heritage-4',
+          title: 'Traditional Ethiopian Crafts',
+          description: 'Discover the art of traditional Ethiopian craftsmanship, from pottery to weaving and metalwork.',
+          category: 'Traditional Arts',
           difficulty: 'Intermediate',
           duration: '5 weeks',
           lessons: 20,
           rating: 4.6,
           enrolled: 980,
-          image: 'https://picsum.photos/400/200?random=trade1'
+          image: getEducationImage('Traditional Arts', 'crafts')
         },
         {
-          id: 'muslim-5',
-          title: 'Sufi Traditions in Ethiopia',
-          description: 'Explore the mystical traditions of Sufism in Ethiopia, including shrines, practices, and spiritual teachings.',
-          category: 'Islamic Spirituality',
+          id: 'heritage-5',
+          title: 'Ethiopian Orthodox Traditions',
+          description: 'Explore the deep spiritual traditions, ceremonies, and practices of the Ethiopian Orthodox Church.',
+          category: 'Religious Heritage',
           difficulty: 'Intermediate',
           duration: '6 weeks',
           lessons: 18,
           rating: 4.8,
           enrolled: 720,
-          image: 'https://picsum.photos/400/200?random=sufi1'
+          image: getEducationImage('Religious Heritage', 'orthodox')
         },
         {
-          id: 'muslim-6',
-          title: 'Islamic Festivals and Celebrations',
-          description: 'Learn about Islamic festivals, traditions, and cultural celebrations in Ethiopian Muslim communities.',
-          category: 'Islamic Culture',
+          id: 'heritage-6',
+          title: 'Ethiopian Festivals: Timkat & Meskel',
+          description: 'Learn about Timkat, Meskel, and other traditional celebrations that mark Ethiopian cultural identity.',
+          category: 'Cultural Festivals',
           difficulty: 'Beginner',
           duration: '3 weeks',
           lessons: 12,
           rating: 4.9,
           enrolled: 1100,
-          image: 'https://picsum.photos/400/200?random=festival1'
+          image: getEducationImage('Cultural Festivals', 'festivals')
+        },
+        {
+          id: 'heritage-7',
+          title: 'Traditional Ethiopian Dance',
+          description: 'Master the traditional dances from different regions of Ethiopia and their cultural significance.',
+          category: 'Traditional Arts',
+          difficulty: 'Beginner',
+          duration: '4 weeks',
+          lessons: 16,
+          rating: 4.7,
+          enrolled: 850,
+          image: getEducationImage('Traditional Arts', 'dance')
+        },
+        {
+          id: 'heritage-8',
+          title: 'Ethiopian Cuisine & Coffee Culture',
+          description: 'Explore the rich culinary traditions of Ethiopia and the birthplace of coffee culture.',
+          category: 'Culinary Heritage',
+          difficulty: 'Beginner',
+          duration: '4 weeks',
+          lessons: 14,
+          rating: 4.8,
+          enrolled: 1200,
+          image: getEducationImage('Culinary Heritage', 'cuisine')
+        },
+        {
+          id: 'heritage-9',
+          title: 'Traditional Ethiopian Clothing',
+          description: 'Learn about the beautiful traditional clothing styles and their cultural meanings across Ethiopia.',
+          category: 'Traditional Arts',
+          difficulty: 'Beginner',
+          duration: '3 weeks',
+          lessons: 10,
+          rating: 4.6,
+          enrolled: 750,
+          image: getEducationImage('Traditional Arts', 'clothing')
+        },
+        {
+          id: 'heritage-10',
+          title: 'Ethiopian Musical Heritage',
+          description: 'Discover the rich musical heritage of Ethiopia and learn about traditional instruments like the krar and masenqo.',
+          category: 'Musical Heritage',
+          difficulty: 'Intermediate',
+          duration: '5 weeks',
+          lessons: 18,
+          rating: 4.7,
+          enrolled: 650,
+          image: getEducationImage('Musical Heritage', 'music')
+        },
+        {
+          id: 'heritage-11',
+          title: 'Ethiopian Architecture Through Ages',
+          description: 'Explore the evolution of Ethiopian architecture from ancient Aksumite obelisks to rock-hewn churches.',
+          category: 'Islamic Architecture',
+          difficulty: 'Advanced',
+          duration: '7 weeks',
+          lessons: 28,
+          rating: 4.6,
+          enrolled: 520,
+          image: getEducationImage('Islamic Architecture', 'architecture')
+        },
+        {
+          id: 'heritage-12',
+          title: 'Ethiopian Tribal Cultures',
+          description: 'Learn about the diverse tribal cultures of Ethiopia, their traditions, languages, and customs.',
+          category: 'Cultural Heritage',
+          difficulty: 'Intermediate',
+          duration: '6 weeks',
+          lessons: 22,
+          rating: 4.5,
+          enrolled: 680,
+          image: getEducationImage('Traditional Arts', 'tribal')
+        },
+        {
+          id: 'heritage-13',
+          title: 'Traditional Ethiopian Medicine',
+          description: 'Discover ancient healing practices and traditional medicine used in Ethiopian culture.',
+          category: 'Traditional Knowledge',
+          difficulty: 'Advanced',
+          duration: '8 weeks',
+          lessons: 30,
+          rating: 4.4,
+          enrolled: 420,
+          image: getEducationImage('Traditional Arts', 'medicine')
+        },
+        {
+          id: 'heritage-14',
+          title: 'Ethiopian Highlands & Geography',
+          description: 'Explore the unique geography, climate, and ecosystems of the Ethiopian Highlands.',
+          category: 'Natural Heritage',
+          difficulty: 'Beginner',
+          duration: '4 weeks',
+          lessons: 16,
+          rating: 4.7,
+          enrolled: 890,
+          image: getEducationImage('default', 'highlands')
+        },
+        {
+          id: 'heritage-15',
+          title: 'Modern Ethiopia & Development',
+          description: 'Learn about modern Ethiopia, its development, urbanization, and contemporary culture.',
+          category: 'Modern Heritage',
+          difficulty: 'Intermediate',
+          duration: '5 weeks',
+          lessons: 20,
+          rating: 4.5,
+          enrolled: 760,
+          image: getEducationImage('default', 'modern')
         }
       ];
 
-      setCourses([...coursesData, ...muslimHeritageCourses]);
+      // Safely handle coursesData from the server
+      const safeCourses = Array.isArray(coursesData) ? coursesData.map(course => ({
+        ...course,
+        // Convert MongoDB ObjectId to string if needed
+        id: course._id || course.id,
+        // Ensure proper data types for rendering
+        title: String(course.title || ''),
+        description: String(course.description || ''),
+        category: String(course.category || ''),
+        difficulty: String(course.difficulty || 'beginner'),
+        duration: String(course.estimatedDuration ? `${course.estimatedDuration} min` : course.duration || ''),
+        lessons: Array.isArray(course.lessons) ? course.lessons.length : (course.lessons || 0),
+        rating: Number(course.rating || 4.5),
+        enrolled: Number(course.enrolled || 0),
+        image: course.image || course.thumbnail
+      })) : [];
+      
+      setCourses([...safeCourses, ...heritageCourses]);
       setProgress(progressData);
       setAchievements(achievementsData);
-      setRecommendations(recommendationsData);
+      // Ensure recommendations is always an array
+      const safeRecommendations = Array.isArray(recommendationsData) ? recommendationsData : [];
+      setRecommendations(safeRecommendations);
     } catch (error) {
       console.error('Failed to load learning data:', error);
-      // Fallback to Muslim heritage courses only if service fails
+      // Fallback to heritage courses with local images if service fails
       const fallbackCourses = [
         {
-          id: 'muslim-1',
+          id: 'fallback-1',
           title: 'Islamic History of Ethiopia',
           description: 'Explore the rich Islamic heritage of Ethiopia from the arrival of Islam in the 7th century to the modern era.',
           category: 'Islamic Heritage',
@@ -132,10 +285,10 @@ const Learning = () => {
           lessons: 24,
           rating: 4.8,
           enrolled: 1250,
-          image: 'https://picsum.photos/400/200?random=islamic1'
+          image: ethiopianHistoryImg
         },
         {
-          id: 'muslim-2',
+          id: 'fallback-2',
           title: 'Harar: The Fourth Holy City of Islam',
           description: 'Discover the sacred city of Harar, its 99 mosques, Islamic architecture, and role in Islamic scholarship.',
           category: 'Islamic Architecture',
@@ -144,55 +297,55 @@ const Learning = () => {
           lessons: 16,
           rating: 4.9,
           enrolled: 890,
-          image: 'https://picsum.photos/400/200?random=harar1'
+          image: fourthHolyCityImg
         },
         {
-          id: 'muslim-3',
-          title: 'Islamic Manuscripts and Calligraphy',
-          description: 'Learn about the beautiful Islamic manuscripts, Arabic calligraphy, and scholarly traditions in Ethiopian Islam.',
-          category: 'Islamic Arts',
+          id: 'fallback-3',
+          title: 'Traditional Ethiopian Crafts',
+          description: 'Discover the art of traditional Ethiopian craftsmanship, from pottery to weaving and metalwork.',
+          category: 'Traditional Arts',
           difficulty: 'Advanced',
           duration: '8 weeks',
           lessons: 32,
           rating: 4.7,
           enrolled: 675,
-          image: 'https://picsum.photos/400/200?random=calligraphy1'
+          image: traditionalCraftsImg
         },
         {
-          id: 'muslim-4',
-          title: 'Muslim Traders and the Trade Routes',
-          description: 'Understand the role of Muslim merchants in establishing trade routes and spreading Islamic culture across Ethiopia.',
-          category: 'Islamic History',
-          difficulty: 'Intermediate',
+          id: 'fallback-4',
+          title: 'Ethiopian Festivals and Celebrations',
+          description: 'Learn about Timkat, Meskel, and other traditional celebrations that mark Ethiopian cultural identity.',
+          category: 'Cultural Festivals',
+          difficulty: 'Beginner',
           duration: '5 weeks',
           lessons: 20,
           rating: 4.6,
           enrolled: 980,
-          image: 'https://picsum.photos/400/200?random=trade1'
+          image: meskelFestivalImg
         },
         {
-          id: 'muslim-5',
-          title: 'Sufi Traditions in Ethiopia',
-          description: 'Explore the mystical traditions of Sufism in Ethiopia, including shrines, practices, and spiritual teachings.',
-          category: 'Islamic Spirituality',
+          id: 'fallback-5',
+          title: 'Traditional Ethiopian Dance',
+          description: 'Master the traditional dances from different regions of Ethiopia and their cultural significance.',
+          category: 'Traditional Arts',
           difficulty: 'Intermediate',
           duration: '6 weeks',
           lessons: 18,
           rating: 4.8,
           enrolled: 720,
-          image: 'https://picsum.photos/400/200?random=sufi1'
+          image: traditionalDanceImg
         },
         {
-          id: 'muslim-6',
-          title: 'Islamic Festivals and Celebrations',
-          description: 'Learn about Islamic festivals, traditions, and cultural celebrations in Ethiopian Muslim communities.',
-          category: 'Islamic Culture',
+          id: 'fallback-6',
+          title: 'Ethiopian Cuisine and Coffee Culture',
+          description: 'Explore the rich culinary traditions of Ethiopia and the birthplace of coffee culture.',
+          category: 'Culinary Heritage',
           difficulty: 'Beginner',
           duration: '3 weeks',
           lessons: 12,
           rating: 4.9,
           enrolled: 1100,
-          image: 'https://picsum.photos/400/200?random=festival1'
+          image: ethiopianCuisineImg
         }
       ];
       setCourses(fallbackCourses);
@@ -338,7 +491,21 @@ const Learning = () => {
                 
                 {/* Category Filter */}
                 <div className="flex flex-wrap gap-2">
-                  {['all', 'Islamic Heritage', 'Islamic Architecture', 'Islamic Arts', 'Islamic History', 'Islamic Spirituality', 'Islamic Culture'].map((category) => (
+                  {[
+                    'all', 
+                    'Islamic Heritage', 
+                    'Islamic Architecture', 
+                    'Ethiopian Scripts', 
+                    'Traditional Arts', 
+                    'Religious Heritage', 
+                    'Cultural Festivals', 
+                    'Culinary Heritage', 
+                    'Musical Heritage',
+                    'Cultural Heritage',
+                    'Traditional Knowledge',
+                    'Natural Heritage',
+                    'Modern Heritage'
+                  ].map((category) => (
                     <button
                       key={category}
                       onClick={() => setSelectedCategory(category)}
@@ -358,12 +525,22 @@ const Learning = () => {
                   .filter(course => selectedCategory === 'all' || course.category === selectedCategory)
                   .map((course) => (
                   <div key={course.id} className="group bg-card rounded-3xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                    <div className="relative h-48 overflow-hidden">
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
                       <img 
                         src={course.image || 'https://picsum.photos/400/200?random=' + course.id}
                         alt={course.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
+                      <div className="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-primary/30 to-secondary/30">
+                        <div className="text-center text-white p-4">
+                          <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-60" />
+                          <div className="text-sm font-medium opacity-80">{course.category}</div>
+                        </div>
+                      </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                       <div className="absolute top-4 left-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(course.difficulty)}`}>
@@ -445,29 +622,44 @@ const Learning = () => {
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-8">Recommended for You</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recommendations.map((item) => (
-                  <div key={item.id} className="bg-card rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300">
-                    <img 
-                      src={item.image || 'https://picsum.photos/300/150?random=' + item.id}
-                      alt={item.title}
-                      className="w-full h-32 object-cover"
-                    />
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="bg-accent/10 text-accent px-2 py-1 rounded-full text-xs font-semibold capitalize">
-                          {item.type}
-                        </span>
-                        <Sparkles className="w-4 h-4 text-primary" />
+                {recommendations.map((item) => {
+                  // Check if item is an object and stringify it for debugging
+                  if (typeof item !== 'object' || item === null) {
+                    console.error('Invalid recommendation item:', item);
+                    return null;
+                  }
+                  
+                  // Extract properties safely
+                  const id = item.id || Math.random().toString(36).substring(7);
+                  const title = item.title || 'Recommended Content';
+                  const type = item.type || 'course';
+                  const reason = item.reason || 'Recommended based on your interests';
+                  const imageUrl = item.image || 'https://picsum.photos/300/150?random=' + id;
+                  
+                  return (
+                    <div key={id} className="bg-card rounded-2xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300">
+                      <img 
+                        src={imageUrl}
+                        alt={title}
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="bg-accent/10 text-accent px-2 py-1 rounded-full text-xs font-semibold capitalize">
+                            {type}
+                          </span>
+                          <Sparkles className="w-4 h-4 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-bold text-card-foreground mb-2">{title}</h3>
+                        <p className="text-muted-foreground text-sm mb-3">{reason}</p>
+                        <button className="w-full bg-primary/10 text-primary px-4 py-2 rounded-lg font-semibold hover:bg-primary/20 transition-colors flex items-center justify-center">
+                          <ArrowRight className="w-4 h-4 mr-2" />
+                          Explore
+                        </button>
                       </div>
-                      <h3 className="text-lg font-bold text-card-foreground mb-2">{item.title}</h3>
-                      <p className="text-muted-foreground text-sm mb-3">{item.reason}</p>
-                      <button className="w-full bg-primary/10 text-primary px-4 py-2 rounded-lg font-semibold hover:bg-primary/20 transition-colors flex items-center justify-center">
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                        Explore
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                }).filter(Boolean)}
               </div>
             </div>
           )}

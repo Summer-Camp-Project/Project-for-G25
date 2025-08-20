@@ -1,4 +1,5 @@
 import { api } from '../utils/api.js';
+import imageMapper from './imageMapperService.js';
 
 class LearningService {
   constructor() {
@@ -434,48 +435,138 @@ class LearningService {
   // Mock data methods
 
   /**
-   * Get mock courses
+   * Get mock courses (cleaned up, no duplicates)
    * @returns {Array} Mock courses
    */
   getMockCourses() {
-    return [
+    const courses = [
       {
         id: 1,
         title: 'Ethiopian History Fundamentals',
-        description: 'Explore the rich history of Ethiopia from ancient times to modern day',
-        image: 'https://picsum.photos/300/200?random=10',
+        description: 'Explore the rich history of Ethiopia from ancient civilizations to modern day, including the Kingdom of Aksum, medieval dynasties, and contemporary developments',
         difficulty: 'Beginner',
         duration: '4 hours',
         lessons: 8,
         category: 'History',
         rating: 4.7,
-        enrolled: 1250
+        enrolled: 1250,
+        topics: ['Ancient Aksum', 'Zagwe Dynasty', 'Solomonic Dynasty', 'Modern Ethiopia']
       },
       {
         id: 2,
         title: 'Cultural Traditions of Ethiopia',
-        description: 'Discover the diverse cultural practices and traditions across Ethiopian regions',
-        image: 'https://picsum.photos/300/200?random=11',
+        description: 'Discover the diverse cultural practices, traditions, and social customs across Ethiopian regions and ethnic groups',
         difficulty: 'Intermediate',
         duration: '3 hours',
         lessons: 6,
         category: 'Culture',
         rating: 4.8,
-        enrolled: 890
+        enrolled: 890,
+        topics: ['Ethnic Diversity', 'Social Customs', 'Traditional Ceremonies', 'Cultural Values']
       },
       {
         id: 3,
         title: 'Archaeological Wonders',
-        description: 'Journey through Ethiopia\'s most significant archaeological discoveries',
-        image: 'https://picsum.photos/300/200?random=12',
+        description: 'Journey through Ethiopia\'s most significant archaeological discoveries including Lalibela, Aksum, and ancient fossils like Lucy',
         difficulty: 'Advanced',
         duration: '5 hours',
         lessons: 10,
         category: 'Archaeology',
         rating: 4.9,
-        enrolled: 650
+        enrolled: 650,
+        topics: ['Rock-hewn Churches', 'Ancient Obelisks', 'Human Evolution', 'Archaeological Methods']
+      },
+      {
+        id: 4,
+        title: 'Ethiopian Languages and Scripts',
+        description: 'Learn about Ethiopia\'s linguistic diversity including Amharic, Oromo, Tigrinya, and the ancient Ge\'ez script with its unique writing system',
+        difficulty: 'Intermediate',
+        duration: '6 hours',
+        lessons: 12,
+        category: 'Language',
+        rating: 4.6,
+        enrolled: 780,
+        topics: ['Semitic Languages', 'Cushitic Languages', 'Ge\'ez Script', 'Modern Alphabets']
+      },
+      {
+        id: 5,
+        title: 'Ethiopian Orthodox Christianity',
+        description: 'Explore the unique traditions, art, architecture, and spiritual practices of Ethiopian Orthodox Christianity',
+        difficulty: 'Intermediate',
+        duration: '4 hours',
+        lessons: 9,
+        category: 'Religion',
+        rating: 4.8,
+        enrolled: 920,
+        topics: ['Religious History', 'Church Architecture', 'Liturgical Art', 'Monastic Traditions']
+      },
+      {
+        id: 6,
+        title: 'Traditional Ethiopian Arts and Crafts',
+        description: 'Discover the rich artistic heritage including weaving, pottery, metalwork, basketry, and traditional painting techniques',
+        difficulty: 'Beginner',
+        duration: '3.5 hours',
+        lessons: 7,
+        category: 'Arts',
+        rating: 4.7,
+        enrolled: 650,
+        topics: ['Traditional Weaving', 'Pottery Making', 'Metalwork', 'Basket Crafting']
+      },
+      {
+        id: 7,
+        title: 'Ethiopian Cuisine and Food Culture',
+        description: 'Learn about traditional Ethiopian cuisine, spices, cooking methods, injera preparation, and food ceremonies',
+        difficulty: 'Beginner',
+        duration: '2.5 hours',
+        lessons: 5,
+        category: 'Culture',
+        rating: 4.9,
+        enrolled: 1150,
+        topics: ['Injera & Teff', 'Spice Blends', 'Cooking Methods', 'Food Ceremonies']
+      },
+      {
+        id: 8,
+        title: 'Music and Dance of Ethiopia',
+        description: 'Explore the diverse musical traditions and dance forms from different Ethiopian regions including traditional instruments and rhythms',
+        difficulty: 'Beginner',
+        duration: '3 hours',
+        lessons: 6,
+        category: 'Arts',
+        rating: 4.8,
+        enrolled: 820,
+        topics: ['Traditional Instruments', 'Regional Dances', 'Musical Scales', 'Performance Traditions']
+      },
+      {
+        id: 9,
+        title: 'Ethiopian Coffee Culture',
+        description: 'Explore the birthplace of coffee and its deep cultural significance in Ethiopian society, including traditional coffee ceremonies',
+        difficulty: 'Beginner',
+        duration: '2 hours',
+        lessons: 4,
+        category: 'Culture',
+        rating: 4.9,
+        enrolled: 1320,
+        topics: ['Coffee Origins', 'Coffee Ceremony', 'Cultural Significance', 'Regional Variations']
+      },
+      {
+        id: 10,
+        title: 'Traditional Ethiopian Medicine',
+        description: 'Discover traditional healing practices, medicinal plants, and indigenous knowledge systems used in Ethiopian healthcare',
+        difficulty: 'Advanced',
+        duration: '4.5 hours',
+        lessons: 9,
+        category: 'Traditional Knowledge',
+        rating: 4.5,
+        enrolled: 420,
+        topics: ['Medicinal Plants', 'Traditional Healers', 'Healing Practices', 'Herbal Remedies']
       }
     ];
+
+    // Add image mappings using the image mapper service
+    return courses.map(course => ({
+      ...course,
+      image: imageMapper.getCourseImage(course)
+    }));
   }
 
   /**
@@ -507,6 +598,102 @@ class LearningService {
         icon: 'trophy',
         earnedAt: '2024-01-25T16:45:00Z',
         points: 75
+      },
+      {
+        id: 4,
+        name: 'Cultural Ambassador',
+        description: 'Completed 3 cultural courses',
+        icon: 'globe',
+        earnedAt: '2024-02-01T11:00:00Z',
+        points: 100
+      },
+      {
+        id: 5,
+        name: 'Language Scholar',
+        description: 'Completed Ethiopian Languages and Scripts course',
+        icon: 'language',
+        earnedAt: '2024-02-05T14:30:00Z',
+        points: 80
+      },
+      {
+        id: 6,
+        name: 'Coffee Connoisseur',
+        description: 'Mastered Ethiopian Coffee Culture course',
+        icon: 'coffee',
+        earnedAt: '2024-02-08T09:15:00Z',
+        points: 60
+      },
+      {
+        id: 7,
+        name: 'Festival Enthusiast',
+        description: 'Learned about all major Ethiopian festivals',
+        icon: 'celebration',
+        earnedAt: '2024-02-12T16:45:00Z',
+        points: 90
+      },
+      {
+        id: 8,
+        name: 'Arts and Crafts Expert',
+        description: 'Completed traditional arts courses with high scores',
+        icon: 'palette',
+        earnedAt: '2024-02-15T13:20:00Z',
+        points: 120
+      },
+      {
+        id: 9,
+        name: 'Heritage Guardian',
+        description: 'Completed 10 different heritage courses',
+        icon: 'shield',
+        earnedAt: '2024-02-20T10:30:00Z',
+        points: 200
+      },
+      {
+        id: 10,
+        name: 'Archaeological Detective',
+        description: 'Mastered archaeological wonders course',
+        icon: 'search',
+        earnedAt: '2024-02-22T15:45:00Z',
+        points: 150
+      },
+      {
+        id: 11,
+        name: 'Traditional Medicine Healer',
+        description: 'Completed traditional medicine course with distinction',
+        icon: 'leaf',
+        earnedAt: '2024-02-25T12:10:00Z',
+        points: 130
+      },
+      {
+        id: 12,
+        name: 'Orthodox Scholar',
+        description: 'Deep understanding of Ethiopian Orthodox Christianity',
+        icon: 'cross',
+        earnedAt: '2024-02-28T17:20:00Z',
+        points: 110
+      },
+      {
+        id: 13,
+        name: 'Music and Dance Master',
+        description: 'Learned about all regional music and dance forms',
+        icon: 'music',
+        earnedAt: '2024-03-02T14:00:00Z',
+        points: 95
+      },
+      {
+        id: 14,
+        name: 'Culinary Expert',
+        description: 'Mastered Ethiopian cuisine and food culture',
+        icon: 'utensils',
+        earnedAt: '2024-03-05T11:30:00Z',
+        points: 85
+      },
+      {
+        id: 15,
+        name: 'Learning Streak Champion',
+        description: 'Maintained a 30-day learning streak',
+        icon: 'fire',
+        earnedAt: '2024-03-08T20:00:00Z',
+        points: 250
       }
     ];
   }
@@ -524,7 +711,8 @@ class LearningService {
         description: 'Explore major events in Ethiopian history',
         url: '/resources/timeline',
         category: 'History',
-        duration: '30 minutes'
+        duration: '30 minutes',
+        image: '/assets/Ethiopia.jpg'
       },
       {
         id: 2,
@@ -533,7 +721,8 @@ class LearningService {
         description: 'Listen to traditional Ethiopian music',
         url: '/resources/music',
         category: 'Culture',
-        duration: '2 hours'
+        duration: '2 hours',
+        image: '/assets/traditional-instruments.jpg'
       },
       {
         id: 3,
@@ -542,7 +731,128 @@ class LearningService {
         description: 'Detailed maps of Ethiopian archaeological sites',
         url: '/resources/maps',
         category: 'Archaeology',
-        duration: '1 hour'
+        duration: '1 hour',
+        image: '/assets/Archaeological Wonders.jpg'
+      },
+      {
+        id: 4,
+        title: 'Ethiopian Literature Digital Library',
+        type: 'Digital Library',
+        description: 'Access classical and contemporary Ethiopian literature in multiple languages',
+        url: '/resources/literature',
+        category: 'Literature',
+        duration: '3 hours',
+        image: '/assets/geez-script.jpg'
+      },
+      {
+        id: 5,
+        title: 'Traditional Medicine Plant Guide',
+        type: 'Interactive Guide',
+        description: 'Learn about medicinal plants used in traditional Ethiopian healing',
+        url: '/resources/medicine',
+        category: 'Traditional Knowledge',
+        duration: '1.5 hours',
+        image: '/assets/traditional-medicine.jpg'
+      },
+      {
+        id: 6,
+        title: 'Ethiopian Architecture Styles Showcase',
+        type: 'Visual Gallery',
+        description: 'Explore different architectural styles across Ethiopian regions',
+        url: '/resources/architecture',
+        category: 'Architecture',
+        duration: '45 minutes',
+        image: '/assets/architecture.jpg'
+      },
+      {
+        id: 7,
+        title: 'Festival Calendar Interactive',
+        type: 'Interactive Calendar',
+        description: 'Discover Ethiopian festivals and celebrations throughout the year',
+        url: '/resources/festivals',
+        category: 'Culture',
+        duration: '1 hour',
+        image: '/assets/timkat-festival.jpg'
+      },
+      {
+        id: 8,
+        title: 'Ethiopian Cuisine Recipe Collection',
+        type: 'Recipe Database',
+        description: 'Traditional Ethiopian recipes with cultural context and preparation methods',
+        url: '/resources/recipes',
+        category: 'Culture',
+        duration: '2 hours',
+        image: '/assets/ethiopian-cuisine.jpg'
+      },
+      {
+        id: 9,
+        title: 'Traditional Crafts Workshop Videos',
+        type: 'Video Library',
+        description: 'Learn traditional Ethiopian crafts through expert demonstrations',
+        url: '/resources/crafts',
+        category: 'Arts',
+        duration: '4 hours',
+        image: '/assets/traditional-crafts.jpg'
+      },
+      {
+        id: 10,
+        title: 'Ethiopian Language Learning Tools',
+        type: 'Language Platform',
+        description: 'Interactive tools for learning Amharic, Oromo, Tigrinya, and Ge\'ez',
+        url: '/resources/languages',
+        category: 'Language',
+        duration: '8 hours',
+        image: '/assets/geez-script.jpg'
+      },
+      {
+        id: 11,
+        title: 'Coffee Culture Experience',
+        type: 'Virtual Experience',
+        description: 'Immersive experience of Ethiopian coffee culture and ceremony traditions',
+        url: '/resources/coffee',
+        category: 'Culture',
+        duration: '1 hour',
+        image: '/assets/coffee-ceremony.jpg'
+      },
+      {
+        id: 12,
+        title: 'Traditional Clothing and Textiles Guide',
+        type: 'Fashion Archive',
+        description: 'Explore traditional Ethiopian clothing styles and textile techniques',
+        url: '/resources/clothing',
+        category: 'Culture',
+        duration: '1.5 hours',
+        image: '/assets/traditional-clothing.jpg'
+      },
+      {
+        id: 13,
+        title: 'Ethiopian Wildlife and Nature Documentary',
+        type: 'Documentary Series',
+        description: 'Discover Ethiopia\'s unique wildlife and natural heritage',
+        url: '/resources/wildlife',
+        category: 'Nature',
+        duration: '3 hours',
+        image: '/assets/ethiopian-highlands.jpg'
+      },
+      {
+        id: 14,
+        title: 'Tribal Cultures Photo Exhibition',
+        type: 'Photo Gallery',
+        description: 'Visual journey through Ethiopia\'s diverse tribal communities and traditions',
+        url: '/resources/tribes',
+        category: 'Anthropology',
+        duration: '2 hours',
+        image: '/assets/tribal-cultures.jpg'
+      },
+      {
+        id: 15,
+        title: 'Ethiopian Orthodox Art and Iconography',
+        type: 'Art Gallery',
+        description: 'Explore the rich artistic tradition of Ethiopian Orthodox Christianity',
+        url: '/resources/orthodox-art',
+        category: 'Religion',
+        duration: '2.5 hours',
+        image: '/assets/orthodox-church.jpg'
       }
     ];
   }
@@ -572,21 +882,70 @@ class LearningService {
         type: 'lesson',
         title: 'Queen of Sheba Legend',
         reason: 'Based on your interest in Ethiopian history',
-        image: 'https://picsum.photos/200/150?random=20'
+        image: '/assets/Ethiopian History Fundamentals.jpg'
       },
       {
         id: 2,
         type: 'course',
         title: 'Ethiopian Orthodox Christianity',
         reason: 'Continue your religious artifacts exploration',
-        image: 'https://picsum.photos/200/150?random=21'
+        image: '/assets/orthodox-church.jpg'
       },
       {
         id: 3,
         type: 'quiz',
         title: 'Ancient Kingdoms Quiz',
         reason: 'Test your knowledge of Ethiopian kingdoms',
-        image: 'https://picsum.photos/200/150?random=22'
+        image: '/assets/Archaeological Wonders.jpg'
+      },
+      {
+        id: 4,
+        type: 'course',
+        title: 'Ethiopian Coffee Culture',
+        reason: 'Explore the birthplace of coffee traditions',
+        image: '/assets/coffee-ceremony.jpg'
+      },
+      {
+        id: 5,
+        type: 'resource',
+        title: 'Traditional Music Collection',
+        reason: 'Discover Ethiopian musical heritage',
+        image: '/assets/traditional-instruments.jpg'
+      },
+      {
+        id: 6,
+        type: 'course',
+        title: 'Ethiopian Festivals and Celebrations',
+        reason: 'Learn about cultural celebrations',
+        image: '/assets/timkat-festival.jpg'
+      },
+      {
+        id: 7,
+        type: 'lesson',
+        title: 'Ge\'ez Script and Ancient Texts',
+        reason: 'Perfect for language enthusiasts',
+        image: '/assets/geez-script.jpg'
+      },
+      {
+        id: 8,
+        type: 'resource',
+        title: 'Traditional Crafts Workshop',
+        reason: 'Hands-on cultural experience',
+        image: '/assets/traditional-crafts.jpg'
+      },
+      {
+        id: 9,
+        type: 'course',
+        title: 'Traditional Ethiopian Medicine',
+        reason: 'Explore indigenous knowledge systems',
+        image: '/assets/traditional-medicine.jpg'
+      },
+      {
+        id: 10,
+        type: 'quiz',
+        title: 'Ethiopian Cuisine Challenge',
+        reason: 'Test your food culture knowledge',
+        image: '/assets/ethiopian-cuisine.jpg'
       }
     ];
   }

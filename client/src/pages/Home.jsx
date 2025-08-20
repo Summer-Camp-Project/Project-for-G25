@@ -314,24 +314,24 @@ const Home = () => {
 
           {/* Learning Statistics */}
           <div className="bg-card/50 backdrop-blur-sm rounded-3xl p-8 border border-border">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold text-accent mb-2">5,000+</div>
-                <div className="text-muted-foreground">Active Learners</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-primary mb-2">15+</div>
-                <div className="text-muted-foreground">Expert Courses</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-secondary mb-2">50+</div>
-                <div className="text-muted-foreground">Learning Modules</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-accent mb-2">95%</div>
-                <div className="text-muted-foreground">Satisfaction Rate</div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-4xl font-bold text-accent mb-2">8,000+</div>
+              <div className="text-muted-foreground">Active Learners</div>
             </div>
+            <div>
+              <div className="text-4xl font-bold text-primary mb-2">25+</div>
+              <div className="text-muted-foreground">Expert Courses</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-secondary mb-2">75+</div>
+              <div className="text-muted-foreground">Learning Resources</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-accent mb-2">98%</div>
+              <div className="text-muted-foreground">Satisfaction Rate</div>
+            </div>
+          </div>
           </div>
         </div>
       </section>

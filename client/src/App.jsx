@@ -18,6 +18,11 @@ import VisitorDashboard from './pages/VisitorDashboard'
 import UserTourPage from './components/pages/UserTourPage'
 import UserProfile from './pages/UserProfile'
 import Learning from './pages/Learning'
+import CourseDetail from './pages/CourseDetail'
+import Games from './pages/Games'
+import AdminSupport from './pages/AdminSupport'
+import Support from './pages/Support'
+import StudyGuides from './pages/StudyGuides'
 // Visitor specific pages
 import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
 import ProfileSettings from './pages/visitor/ProfileSettings'
@@ -309,6 +314,25 @@ function App() {
                 </div>
               </div>
             </RoleBasedRoute>
+          } />
+          
+          {/* New Educational Routes */}
+          <Route path="/course/:courseId" element={
+            <CourseDetail darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          } />
+          <Route path="/games" element={
+            <Games darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          } />
+          <Route path="/support" element={
+            <Support darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          } />
+          <Route path="/study-guides" element={
+            <StudyGuides darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          } />
+          <Route path="/admin-support" element={
+            <ProtectedRoute allowedRoles={['admin', 'superAdmin']}>
+              <AdminSupport darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            </ProtectedRoute>
           } />
           
           <Route path="/profile" element={
