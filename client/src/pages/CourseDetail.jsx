@@ -17,7 +17,7 @@ import {
   Download
 } from 'lucide-react';
 import learningService from '../services/learningService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import Footer from '../components/common/Footer';
 import Navbar from '../components/common/Navbar';
 

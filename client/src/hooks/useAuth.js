@@ -21,8 +21,31 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Check token expiration
-      const tokenPayload = JSON.parse(atob(token.split('.')[1]))
+      // Check token expiration with better error handling
+      if (!token || typeof token !== 'string' || token.split('.').length !== 3) {
+        console.warn('Invalid token format');
+        return false;
+      }
+      
+      const tokenParts = token.split('.');
+      let tokenPayload;
+      
+      try {
+        // Add padding if necessary for base64 decoding
+        let base64Payload = tokenParts[1];
+        while (base64Payload.length % 4) {
+          base64Payload += '=';
+        }
+        tokenPayload = JSON.parse(atob(base64Payload));
+      } catch (parseError) {
+        console.error('Failed to parse JWT token:', parseError);
+        // Clear invalid token
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        return false;
+      }
+      
       const now = Math.floor(Date.now() / 1000)
       const timeUntilExpiry = tokenPayload.exp - now
 
@@ -59,7 +82,38 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   useEffect(() => {
+    // Clean up any corrupted localStorage data
+    const cleanupCorruptedData = () => {
+      try {
+        const token = localStorage.getItem('token');
+        const user = localStorage.getItem('user');
+        
+        // Check if user data is valid JSON
+        if (user) {
+          try {
+            JSON.parse(user);
+          } catch (e) {
+            console.warn('Corrupted user data detected, clearing...');
+            localStorage.removeItem('user');
+          }
+        }
+        
+        // Check if token is valid format
+        if (token && (typeof token !== 'string' || token.split('.').length !== 3)) {
+          console.warn('Corrupted token detected, clearing...');
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+        }
+      } catch (error) {
+        console.error('Error during localStorage cleanup:', error);
+      }
+    };
+    
     const initializeAuth = async () => {
+      // Clean up corrupted data first
+      cleanupCorruptedData();
+      
       const token = localStorage.getItem('token')
       if (token) {
         try {
