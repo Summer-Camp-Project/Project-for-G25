@@ -16,48 +16,65 @@ import {
 } from 'lucide-react';
 import learningService from '../services/learningService';
 import EducationalGames from '../components/learning/EducationalGames';
+import { useAuth } from '../hooks/useAuth';
 
-// Import educational images (working ones)
+// Import educational images from local assets
 import fourthHolyCityImg from '../assets/The Fourth Holy City of Islam.jpg';
 import ethiopianHistoryImg from '../assets/Ethiopian History Fundamentals.jpg';
+import geezScriptImg from '../assets/Ancient Ge\'ez Script and Manuscripts.jpg';
+import traditionalCraftsImg from '../assets/Traditional Ethiopian Arts and Crafts.jpg';
+import traditionalCrafts2Img from '../assets/Traditional Ethiopian Crafts.jpg';
+import orthodoxTraditionsImg from '../assets/Ethiopian Orthodox Traditions.jpg';
+import orthodoxChristianityImg from '../assets/Ethiopian Orthodox Christianity.jpg';
+import meskelFestivalImg from '../assets/Ethiopian Festivals and Celebrations.jpg';
+import musicImg from '../assets/Music and Dance of Ethiopia.jpg';
+import coffeeImg from '../assets/Ethiopian Coffee Culture.jpg';
+import architectureImg from '../assets/Ethiopian Architecture Through Ages.jpg';
+import cultureImg from '../assets/Cultural Traditions of Ethiopia.jpg';
+import traditionalMedicineImg from '../assets/Traditional Ethiopian Medicine.jpg';
+import modernEthiopiaImg from '../assets/Modern Ethiopia & Development.jpg';
+import archaeologicalImg from '../assets/Archaeological Wonders.jpg';
+import ethiopianLanguagesImg from '../assets/Ethiopian Languages and Scripts.jpg';
+import gondarImg from '../assets/Gonder.jpg';
+import lucyBoneImg from '../assets/Lucy-Bone.jpg';
+import coffeCeremonyImg from '../assets/coffee-ceremony.jpg';
 
-// Fallback images for undefined imports
-const traditionalCraftsImg = 'https://images.unsplash.com/photo-1594736797933-d0801ba2fe65?w=400&h=300&fit=crop&q=80';
-const meskelFestivalImg = 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80';
-const traditionalDanceImg = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80';
-const ethiopianCuisineImg = 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80';
-
-// Fallback images with unique images for each course
+// Function to get appropriate local images for each course
 const getEducationImage = (category, fallbackId) => {
   const specificImages = {
     // Ethiopian Scripts
-    'geez': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80',
+    'geez': geezScriptImg,
     
-    // Traditional Arts - Different images for each
-    'crafts': 'https://images.unsplash.com/photo-1594736797933-d0801ba2fe65?w=400&h=300&fit=crop&q=80',
-    'dance': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
-    'clothing': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=300&fit=crop&q=80',
-    'tribal': 'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=400&h=300&fit=crop&q=80',
-    'medicine': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&q=80',
+    // Traditional Arts - Using available images
+    'crafts': traditionalCraftsImg,
+    'dance': musicImg, // Using music image for dance
+    'clothing': traditionalCrafts2Img, // Using second crafts image for clothing
+    'tribal': cultureImg,
+    'medicine': traditionalMedicineImg,
     
-    // Religious Heritage
-    'orthodox': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&q=80',
+    // Religious Heritage - Using available variations
+    'orthodox': orthodoxTraditionsImg,
+    'orthodox2': orthodoxChristianityImg,
     
     // Cultural Festivals
-    'festivals': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80',
+    'festivals': meskelFestivalImg,
     
     // Culinary Heritage
-    'cuisine': 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80',
+    'cuisine': coffeeImg,
+    'coffee': coffeCeremonyImg,
     
     // Musical Heritage
-    'music': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
+    'music': musicImg,
     
     // Islamic Architecture
-    'architecture': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
+    'architecture': architectureImg,
     
-    // Natural and Modern Heritage
-    'highlands': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80',
-    'modern': 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop&q=80'
+    // Natural and Modern Heritage - Using available alternatives
+    'highlands': gondarImg, // Using Gondar for highlands
+    'modern': modernEthiopiaImg,
+    'archaeological': archaeologicalImg,
+    'languages': ethiopianLanguagesImg,
+    'lucy': lucyBoneImg
   };
   
   // Return specific image if fallbackId is provided and exists
@@ -65,27 +82,28 @@ const getEducationImage = (category, fallbackId) => {
     return specificImages[fallbackId];
   }
   
-  // Fallback to category-based images
+  // Fallback to category-based images using local assets
   const categoryImages = {
-    'Islamic Heritage': 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400&h=300&fit=crop&q=80',
-    'Islamic Architecture': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
-    'Ethiopian Scripts': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80',
-    'Traditional Arts': 'https://images.unsplash.com/photo-1594736797933-d0801ba2fe65?w=400&h=300&fit=crop&q=80',
-    'Religious Heritage': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&q=80',
-    'Cultural Festivals': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80',
-    'Culinary Heritage': 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80',
-    'Musical Heritage': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
-    'Cultural Heritage': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
-    'Traditional Knowledge': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&q=80',
-    'Natural Heritage': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80',
-    'Modern Heritage': 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop&q=80',
-    'default': 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=400&h=300&fit=crop&q=80'
+    'Islamic Heritage': ethiopianHistoryImg,
+    'Islamic Architecture': architectureImg,
+    'Ethiopian Scripts': geezScriptImg,
+    'Traditional Arts': traditionalCraftsImg,
+    'Religious Heritage': orthodoxTraditionsImg,
+    'Cultural Festivals': meskelFestivalImg,
+    'Culinary Heritage': coffeeImg,
+    'Musical Heritage': musicImg,
+    'Cultural Heritage': cultureImg,
+    'Traditional Knowledge': traditionalMedicineImg,
+    'Natural Heritage': gondarImg, // Using Gondar instead of non-existent highlands
+    'Modern Heritage': modernEthiopiaImg,
+    'default': ethiopianHistoryImg
   };
   
   return categoryImages[category] || categoryImages.default;
 };
 
 const Learning = () => {
+  const { user, isAuthenticated } = useAuth();
   const [courses, setCourses] = useState([]);
   const [progress, setProgress] = useState(null);
   const [achievements, setAchievements] = useState([]);
@@ -93,6 +111,7 @@ const Learning = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('courses');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     loadLearningData();
@@ -203,7 +222,7 @@ const Learning = () => {
           lessons: 14,
           rating: 4.8,
           enrolled: 1200,
-          image: getEducationImage('Culinary Heritage', 'cuisine')
+          image: coffeeImg
         },
         {
           id: 'heritage-9',
@@ -376,7 +395,7 @@ const Learning = () => {
           lessons: 18,
           rating: 4.8,
           enrolled: 720,
-          image: traditionalDanceImg
+          image: musicImg
         },
         {
           id: 'fallback-6',
@@ -388,13 +407,23 @@ const Learning = () => {
           lessons: 12,
           rating: 4.9,
           enrolled: 1100,
-          image: ethiopianCuisineImg
+          image: coffeeImg
         }
       ];
       setCourses(fallbackCourses);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle course start with authentication check
+  const handleStartCourse = (course) => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    // Redirect to course detail page for authenticated users
+    window.location.href = `/course/${course.id}`;
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -621,7 +650,10 @@ const Learning = () => {
                           <Users className="w-4 h-4 mr-1" />
                           {course.enrolled} enrolled
                         </div>
-                        <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center">
+                        <button 
+                          onClick={() => handleStartCourse(course)}
+                          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center"
+                        >
                           <Play className="w-4 h-4 mr-2" />
                           Start Course
                         </button>
@@ -801,6 +833,39 @@ const Learning = () => {
           </Link>
         </div>
       </section>
+      
+      {/* Authentication Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg p-8 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <GraduationCap className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold text-card-foreground mb-2">Sign In Required</h3>
+              <p className="text-muted-foreground">
+                Please sign in to start this course and track your progress.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <Link to="/auth">
+                <button 
+                  className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Sign In / Sign Up
+                </button>
+              </Link>
+              <button 
+                onClick={() => setShowAuthModal(false)}
+                className="w-full px-4 py-3 border border-border text-muted-foreground rounded-lg font-semibold hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,8 +8,14 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+// Import local assets for educational games
+import ethiopianHistoryImg from '../../assets/Ethiopian History Fundamentals.jpg';
+import coffeeImg from '../../assets/Ethiopian Coffee Culture.jpg';
+import archaeologicalImg from '../../assets/Archaeological Wonders.jpg';
+import festivalsImg from '../../assets/Ethiopian Festivals and Celebrations.jpg';
+
 const EducationalGames = () => {
-  // Simplified list of educational games with unique images
+  // Educational games using local heritage images
   const educationalGames = [
     {
       id: 1,
@@ -18,7 +24,7 @@ const EducationalGames = () => {
       category: 'history',
       difficulty: 'Medium',
       playTime: '15-20 min',
-      image: 'https://images.unsplash.com/photo-1566228015668-4c45dbc4e2f5?w=400&h=300&fit=crop&q=80',
+      image: ethiopianHistoryImg,
     },
     {
       id: 2,
@@ -27,16 +33,16 @@ const EducationalGames = () => {
       category: 'culture',
       difficulty: 'Easy',
       playTime: '5-10 min',
-      image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=300&fit=crop&q=80',
+      image: coffeeImg,
     },
     {
       id: 3,
-      title: 'Ethiopian Geography Challenge',
-      description: 'Explore the diverse landscapes of Ethiopia from highlands to lowlands in this interactive map game!',
-      category: 'geography',
+      title: 'Archaeological Treasures Hunt',
+      description: 'Discover Ethiopia\'s ancient archaeological wonders and unlock the secrets of the past!',
+      category: 'archaeology',
       difficulty: 'Medium',
       playTime: '10-15 min',
-      image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80',
+      image: archaeologicalImg,
     },
     {
       id: 4,
@@ -45,7 +51,7 @@ const EducationalGames = () => {
       category: 'memory',
       difficulty: 'Easy',
       playTime: '5-8 min',
-      image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80',
+      image: festivalsImg,
     }
   ];
 
