@@ -15,6 +15,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import learningService from '../services/learningService';
+import EducationalGames from '../components/learning/EducationalGames';
 
 // Import educational images (working ones)
 import fourthHolyCityImg from '../assets/The Fourth Holy City of Islam.jpg';
@@ -26,9 +27,46 @@ const meskelFestivalImg = 'https://images.unsplash.com/photo-1533174072545-7a4b6
 const traditionalDanceImg = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80';
 const ethiopianCuisineImg = 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80';
 
-// Fallback images for better display
+// Fallback images with unique images for each course
 const getEducationImage = (category, fallbackId) => {
-  const fallbackImages = {
+  const specificImages = {
+    // Ethiopian Scripts
+    'geez': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80',
+    
+    // Traditional Arts - Different images for each
+    'crafts': 'https://images.unsplash.com/photo-1594736797933-d0801ba2fe65?w=400&h=300&fit=crop&q=80',
+    'dance': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
+    'clothing': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=300&fit=crop&q=80',
+    'tribal': 'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=400&h=300&fit=crop&q=80',
+    'medicine': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&q=80',
+    
+    // Religious Heritage
+    'orthodox': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&q=80',
+    
+    // Cultural Festivals
+    'festivals': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80',
+    
+    // Culinary Heritage
+    'cuisine': 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80',
+    
+    // Musical Heritage
+    'music': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
+    
+    // Islamic Architecture
+    'architecture': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
+    
+    // Natural and Modern Heritage
+    'highlands': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80',
+    'modern': 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop&q=80'
+  };
+  
+  // Return specific image if fallbackId is provided and exists
+  if (fallbackId && specificImages[fallbackId]) {
+    return specificImages[fallbackId];
+  }
+  
+  // Fallback to category-based images
+  const categoryImages = {
     'Islamic Heritage': 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=400&h=300&fit=crop&q=80',
     'Islamic Architecture': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
     'Ethiopian Scripts': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80',
@@ -37,9 +75,14 @@ const getEducationImage = (category, fallbackId) => {
     'Cultural Festivals': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=300&fit=crop&q=80',
     'Culinary Heritage': 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=300&fit=crop&q=80',
     'Musical Heritage': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&q=80',
+    'Cultural Heritage': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop&q=80',
+    'Traditional Knowledge': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop&q=80',
+    'Natural Heritage': 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80',
+    'Modern Heritage': 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop&q=80',
     'default': 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=400&h=300&fit=crop&q=80'
   };
-  return fallbackImages[category] || fallbackImages.default;
+  
+  return categoryImages[category] || categoryImages.default;
 };
 
 const Learning = () => {
@@ -463,10 +506,11 @@ const Learning = () => {
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-4 mb-12 justify-center">
             {[
-              { id: 'courses', label: 'All Courses', icon: BookOpen },
+{ id: 'courses', label: 'All Courses', icon: BookOpen },
               { id: 'progress', label: 'My Progress', icon: Target },
               { id: 'achievements', label: 'Achievements', icon: Trophy },
-              { id: 'recommendations', label: 'Recommended', icon: Sparkles }
+              { id: 'recommendations', label: 'Recommended', icon: Sparkles },
+              { id: 'games', label: 'Educational Games', icon: GraduationCap }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -728,6 +772,13 @@ const Learning = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {/* Educational Games Tab */}
+          {activeTab === 'games' && (
+            <div>
+              <EducationalGames />
             </div>
           )}
         </div>

@@ -19,9 +19,8 @@ import UserTourPage from './components/pages/UserTourPage'
 import UserProfile from './pages/UserProfile'
 import Learning from './pages/Learning'
 import CourseDetail from './pages/CourseDetail'
-import Games from './pages/Games'
-import AdminSupport from './pages/AdminSupport'
-import Support from './pages/Support'
+import AdminSupport from './pages/AdminSupport';
+import Support from './pages/Support';
 import StudyGuides from './pages/StudyGuides'
 // Visitor specific pages
 import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
@@ -319,9 +318,6 @@ function App() {
           {/* New Educational Routes */}
           <Route path="/course/:courseId" element={
             <CourseDetail darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-          } />
-          <Route path="/games" element={
-            <Games darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
           } />
           <Route path="/support" element={
             <Support darkMode={darkMode} toggleDarkMode={toggleDarkMode} />

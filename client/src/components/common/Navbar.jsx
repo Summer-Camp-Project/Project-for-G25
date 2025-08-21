@@ -85,9 +85,6 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               <Link to="/learning" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
                 {t('navigation.education')}
               </Link>
-              <Link to="/games" className="text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors">
-                Games
-              </Link>
             </div>
           </div>
 
@@ -172,9 +169,6 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
               </Link>
               <Link to="/learning" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium" onClick={() => setIsMenuOpen(false)}>
                 {t('navigation.education')}
-              </Link>
-              <Link to="/games" className="text-foreground hover:text-primary block px-3 py-2 text-base font-medium" onClick={() => setIsMenuOpen(false)}>
-                Games
               </Link>
               <div className="flex items-center justify-between px-3 py-2">
                 <button
