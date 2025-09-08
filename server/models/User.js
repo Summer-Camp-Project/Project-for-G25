@@ -310,7 +310,7 @@ userSchema.virtual('isLocked').get(function() {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
-// Index for text search
+// Comprehensive text search index
 userSchema.index({
   name: 'text',
   firstName: 'text',
@@ -318,6 +318,24 @@ userSchema.index({
   email: 'text',
   'profile.bio': 'text'
 });
+
+// Additional performance indexes
+userSchema.index({ lastLogin: -1 }); // Recent logins
+userSchema.index({ loginCount: -1 }); // Active users
+userSchema.index({ isVerified: 1, isActive: 1 }); // Verified active users
+userSchema.index({ 'membership.type': 1 }); // Membership filtering
+userSchema.index({ 'stats.artifactsViewed': -1 }); // Most engaged users
+userSchema.index({ 'stats.eventsAttended': -1 }); // Event participants
+userSchema.index({ lockUntil: 1 }, { sparse: true }); // Locked accounts
+userSchema.index({ passwordResetToken: 1 }, { sparse: true }); // Password reset
+userSchema.index({ emailVerificationToken: 1 }, { sparse: true }); // Email verification
+userSchema.index({ deletedAt: 1 }, { sparse: true }); // Soft deleted users
+
+// Compound indexes for complex queries
+userSchema.index({ role: 1, museumId: 1, isActive: 1 }); // Museum staff lookup
+userSchema.index({ isActive: 1, isVerified: 1, role: 1 }); // Active verified users by role
+userSchema.index({ createdAt: -1, role: 1 }); // Recent users by role
+userSchema.index({ 'interests': 1, isActive: 1 }); // Users by interests
 
 // Pre-save middleware to hash password
 userSchema.pre('save', async function(next) {

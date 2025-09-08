@@ -5,6 +5,8 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const config = require('../config/env');
 const { sendEmail } = require('../utils/email');
+const dbUtils = require('../utils/dbUtils');
+const { dbUtils: connectionUtils } = require('../config/database');
 
 // Generate JWT Token
 const generateToken = (userId, role) => {

@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const http = require('http');
 const socketIo = require('socket.io');
 
-const connectDB = require('./config/database');
+const { connectDB, dbUtils } = require('./config/database');
 const config = require('./config/env');
 const NotificationSocketService = require('./services/notificationSocket');
 
@@ -135,12 +135,46 @@ app.use('/api/map', mapRoutes);
 app.use('/api/learning', learningRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'EthioHeritage360 Server is running',
-    timestamp: new Date().toISOString()
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Check database connection status
+    const dbStatus = dbUtils.getConnectionStatus();
+    const isDbConnected = dbUtils.isConnected();
+    
+    let dbStats = null;
+    if (isDbConnected) {
+      try {
+        dbStats = await dbUtils.getDbStats();
+      } catch (error) {
+        console.error('Error getting db stats:', error.message);
+      }
+    }
+    
+    const healthStatus = {
+      status: isDbConnected ? 'OK' : 'DEGRADED',
+      message: 'EthioHeritage360 Server is running',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        status: dbStatus,
+        connected: isDbConnected,
+        stats: dbStats
+      },
+      memory: process.memoryUsage(),
+      nodeVersion: process.version
+    };
+    
+    const statusCode = isDbConnected ? 200 : 503;
+    res.status(statusCode).json(healthStatus);
+    
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Health check failed',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
 });
 
 // Root endpoint
