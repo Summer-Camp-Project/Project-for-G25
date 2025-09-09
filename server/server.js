@@ -28,7 +28,7 @@ const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
 const learningRoutes = require('./routes/learning');
 // const usersRoutes = require('./routes/users');
-// const rentalsRoutes = require('./routes/rentals');
+const rentalsRoutes = require('./routes/rentals');
 
 // Import middleware
 const { errorHandler } = require('./utils/errorHandler');
@@ -118,7 +118,7 @@ app.set('notificationService', notificationSocketService);
 app.use('/api/auth', authRoutes);
 // Additional routes can be enabled as needed
 // app.use('/api/users', usersRoutes);
-// app.use('/api/rentals', rentalsRoutes);
+app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
