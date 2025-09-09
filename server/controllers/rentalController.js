@@ -848,3 +848,329 @@ exports.escalateToSuperAdmin = async (req, res) => {
     });
   }
 };
+
+// Missing methods for routes compatibility
+exports.getMuseumPendingRentals = async (req, res) => {
+  try {
+    const { museumId } = req.params;
+    
+    const pendingRentals = await Rental.find({
+      museum: museumId,
+      'approvals.museumAdmin.status': 'pending',
+      status: 'pending_review'
+    }).populate('artifact', 'name images')
+      .populate('renter', 'name email');
+
+    res.json({
+      success: true,
+      data: pendingRentals,
+      count: pendingRentals.length
+    });
+
+  } catch (error) {
+    console.error('Get museum pending rentals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch museum pending rentals',
+      error: error.message
+    });
+  }
+};
+
+exports.getSuperAdminPendingRentals = async (req, res) => {
+  try {
+    const pendingRentals = await Rental.findPendingSuperAdminApproval();
+
+    res.json({
+      success: true,
+      data: pendingRentals,
+      count: pendingRentals.length
+    });
+
+  } catch (error) {
+    console.error('Get super admin pending rentals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch super admin pending rentals',
+      error: error.message
+    });
+  }
+};
+
+// Placeholder methods for additional route functionality
+exports.activateRental = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const rental = await Rental.findById(id);
+    if (!rental) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental not found'
+      });
+    }
+
+    rental.status = 'active';
+    rental.actualDuration.startDate = new Date();
+    await rental.save();
+
+    await rental.addTimelineEntry('activated', 'Rental activated', req.user._id);
+
+    res.json({
+      success: true,
+      message: 'Rental activated successfully',
+      data: rental
+    });
+
+  } catch (error) {
+    console.error('Activate rental error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to activate rental',
+      error: error.message
+    });
+  }
+};
+
+exports.completeRental = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const rental = await Rental.findById(id);
+    if (!rental) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental not found'
+      });
+    }
+
+    rental.status = 'completed';
+    rental.actualDuration.endDate = new Date();
+    await rental.save();
+
+    await rental.addTimelineEntry('completed', 'Rental completed', req.user._id);
+
+    res.json({
+      success: true,
+      message: 'Rental completed successfully',
+      data: rental
+    });
+
+  } catch (error) {
+    console.error('Complete rental error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to complete rental',
+      error: error.message
+    });
+  }
+};
+
+exports.requestExtension = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Extension functionality not yet implemented'
+  });
+};
+
+exports.addMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, type = 'message' } = req.body;
+
+    const rental = await Rental.findById(id);
+    if (!rental) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental not found'
+      });
+    }
+
+    await rental.addCommunication(req.user._id, null, message, type);
+
+    res.json({
+      success: true,
+      message: 'Message added successfully'
+    });
+
+  } catch (error) {
+    console.error('Add message error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add message',
+      error: error.message
+    });
+  }
+};
+
+exports.getMessages = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const rental = await Rental.findById(id)
+      .populate('communications.from', 'name email')
+      .populate('communications.to', 'name email');
+
+    if (!rental) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rental.communications
+    });
+
+  } catch (error) {
+    console.error('Get messages error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch messages',
+      error: error.message
+    });
+  }
+};
+
+// Placeholder methods for document and other functionality
+exports.uploadDocument = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Document upload functionality not yet implemented'
+  });
+};
+
+exports.getDocuments = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Document retrieval functionality not yet implemented'
+  });
+};
+
+exports.addConditionReport = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Condition report functionality not yet implemented'
+  });
+};
+
+exports.getRentalTimeline = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const rental = await Rental.findById(id)
+      .populate('timeline.user', 'name email');
+
+    if (!rental) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rental.timeline
+    });
+
+  } catch (error) {
+    console.error('Get rental timeline error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch rental timeline',
+      error: error.message
+    });
+  }
+};
+
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus } = req.body;
+
+    const rental = await Rental.findById(id);
+    if (!rental) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental not found'
+      });
+    }
+
+    rental.pricing.paymentStatus = paymentStatus;
+    await rental.save();
+
+    await rental.addTimelineEntry('payment_updated', `Payment status updated to ${paymentStatus}`, req.user._id);
+
+    res.json({
+      success: true,
+      message: 'Payment status updated successfully',
+      data: rental
+    });
+
+  } catch (error) {
+    console.error('Update payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update payment status',
+      error: error.message
+    });
+  }
+};
+
+exports.getUserRentals = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const rentals = await Rental.find({ renter: userId })
+      .populate('artifact', 'name images')
+      .populate('museum', 'name location')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: rentals,
+      count: rentals.length
+    });
+
+  } catch (error) {
+    console.error('Get user rentals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user rentals',
+      error: error.message
+    });
+  }
+};
+
+exports.getArtifactRentals = async (req, res) => {
+  try {
+    const { artifactId } = req.params;
+
+    const rentals = await Rental.find({ artifact: artifactId })
+      .populate('renter', 'name email')
+      .populate('museum', 'name location')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: rentals,
+      count: rentals.length
+    });
+
+  } catch (error) {
+    console.error('Get artifact rentals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch artifact rentals',
+      error: error.message
+    });
+  }
+};
+
+exports.addReview = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Review functionality not yet implemented'
+  });
+};
