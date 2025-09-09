@@ -27,7 +27,9 @@ const virtualMuseumRoutes = require('./routes/virtualMuseum');
 const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
 const learningRoutes = require('./routes/learning');
-// const usersRoutes = require('./routes/users');
+const usersRoutes = require('./routes/users');
+const userRoutes = require('./routes/User');
+const visitorRoutes = require('./routes/visitor');
 // const rentalsRoutes = require('./routes/rentals');
 
 // Import middleware
@@ -62,9 +64,11 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
+  'http://localhost:5176',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
-  'http://127.0.0.1:5175'
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:5176'
 ];
 app.use(cors({
   origin: function (origin, callback) {
@@ -117,14 +121,15 @@ app.set('notificationService', notificationSocketService);
 // API Routes
 app.use('/api/auth', authRoutes);
 // Additional routes can be enabled as needed
-// app.use('/api/users', usersRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/visitor', visitorRoutes);
 // app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 // app.use('/api/museum', museumRoutes);
 app.use('/api/organizer', organizerRoutes);
-// app.use('/api/visitor', visitorRoutes);
 // app.use('/api/tours', toursRoutes);
 app.use('/api/tour-packages', tourPackageRoutes);
 app.use('/api/bookings', bookingRoutes);
