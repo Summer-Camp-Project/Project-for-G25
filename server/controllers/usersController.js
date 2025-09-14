@@ -235,9 +235,138 @@ const getUserStats = async (req, res) => {
   }
 };
 
+// Create stub functions for missing route handlers
+const createUser = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Create user functionality not implemented yet'
+  });
+};
+
+const deleteUser = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Delete user functionality not implemented yet'
+  });
+};
+
+const getUsersByMuseum = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Get users by museum functionality not implemented yet'
+  });
+};
+
+const activateUser = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Activate user functionality not implemented yet'
+  });
+};
+
+const deactivateUser = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Deactivate user functionality not implemented yet'
+  });
+};
+
+const changeUserRole = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Change user role functionality not implemented yet'
+  });
+};
+
+const updateUserPermissions = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Update user permissions functionality not implemented yet'
+  });
+};
+
+const assignUserToMuseum = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Assign user to museum functionality not implemented yet'
+  });
+};
+
+const getUserActivity = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Get user activity functionality not implemented yet'
+  });
+};
+
+const getUserBookmarks = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Get user bookmarks functionality not implemented yet'
+  });
+};
+
+const addBookmark = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Add bookmark functionality not implemented yet'
+  });
+};
+
+const removeBookmark = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Remove bookmark functionality not implemented yet'
+  });
+};
+
+const getFavoriteMuseums = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Get favorite museums functionality not implemented yet'
+  });
+};
+
+const addFavoriteMuseum = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Add favorite museum functionality not implemented yet'
+  });
+};
+
+const removeFavoriteMuseum = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Remove favorite museum functionality not implemented yet'
+  });
+};
+
+const updateUserPreferences = async (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Update user preferences functionality not implemented yet'
+  });
+};
+
 module.exports = {
-  getUsers,
-  getUserById,
+  getAllUsers: getUsers,
+  getUser: getUserById,
   updateUser,
-  getUserStats
+  getUserStats,
+  getUsersByMuseum,
+  createUser,
+  deleteUser,
+  activateUser,
+  deactivateUser,
+  changeUserRole,
+  updateUserPermissions,
+  assignUserToMuseum,
+  getUserActivity,
+  getUserBookmarks,
+  addBookmark,
+  removeBookmark,
+  getFavoriteMuseums,
+  addFavoriteMuseum,
+  removeFavoriteMuseum,
+  updateUserPreferences
 };

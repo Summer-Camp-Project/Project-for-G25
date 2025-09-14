@@ -8,7 +8,7 @@
 
 *A comprehensive digital platform for preserving, exploring, and sharing Ethiopia's rich cultural heritage through immersive virtual experiences, artifact management, and community engagement.*
 
-[🚀 **Live Demo**](https://ethioheritage360.com) • [📖 **Documentation**](./docs) • [🐛 **Report Bug**](https://github.com/Summer-Camp-Project/Project-for-G25/issues) • [✨ **Request Feature**](https://github.com/Summer-Camp-Project/Project-for-G25/issues)
+[🚀 **Live Demo**](https://ethioheritage360.com) • [📖 **Documentation**](./docs) • [🔧 **Setup Guide**](./docs/setup/) • [🗄️ **Database Docs**](./docs/database/) • [🐛 **Report Bug**](https://github.com/Summer-Camp-Project/Project-for-G25/issues) • [✨ **Request Feature**](https://github.com/Summer-Camp-Project/Project-for-G25/issues)
 
 ---
 
@@ -211,10 +211,15 @@ EthioHeritage360/
 │   ├── 📁 config/               # Configuration files
 │   ├── 📁 scripts/              # Database seeders
 │   └── 📄 server.js             # Main application file
-├── 📁 docs/                     # Documentation
-│   ├── 📄 API.md                # API documentation
-│   ├── 📄 SUPER_ADMIN_API.md    # Super Admin API guide
-│   └── 📁 images/               # README images
+├── 📁 docs/                     # 📚 Organized Documentation
+│   ├── 📄 README.md             # Documentation index
+│   ├── 📁 setup/                # 🚀 Setup & Installation guides
+│   ├── 📁 database/             # 🗄️ Database schemas & integration
+│   ├── 📁 admin/                # 👥 Admin management & credentials
+│   ├── 📁 features/             # 🎯 Feature specifications
+│   ├── 📁 development/          # 🛠️ API docs & development guides
+│   ├── 📁 troubleshooting/      # 🔧 Fixes & troubleshooting
+│   └── 📁 scripts/              # 📜 Automation scripts
 ├── 📁 scripts/                  # Build and deployment
 ├── 📄 docker-compose.yml       # Docker configuration
 ├── 📄 package.json             # Root dependencies
@@ -367,9 +372,19 @@ We welcome contributions! Please follow these steps:
 
 ## 📖 **API Documentation**
 
-- 📊 **Super Admin API**: [View Documentation](./server/docs/SUPER_ADMIN_API.md)
+### 📚 **Comprehensive Documentation**
+- 🏠 **Documentation Home**: [Browse All Docs](./docs/README.md)
+- 📊 **API Reference**: [Development Docs](./docs/development/api.md)
+- 🔧 **Setup Guides**: [Installation & Setup](./docs/setup/)
+- 🗄️ **Database**: [Database Documentation](./docs/database/)
+- 👥 **Admin Guides**: [Admin Management](./docs/admin/)
+- 🎯 **Features**: [Feature Specifications](./docs/features/)
+- 🔧 **Troubleshooting**: [Common Issues & Fixes](./docs/troubleshooting/)
+
+### 🛠️ **Development Resources**
 - 🏛️ **Museum Admin API**: Available in `/server/routes/museumAdmin.js`
 - 🔐 **Authentication API**: Available in `/server/routes/auth.js`
+- 📜 **Scripts**: [Automation Scripts](./docs/scripts/)
 
 ## 🐛 **Troubleshooting**
 
