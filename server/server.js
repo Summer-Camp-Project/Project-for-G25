@@ -16,7 +16,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const superAdminRoutes = require('./routes/superAdmin');
 // const museumAdminRoutes = require('./routes/museumAdmin');
-// const museumRoutes = require('./routes/museum');
+const museumRoutes = require('./routes/museums'); // Added museum management routes
 const organizerRoutes = require('./routes/organizer');
 // const visitorRoutes = require('./routes/visitor');
 // const toursRoutes = require('./routes/tours');
@@ -89,6 +89,9 @@ app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Static file serving for uploads
+app.use('/uploads', express.static('uploads'));
+
 // Logging middleware
 app.use(morgan('combined'));
 app.use(logger);
@@ -128,7 +131,7 @@ app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
-// app.use('/api/museum', museumRoutes);
+app.use('/api/museums', museumRoutes); // Added museum management API
 app.use('/api/organizer', organizerRoutes);
 // app.use('/api/tours', toursRoutes);
 app.use('/api/tour-packages', tourPackageRoutes);
@@ -200,6 +203,7 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       users: '/api/users',
+      museums: '/api/museums', // Added museums endpoint
       rentals: '/api/rentals',
       admin: '/api/admin',
       superAdmin: '/api/super-admin',

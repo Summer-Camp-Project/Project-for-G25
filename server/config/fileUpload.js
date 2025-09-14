@@ -80,8 +80,17 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath = 'uploads/';
     
-    // Determine upload path based on file field and type
-    if (file.fieldname === 'images' || file.fieldname === 'artifactImages') {
+    // Determine upload path based on file field and context
+    // Check URL to determine if it's a museum image upload
+    const isMuseumUpload = req.route && req.route.path.includes('/museums/');
+    
+    if (file.fieldname === 'images') {
+      if (isMuseumUpload) {
+        uploadPath = fileTypes.museumImages.destination;
+      } else {
+        uploadPath = fileTypes.images.destination;
+      }
+    } else if (file.fieldname === 'artifactImages') {
       uploadPath = fileTypes.images.destination;
     } else if (file.fieldname === 'model' || file.fieldname === 'model3D') {
       uploadPath = fileTypes.models.destination;
@@ -120,8 +129,16 @@ const fileFilter = (req, file, cb) => {
     
     let allowedTypes = null;
     
-    // Determine allowed types based on field name
-    if (file.fieldname === 'images' || file.fieldname === 'artifactImages') {
+    // Determine allowed types based on field name and context
+    const isMuseumUpload = req.route && req.route.path.includes('/museums/');
+    
+    if (file.fieldname === 'images') {
+      if (isMuseumUpload) {
+        allowedTypes = fileTypes.museumImages;
+      } else {
+        allowedTypes = fileTypes.images;
+      }
+    } else if (file.fieldname === 'artifactImages') {
       allowedTypes = fileTypes.images;
     } else if (file.fieldname === 'model' || file.fieldname === 'model3D') {
       allowedTypes = fileTypes.models;
@@ -372,6 +389,7 @@ module.exports = {
   modelUpload,
   documentUpload,
   museumUpload,
+  uploadMuseumImages: museumUpload, // Alias for museum routes
   eventUpload,
   staffUpload,
   dynamicUpload,
@@ -393,7 +411,7 @@ module.exports = {
       { name: 'documents', maxCount: 5 }
     ],
     museum: [
-      { name: 'museumImages', maxCount: 5 }
+      { name: 'images', maxCount: 10 } // Changed from 'museumImages' to 'images' to match route expectation
     ],
     event: [
       { name: 'eventImages', maxCount: 5 }

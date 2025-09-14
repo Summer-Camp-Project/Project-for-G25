@@ -427,14 +427,27 @@ const validateRental = [
 ];
 
 // ID parameter validation
-const validateObjectId = (paramName = 'id') => [
+const validateObjectId = (paramName = 'id', fieldName = 'ID') => [
   param(paramName)
     .custom(value => {
       if (!isValidObjectId(value)) {
-        throw new Error(`Invalid ${paramName}`);
+        throw new Error(`Invalid ${fieldName}`);
       }
       return true;
     })
+];
+
+// Pagination validation
+const validatePagination = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+    
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100')
 ];
 
 // Query parameter validation for search and filtering
@@ -497,6 +510,7 @@ module.exports = {
   
   // Parameter validation
   validateObjectId,
+  validatePagination,
   
   // Query validation
   validateSearchQuery,
