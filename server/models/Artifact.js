@@ -108,8 +108,34 @@ const artifactSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'pending-review', 'approved', 'published', 'archived'],
-    default: 'draft'
+    enum: ['on_display', 'in_storage', 'under_conservation', 'on_loan', 'draft', 'pending-review', 'approved', 'published', 'archived'],
+    default: 'in_storage'
+  },
+  
+  // Physical condition as per frontend requirements
+  condition: {
+    type: String,
+    enum: ['excellent', 'good', 'fair', 'fragile'],
+    default: 'good',
+    required: true
+  },
+  
+  // Display status
+  isOnDisplay: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Featured artifact flag
+  featured: {
+    type: Boolean,
+    default: false
+  },
+  
+  // Location within museum
+  location: {
+    type: String,
+    maxlength: [200, 'Location cannot be more than 200 characters']
   },
   visibility: {
     type: String,
