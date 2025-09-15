@@ -390,6 +390,8 @@ module.exports = {
   documentUpload,
   museumUpload,
   uploadMuseumImages: museumUpload, // Alias for museum routes
+  uploadArtifactImages: artifactUpload, // Alias for artifact image routes
+  upload3DModels: modelUpload, // Alias for 3D model routes
   eventUpload,
   staffUpload,
   dynamicUpload,

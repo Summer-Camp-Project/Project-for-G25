@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/admin');
 const superAdminRoutes = require('./routes/superAdmin');
 // const museumAdminRoutes = require('./routes/museumAdmin');
 const museumRoutes = require('./routes/museums'); // Added museum management routes
+const artifactRoutes = require('./routes/artifacts'); // Added artifact management routes
 const organizerRoutes = require('./routes/organizer');
 // const visitorRoutes = require('./routes/visitor');
 // const toursRoutes = require('./routes/tours');
@@ -132,6 +133,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 app.use('/api/museums', museumRoutes); // Added museum management API
+app.use('/api/artifacts', artifactRoutes); // Added artifact management API
 app.use('/api/organizer', organizerRoutes);
 // app.use('/api/tours', toursRoutes);
 app.use('/api/tour-packages', tourPackageRoutes);
@@ -204,6 +206,7 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       users: '/api/users',
       museums: '/api/museums', // Added museums endpoint
+      artifacts: '/api/artifacts', // Added artifacts endpoint
       rentals: '/api/rentals',
       admin: '/api/admin',
       superAdmin: '/api/super-admin',
