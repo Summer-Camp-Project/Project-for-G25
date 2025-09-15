@@ -12,7 +12,7 @@ const {
 } = require('../controllers/museums');
 
 // Middleware imports
-const { authenticate, authorize, checkMuseumAccess } = require('../middleware/auth');
+const { auth: authenticate, authorize, requireMuseumAccess: checkMuseumAccess } = require('../middleware/auth');
 const { 
   validateMuseum, 
   validateMuseumUpdate,

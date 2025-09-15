@@ -27,9 +27,9 @@ const virtualMuseumRoutes = require('./routes/virtualMuseum');
 const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
 const learningRoutes = require('./routes/learning');
-const usersRoutes = require('./routes/users');
-const userRoutes = require('./routes/User');
-const visitorRoutes = require('./routes/visitor');
+// const usersRoutes = require('./routes/users');
+// const userRoutes = require('./routes/User');
+// const visitorRoutes = require('./routes/visitor');
 const rentalsRoutes = require('./routes/rentals');
 
 // Import middleware
@@ -124,9 +124,9 @@ app.set('notificationService', notificationSocketService);
 // API Routes
 app.use('/api/auth', authRoutes);
 // Additional routes can be enabled as needed
-app.use('/api/users', usersRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/visitor', visitorRoutes);
+// app.use('/api/users', usersRoutes);
+// app.use('/api/user', userRoutes);
+// app.use('/api/visitor', visitorRoutes);
 app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);

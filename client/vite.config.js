@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5175,
+    port: 5173,
     host: true,
     hmr: {
       overlay: false
@@ -39,12 +39,26 @@ export default defineConfig({
     sourcemap: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom',
+      'axios',
+      '@mui/material',
+      '@mui/icons-material',
+      'i18next',
+      'react-i18next',
+      'i18next-browser-languagedetector',
+      'sonner'
+    ],
+    exclude: ['lucide-react'],
+    force: true,
     esbuildOptions: {
       loader: {
         '.js': 'jsx',
       },
-      sourcemap: true
+      sourcemap: false,
+      ignoreAnnotations: true
     },
   },
   resolve: {
