@@ -9,16 +9,17 @@ const dbUtils = require('../utils/dbUtils');
 const { dbUtils: connectionUtils } = require('../config/database');
 
 // Generate JWT Token
-const generateToken = (userId, role) => {
+const generateToken = (userId, role, museumId = null) => {
   const payload = {
     user: {
       id: userId,
-      role: role
+      role: role,
+      museumId: museumId
     }
   };
-  
-  return jwt.sign(payload, config.JWT_SECRET, { 
-    expiresIn: '7d' 
+
+  return jwt.sign(payload, config.JWT_SECRET, {
+    expiresIn: '7d'
   });
 };
 
@@ -41,7 +42,7 @@ const register = async (req, res) => {
       ...req.body,
       password: '[HIDDEN]'
     });
-    
+
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -56,7 +57,7 @@ const register = async (req, res) => {
     const { name, firstName, lastName, email, password, role, museumName, organizerCompany } = req.body;
     console.log('📝 BACKEND REGISTER: Extracted data:', {
       name,
-      firstName, 
+      firstName,
       lastName,
       email,
       role,
@@ -140,9 +141,9 @@ const register = async (req, res) => {
     await user.save();
 
     // Generate JWT token and refresh token
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.museumId);
     const refreshToken = generateRefreshToken(user._id);
-    
+
     // Store refresh token in user record
     user.refreshToken = refreshToken;
     await user.save();
@@ -175,7 +176,7 @@ const register = async (req, res) => {
         }))
       });
     }
-    
+
     // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({
@@ -239,7 +240,7 @@ const login = async (req, res) => {
     if (!isMatch) {
       // Increment login attempts
       await user.incLoginAttempts();
-      
+
       return res.status(400).json({
         success: false,
         message: 'Invalid email or password'
@@ -256,9 +257,9 @@ const login = async (req, res) => {
     await user.save();
 
     // Generate JWT token and refresh token
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.museumId);
     const refreshToken = generateRefreshToken(user._id);
-    
+
     // Store refresh token in user record
     user.refreshToken = refreshToken;
     await user.save();
@@ -297,7 +298,7 @@ const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .select('-password -loginAttempts -lockUntil -emailVerificationToken -passwordResetToken -passwordResetExpires');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -324,7 +325,7 @@ const getCurrentUser = async (req, res) => {
 const logout = async (req, res) => {
   try {
     const userId = req.user?.id;
-    
+
     // Clear refresh token from user record
     if (userId) {
       await User.findByIdAndUpdate(userId, {
@@ -332,7 +333,7 @@ const logout = async (req, res) => {
         lastLogout: new Date()
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Logout successful'
@@ -440,7 +441,7 @@ const forgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.passwordResetToken = resetToken;
     user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-    
+
     await user.save();
 
     // In a real application, you would send an email here
@@ -482,11 +483,11 @@ const resetPassword = async (req, res) => {
     user.password = password;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-    
+
     // Reset login attempts
     user.loginAttempts = 0;
     user.lockUntil = undefined;
-    
+
     await user.save();
 
     res.json({
@@ -509,7 +510,7 @@ const resetPassword = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const { name, phone, bio, address, preferences } = req.body;
-    
+
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
@@ -557,7 +558,7 @@ const updateProfile = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    
+
     const user = await User.findById(req.user.id).select('+password');
     if (!user) {
       return res.status(404).json({

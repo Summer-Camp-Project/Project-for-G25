@@ -8,20 +8,23 @@ const {
   listMuseums,
   uploadMuseumImages,
   deleteMuseumImage,
-  getMuseumStats
+  getMuseumStats,
+  getMuseumProfile,
+  updateMuseumProfile,
+  uploadMuseumLogo
 } = require('../controllers/museums');
 
 // Middleware imports
 const { auth: authenticate, authorize, requireMuseumAccess: checkMuseumAccess } = require('../middleware/auth');
-const { 
-  validateMuseum, 
+const {
+  validateMuseum,
   validateMuseumUpdate,
   validateObjectId,
-  validatePagination 
+  validatePagination
 } = require('../middleware/validation');
 
 // File upload configuration
-const { uploadMuseumImages: multerUpload } = require('../config/fileUpload');
+const { uploadMuseumImages: multerUpload, uploadMuseumLogo: multerLogoUpload } = require('../config/fileUpload');
 
 /**
  * @desc    Create a new museum
@@ -116,6 +119,40 @@ router.get('/:id/stats',
   validateObjectId('id', 'Museum ID'),
   authorize(['superAdmin', 'museumAdmin', 'staff']),
   getMuseumStats
+);
+
+/**
+ * @desc    Get museum profile (for museum admin's own museum)
+ * @route   GET /api/museums/profile
+ * @access  Private (museumAdmin, staff)
+ */
+router.get('/profile',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  getMuseumProfile
+);
+
+/**
+ * @desc    Update museum profile (for museum admin's own museum)
+ * @route   PUT /api/museums/profile
+ * @access  Private (museumAdmin, staff)
+ */
+router.put('/profile',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  updateMuseumProfile
+);
+
+/**
+ * @desc    Upload museum logo
+ * @route   POST /api/museums/profile/logo
+ * @access  Private (museumAdmin, staff)
+ */
+router.post('/profile/logo',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  multerLogoUpload.single('logo'),
+  uploadMuseumLogo
 );
 
 module.exports = router;

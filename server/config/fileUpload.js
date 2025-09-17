@@ -12,6 +12,7 @@ const createDirectories = () => {
     'uploads/artifacts/documents/',
     'uploads/museums/',
     'uploads/museums/images/',
+    'uploads/museums/logos/',
     'uploads/events/',
     'uploads/events/images/',
     'uploads/staff/',
@@ -61,6 +62,12 @@ const fileTypes = {
     maxSize: 5 * 1024 * 1024, // 5MB
     destination: 'uploads/museums/images/'
   },
+  museumLogos: {
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+    extensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    maxSize: 2 * 1024 * 1024, // 2MB
+    destination: 'uploads/museums/logos/'
+  },
   eventImages: {
     mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
     extensions: ['.jpg', '.jpeg', '.png', '.webp'],
@@ -79,11 +86,11 @@ const fileTypes = {
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath = 'uploads/';
-    
+
     // Determine upload path based on file field and context
     // Check URL to determine if it's a museum image upload
     const isMuseumUpload = req.route && req.route.path.includes('/museums/');
-    
+
     if (file.fieldname === 'images') {
       if (isMuseumUpload) {
         uploadPath = fileTypes.museumImages.destination;
@@ -98,18 +105,20 @@ const storage = multer.diskStorage({
       uploadPath = fileTypes.documents.destination;
     } else if (file.fieldname === 'museumImage' || file.fieldname === 'museumImages') {
       uploadPath = fileTypes.museumImages.destination;
+    } else if (file.fieldname === 'logo') {
+      uploadPath = fileTypes.museumLogos.destination;
     } else if (file.fieldname === 'eventImage' || file.fieldname === 'eventImages') {
       uploadPath = fileTypes.eventImages.destination;
     } else if (file.fieldname === 'avatar' || file.fieldname === 'staffAvatar') {
       uploadPath = fileTypes.staffAvatars.destination;
     }
-    
+
     // Create directory if it doesn't exist
     const fullPath = path.join(__dirname, '..', uploadPath);
     if (!fs.existsSync(fullPath)) {
       fs.mkdirSync(fullPath, { recursive: true });
     }
-    
+
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
@@ -126,12 +135,12 @@ const fileFilter = (req, file, cb) => {
   try {
     const ext = path.extname(file.originalname).toLowerCase();
     const mimetype = file.mimetype.toLowerCase();
-    
+
     let allowedTypes = null;
-    
+
     // Determine allowed types based on field name and context
     const isMuseumUpload = req.route && req.route.path.includes('/museums/');
-    
+
     if (file.fieldname === 'images') {
       if (isMuseumUpload) {
         allowedTypes = fileTypes.museumImages;
@@ -146,21 +155,23 @@ const fileFilter = (req, file, cb) => {
       allowedTypes = fileTypes.documents;
     } else if (file.fieldname === 'museumImage' || file.fieldname === 'museumImages') {
       allowedTypes = fileTypes.museumImages;
+    } else if (file.fieldname === 'logo') {
+      allowedTypes = fileTypes.museumLogos;
     } else if (file.fieldname === 'eventImage' || file.fieldname === 'eventImages') {
       allowedTypes = fileTypes.eventImages;
     } else if (file.fieldname === 'avatar' || file.fieldname === 'staffAvatar') {
       allowedTypes = fileTypes.staffAvatars;
     }
-    
+
     if (!allowedTypes) {
       return cb(new Error(`Unknown file field: ${file.fieldname}`), false);
     }
-    
+
     // Check file extension
     if (!allowedTypes.extensions.includes(ext)) {
       return cb(new Error(`Invalid file extension. Allowed: ${allowedTypes.extensions.join(', ')}`), false);
     }
-    
+
     // Check MIME type (more flexible for 3D models)
     if (file.fieldname === 'model' || file.fieldname === 'model3D') {
       // For 3D models, we're more lenient with MIME types as they can vary
@@ -174,7 +185,7 @@ const fileFilter = (req, file, cb) => {
         return cb(new Error(`Invalid file type. Allowed: ${allowedTypes.mimeTypes.join(', ')}`), false);
       }
     }
-    
+
     cb(null, true);
   } catch (error) {
     cb(error, false);
@@ -184,7 +195,7 @@ const fileFilter = (req, file, cb) => {
 // Size limits function
 const getLimits = (fieldname) => {
   let maxSize = 10 * 1024 * 1024; // Default 10MB
-  
+
   if (fieldname === 'images' || fieldname === 'artifactImages') {
     maxSize = fileTypes.images.maxSize;
   } else if (fieldname === 'model' || fieldname === 'model3D') {
@@ -193,12 +204,14 @@ const getLimits = (fieldname) => {
     maxSize = fileTypes.documents.maxSize;
   } else if (fieldname === 'museumImage' || fieldname === 'museumImages') {
     maxSize = fileTypes.museumImages.maxSize;
+  } else if (fieldname === 'logo') {
+    maxSize = fileTypes.museumLogos.maxSize;
   } else if (fieldname === 'eventImage' || fieldname === 'eventImages') {
     maxSize = fileTypes.eventImages.maxSize;
   } else if (fieldname === 'avatar' || fieldname === 'staffAvatar') {
     maxSize = fileTypes.staffAvatars.maxSize;
   }
-  
+
   return {
     fileSize: maxSize,
     files: 10, // Max 10 files per request
@@ -230,6 +243,12 @@ const museumUpload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: getLimits('museumImage')
+});
+
+const museumLogoUpload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: getLimits('logo')
 });
 
 const eventUpload = multer({
@@ -298,7 +317,7 @@ const handleUploadErrors = (error, req, res, next) => {
       code: 'VALIDATION_ERROR'
     });
   }
-  
+
   next();
 };
 
@@ -306,7 +325,7 @@ const handleUploadErrors = (error, req, res, next) => {
 const getFileUrl = (filename, type = 'images') => {
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   let path = '';
-  
+
   switch (type) {
     case 'images':
       path = '/uploads/artifacts/images/';
@@ -320,6 +339,9 @@ const getFileUrl = (filename, type = 'images') => {
     case 'museumImages':
       path = '/uploads/museums/images/';
       break;
+    case 'museumLogos':
+      path = '/uploads/museums/logos/';
+      break;
     case 'eventImages':
       path = '/uploads/events/images/';
       break;
@@ -329,14 +351,14 @@ const getFileUrl = (filename, type = 'images') => {
     default:
       path = '/uploads/';
   }
-  
+
   return `${baseUrl}${path}${filename}`;
 };
 
 const deleteFile = (filename, type = 'images') => {
   try {
     let filePath = '';
-    
+
     switch (type) {
       case 'images':
         filePath = path.join(__dirname, '..', fileTypes.images.destination, filename);
@@ -350,6 +372,9 @@ const deleteFile = (filename, type = 'images') => {
       case 'museumImages':
         filePath = path.join(__dirname, '..', fileTypes.museumImages.destination, filename);
         break;
+      case 'museumLogos':
+        filePath = path.join(__dirname, '..', fileTypes.museumLogos.destination, filename);
+        break;
       case 'eventImages':
         filePath = path.join(__dirname, '..', fileTypes.eventImages.destination, filename);
         break;
@@ -359,7 +384,7 @@ const deleteFile = (filename, type = 'images') => {
       default:
         return false;
     }
-    
+
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       return true;
@@ -389,22 +414,24 @@ module.exports = {
   modelUpload,
   documentUpload,
   museumUpload,
+  museumLogoUpload,
   uploadMuseumImages: museumUpload, // Alias for museum routes
+  uploadMuseumLogo: museumLogoUpload, // Alias for museum logo routes
   uploadArtifactImages: artifactUpload, // Alias for artifact image routes
   upload3DModels: modelUpload, // Alias for 3D model routes
   eventUpload,
   staffUpload,
   dynamicUpload,
-  
+
   // Middleware
   handleUploadErrors,
-  
+
   // Utilities
   getFileUrl,
   deleteFile,
   extractFileInfo,
   fileTypes,
-  
+
   // Field configurations for different upload types
   fields: {
     artifact: [

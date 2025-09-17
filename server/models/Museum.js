@@ -141,6 +141,28 @@ const museumSchema = new mongoose.Schema({
     hasParking: { type: Boolean, default: false },
     isWheelchairAccessible: { type: Boolean, default: false }
   },
+  // Additional profile fields
+  founded: {
+    type: String,
+    trim: true
+  },
+  capacity: {
+    type: Number,
+    min: [0, 'Capacity cannot be negative']
+  },
+  languages: [{
+    type: String,
+    trim: true
+  }],
+  facilities: [{
+    type: String,
+    trim: true
+  }],
+  logo: {
+    url: String,
+    filename: String,
+    uploadedAt: { type: Date, default: Date.now }
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -167,20 +189,20 @@ museumSchema.index({ 'location.city': 1, status: 1 }); // Museums by city
 museumSchema.index({ admin: 1, isActive: 1 }); // Admin's active museums
 
 // Virtual for staff count
-museumSchema.virtual('staffCount').get(function() {
+museumSchema.virtual('staffCount').get(function () {
   return this.staff ? this.staff.length : 0;
 });
 
 // Static methods
-museumSchema.statics.findByStatus = function(status) {
+museumSchema.statics.findByStatus = function (status) {
   return this.find({ status, isActive: true });
 };
 
-museumSchema.statics.findVerified = function() {
+museumSchema.statics.findVerified = function () {
   return this.find({ verified: true, isActive: true });
 };
 
-museumSchema.statics.findNearby = function(coordinates, maxDistance = 10000) {
+museumSchema.statics.findNearby = function (coordinates, maxDistance = 10000) {
   return this.find({
     'location.coordinates': {
       $near: {
@@ -195,25 +217,25 @@ museumSchema.statics.findNearby = function(coordinates, maxDistance = 10000) {
 };
 
 // Static method to search museums
-museumSchema.statics.search = function(searchTerm, filters = {}) {
+museumSchema.statics.search = function (searchTerm, filters = {}) {
   let query = { isActive: true };
-  
+
   if (searchTerm) {
     query.$text = { $search: searchTerm };
   }
-  
+
   // Apply filters
   if (filters.status) query.status = filters.status;
   if (filters.verified !== undefined) query.verified = filters.verified;
   if (filters.city) query['location.city'] = new RegExp(filters.city, 'i');
   if (filters.region) query['location.region'] = new RegExp(filters.region, 'i');
   if (filters.hasVirtualTour !== undefined) query['features.hasVirtualTour'] = filters.hasVirtualTour;
-  
+
   return this.find(query);
 };
 
 // Static method to get museum statistics
-museumSchema.statics.getGlobalStats = async function() {
+museumSchema.statics.getGlobalStats = async function () {
   const stats = await this.aggregate([
     {
       $group: {
@@ -234,59 +256,59 @@ museumSchema.statics.getGlobalStats = async function() {
       }
     }
   ]);
-  
+
   return stats[0] || {};
 };
 
 // Instance method to update statistics
-museumSchema.methods.updateStats = async function(statsUpdate) {
+museumSchema.methods.updateStats = async function (statsUpdate) {
   Object.assign(this.statistics, statsUpdate);
   this.statistics.lastVisitorUpdate = new Date();
   return await this.save();
 };
 
 // Instance method to add staff member
-museumSchema.methods.addStaff = async function(userId, role, permissions = []) {
+museumSchema.methods.addStaff = async function (userId, role, permissions = []) {
   // Check if user is already staff
   const existingStaff = this.staff.find(s => s.user.toString() === userId.toString());
   if (existingStaff) {
     throw new Error('User is already a staff member');
   }
-  
+
   this.staff.push({ user: userId, role, permissions });
   return await this.save();
 };
 
 // Instance method to remove staff member
-museumSchema.methods.removeStaff = async function(userId) {
+museumSchema.methods.removeStaff = async function (userId) {
   this.staff = this.staff.filter(s => s.user.toString() !== userId.toString());
   return await this.save();
 };
 
 // Instance method to update rating
-museumSchema.methods.updateRating = async function(newRating) {
+museumSchema.methods.updateRating = async function (newRating) {
   const currentCount = this.rating.count;
   const currentAverage = this.rating.average;
-  
+
   // Calculate new average
   const newCount = currentCount + 1;
   const newAverage = ((currentAverage * currentCount) + newRating) / newCount;
-  
+
   this.rating.average = Math.round(newAverage * 10) / 10; // Round to 1 decimal
   this.rating.count = newCount;
-  
+
   return await this.save();
 };
 
 // Instance method to check if museum is open
-museumSchema.methods.isOpenNow = function() {
+museumSchema.methods.isOpenNow = function () {
   const now = new Date();
   const dayName = now.toLocaleDateString('en', { weekday: 'lowercase' });
   const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-  
+
   const daySchedule = this.operatingHours[dayName];
   if (!daySchedule || daySchedule.closed) return false;
-  
+
   return currentTime >= daySchedule.open && currentTime <= daySchedule.close;
 };
 
@@ -307,7 +329,7 @@ museumSchema.virtual('bookingsCount', {
 });
 
 // Pre-save middleware to validate coordinates
-museumSchema.pre('save', function(next) {
+museumSchema.pre('save', function (next) {
   if (this.location && this.location.coordinates) {
     const [lng, lat] = this.location.coordinates;
     if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
@@ -318,25 +340,25 @@ museumSchema.pre('save', function(next) {
 });
 
 // Pre-save middleware to ensure only one primary image
-museumSchema.pre('save', function(next) {
+museumSchema.pre('save', function (next) {
   if (this.images && this.images.length > 0) {
     let primaryCount = 0;
     let lastPrimaryIndex = -1;
-    
+
     this.images.forEach((image, index) => {
       if (image.isPrimary) {
         primaryCount++;
         lastPrimaryIndex = index;
       }
     });
-    
+
     // If multiple primary images, keep only the last one
     if (primaryCount > 1) {
       this.images.forEach((image, index) => {
         image.isPrimary = index === lastPrimaryIndex;
       });
     }
-    
+
     // If no primary image, make the first one primary
     if (primaryCount === 0 && this.images.length > 0) {
       this.images[0].isPrimary = true;
@@ -346,7 +368,7 @@ museumSchema.pre('save', function(next) {
 });
 
 // Pre-remove middleware to clean up related data
-museumSchema.pre('remove', async function(next) {
+museumSchema.pre('remove', async function (next) {
   try {
     // Remove related artifacts, bookings, etc.
     // This would require importing the models, so we'll handle it in the controller

@@ -18,6 +18,7 @@ const superAdminRoutes = require('./routes/superAdmin');
 // const museumAdminRoutes = require('./routes/museumAdmin');
 const museumRoutes = require('./routes/museums'); // Added museum management routes
 const artifactRoutes = require('./routes/artifacts'); // Added artifact management routes
+const staffRoutes = require('./routes/staff'); // Added staff management routes
 const organizerRoutes = require('./routes/organizer');
 // const visitorRoutes = require('./routes/visitor');
 // const toursRoutes = require('./routes/tours');
@@ -140,6 +141,7 @@ app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 app.use('/api/museums', museumRoutes); // Added museum management API
 app.use('/api/artifacts', artifactRoutes); // Added artifact management API
+app.use('/api/staff', staffRoutes); // Added staff management API
 app.use('/api/organizer', organizerRoutes);
 // app.use('/api/tours', toursRoutes);
 app.use('/api/tour-packages', tourPackageRoutes);

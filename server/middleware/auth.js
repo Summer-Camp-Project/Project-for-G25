@@ -85,6 +85,11 @@ const auth = async (req, res, next) => {
       });
     }
 
+    // 3.5) Set museumId from JWT payload if available
+    if (decoded.user && decoded.user.museumId) {
+      currentUser.museumId = decoded.user.museumId;
+    }
+
     // 4) Check if user is active
     if (!currentUser.isActive) {
       return res.status(401).json({

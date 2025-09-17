@@ -55,7 +55,7 @@ const MOCK_USERS = [
     verified: true,
     createdAt: new Date().toISOString()
   },
-  
+
   // Museum Administrators (from ADMIN_CREDENTIALS.md)
   {
     id: 7,
@@ -97,7 +97,7 @@ const MOCK_USERS = [
     verified: true,
     createdAt: new Date().toISOString()
   },
-  
+
   // Tour Organizers
   {
     id: 11,
@@ -126,7 +126,7 @@ const MOCK_USERS = [
     verified: true,
     createdAt: new Date().toISOString()
   },
-  
+
   // Educators
   {
     id: 14,
@@ -146,7 +146,7 @@ const MOCK_USERS = [
     verified: true,
     createdAt: new Date().toISOString()
   },
-  
+
   // Visitors
   {
     id: 16,
@@ -704,7 +704,7 @@ const MOCK_CONTENT = [
     category: 'Royal Artifacts'
   },
   {
-    _id: '2', 
+    _id: '2',
     name: 'Ethiopian Heritage Virtual Tour',
     museum: 'National Museum',
     submittedAt: '2025-01-11',
@@ -715,7 +715,7 @@ const MOCK_CONTENT = [
   },
   {
     _id: '3',
-    name: 'Coffee Ceremony Workshop', 
+    name: 'Coffee Ceremony Workshop',
     museum: 'Ethnological Museum',
     submittedAt: '2025-01-10',
     status: 'rejected',
@@ -781,9 +781,9 @@ class MockApiClient {
 
   async login(credentials) {
     const { email, password } = credentials;
-    
+
     // Find user by email and password
-    const user = MOCK_USERS.find(u => 
+    const user = MOCK_USERS.find(u =>
       u.email === email && u.password === password
     );
 
@@ -885,7 +885,7 @@ class MockApiClient {
   }
 
   async getTours() {
-    return { 
+    return {
       success: true,
       data: MOCK_TOURS,
       tours: MOCK_TOURS,
@@ -900,7 +900,7 @@ class MockApiClient {
 
   async createTour(tourData) {
     await delay(500);
-    
+
     const newTour = {
       ...tourData,
       _id: (MOCK_TOURS.length + 1).toString(),
@@ -929,9 +929,9 @@ class MockApiClient {
         }]
       }
     };
-    
+
     MOCK_TOURS.push(newTour);
-    
+
     return {
       success: true,
       message: 'Tour created successfully',
@@ -967,12 +967,12 @@ class MockApiClient {
     if (role) {
       filteredUsers = MOCK_USERS.filter(user => user.role === role);
     }
-    
+
     const startIndex = (page - 1) * limit;
     const items = filteredUsers
       .slice(startIndex, startIndex + limit)
       .map(({ password: _, ...user }) => user);
-    
+
     return {
       items,
       total: filteredUsers.length,
@@ -983,13 +983,13 @@ class MockApiClient {
 
   async createUser(userData) {
     const { email, name, password, role = 'visitor', isActive = true } = userData;
-    
+
     // Check if user already exists
     const existingUser = MOCK_USERS.find(u => u.email === email);
     if (existingUser) {
       throw new Error('User already exists with this email');
     }
-    
+
     const newUser = {
       _id: (MOCK_USERS.length + 1).toString(),
       id: MOCK_USERS.length + 1,
@@ -1001,7 +1001,7 @@ class MockApiClient {
       verified: role !== 'visitor',
       createdAt: new Date().toISOString()
     };
-    
+
     MOCK_USERS.push(newUser);
     const { password: _, ...userWithoutPassword } = newUser;
     return { user: userWithoutPassword };
@@ -1012,12 +1012,12 @@ class MockApiClient {
     if (userIndex === -1) {
       throw new Error('User not found');
     }
-    
+
     // Don't update password if it's empty
     if (userData.password && userData.password.trim() === '') {
       delete userData.password;
     }
-    
+
     MOCK_USERS[userIndex] = { ...MOCK_USERS[userIndex], ...userData };
     const { password: _, ...userWithoutPassword } = MOCK_USERS[userIndex];
     return { user: userWithoutPassword };
@@ -1028,7 +1028,7 @@ class MockApiClient {
     if (userIndex === -1) {
       throw new Error('User not found');
     }
-    
+
     MOCK_USERS.splice(userIndex, 1);
     return { success: true, message: 'User deleted successfully' };
   }
@@ -1038,7 +1038,7 @@ class MockApiClient {
     if (userIndex === -1) {
       throw new Error('User not found');
     }
-    
+
     MOCK_USERS[userIndex].role = role;
     const { password: _, ...userWithoutPassword } = MOCK_USERS[userIndex];
     return { user: userWithoutPassword };
@@ -1060,7 +1060,7 @@ class MockApiClient {
         createdAt: new Date().toISOString()
       },
       {
-        _id: '2', 
+        _id: '2',
         name: 'Ethnological Museum',
         email: 'ethnomuseum@ethioheritage360.com',
         museumInfo: {
@@ -1073,7 +1073,7 @@ class MockApiClient {
       },
       {
         _id: '3',
-        name: 'Regional Heritage Center', 
+        name: 'Regional Heritage Center',
         email: 'heritage@center.com',
         museumInfo: {
           name: 'Regional Heritage Center',
@@ -1084,10 +1084,10 @@ class MockApiClient {
         createdAt: new Date().toISOString()
       }
     ];
-    
+
     const startIndex = (page - 1) * limit;
     const items = mockMuseums.slice(startIndex, startIndex + limit);
-    
+
     return {
       items,
       total: mockMuseums.length,
@@ -1172,15 +1172,15 @@ class MockApiClient {
         createdAt: new Date().toISOString()
       }
     ];
-    
+
     let filteredArtifacts = mockArtifacts;
     if (status) {
       filteredArtifacts = mockArtifacts.filter(artifact => artifact.status === status);
     }
-    
+
     const startIndex = (page - 1) * limit;
     const items = filteredArtifacts.slice(startIndex, startIndex + limit);
-    
+
     return {
       items,
       total: filteredArtifacts.length,
@@ -1253,7 +1253,7 @@ class MockApiClient {
         details: 'Successful login from IP: 192.168.1.1'
       },
       {
-        id: '2', 
+        id: '2',
         timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
         activity: 'Artifact uploaded',
         user: 'museum@example.com',
@@ -1269,10 +1269,10 @@ class MockApiClient {
         details: 'Heritage Center museum verified'
       }
     ];
-    
+
     const startIndex = (page - 1) * limit;
     const items = mockLogs.slice(startIndex, startIndex + limit);
-    
+
     return {
       logs: items,
       total: mockLogs.length,
@@ -1320,7 +1320,7 @@ class MockApiClient {
         ]
       }
     };
-    
+
     return mockAnalytics;
   }
 
@@ -1379,24 +1379,37 @@ class MockApiClient {
     return { success: true, message: 'Museum profile updated successfully' };
   }
 
+  async uploadMuseumLogo(logoFile) {
+    await delay(1000);
+    return {
+      success: true,
+      message: 'Logo uploaded successfully',
+      logo: {
+        url: 'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&h=300&fit=crop&crop=center',
+        filename: logoFile.name,
+        uploadedAt: new Date().toISOString()
+      }
+    };
+  }
+
   async getMuseumArtifacts({ page = 1, limit = 20, category, search } = {}) {
     let filteredArtifacts = [...MOCK_MUSEUM_ARTIFACTS];
-    
+
     if (category) {
       filteredArtifacts = filteredArtifacts.filter(artifact => artifact.category === category);
     }
-    
+
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredArtifacts = filteredArtifacts.filter(artifact => 
+      filteredArtifacts = filteredArtifacts.filter(artifact =>
         artifact.name.toLowerCase().includes(searchLower) ||
         artifact.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     const startIndex = (page - 1) * limit;
     const items = filteredArtifacts.slice(startIndex, startIndex + limit);
-    
+
     return {
       items,
       total: filteredArtifacts.length,
@@ -1419,7 +1432,7 @@ class MockApiClient {
   async updateMuseumArtifact(id, artifactData) {
     const index = MOCK_MUSEUM_ARTIFACTS.findIndex(a => a._id === id);
     if (index === -1) throw new Error('Artifact not found');
-    
+
     MOCK_MUSEUM_ARTIFACTS[index] = { ...MOCK_MUSEUM_ARTIFACTS[index], ...artifactData };
     return { artifact: MOCK_MUSEUM_ARTIFACTS[index] };
   }
@@ -1427,7 +1440,7 @@ class MockApiClient {
   async deleteMuseumArtifact(id) {
     const index = MOCK_MUSEUM_ARTIFACTS.findIndex(a => a._id === id);
     if (index === -1) throw new Error('Artifact not found');
-    
+
     MOCK_MUSEUM_ARTIFACTS.splice(index, 1);
     return { success: true, message: 'Artifact deleted successfully' };
   }
@@ -1436,8 +1449,8 @@ class MockApiClient {
     return {
       analytics: {
         visitors: { total: 12543, growth: 15.2 },
-        artifacts: { 
-          total: 247, 
+        artifacts: {
+          total: 247,
           popular: [
             { name: 'Ancient Ethiopian Crown', views: 1234 },
             { name: 'Traditional Coffee Set', views: 987 },
@@ -1475,11 +1488,11 @@ class MockApiClient {
         submittedAt: new Date('2025-01-08').toISOString()
       }
     ];
-    
+
     let filtered = status ? mockSubmissions.filter(s => s.status === status) : mockSubmissions;
     const startIndex = (page - 1) * limit;
     const items = filtered.slice(startIndex, startIndex + limit);
-    
+
     return { items, total: filtered.length, page, limit };
   }
 
@@ -1508,88 +1521,88 @@ class MockApiClient {
 
   async getVirtualExhibits({ search, category, museum } = {}) {
     let filtered = [...MOCK_VIRTUAL_EXHIBITS];
-    
+
     if (search) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(exhibit => 
+      filtered = filtered.filter(exhibit =>
         exhibit.title.toLowerCase().includes(searchLower) ||
         exhibit.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (category) {
       filtered = filtered.filter(exhibit => exhibit.category === category);
     }
-    
+
     if (museum) {
       filtered = filtered.filter(exhibit => exhibit.museum === museum);
     }
-    
+
     return { exhibits: filtered };
   }
 
   async getHeritageSites({ search, region } = {}) {
     let filtered = [...MOCK_HERITAGE_SITES];
-    
+
     if (search) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(site => 
+      filtered = filtered.filter(site =>
         site.name.toLowerCase().includes(searchLower) ||
         site.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (region) {
       filtered = filtered.filter(site => site.region === region);
     }
-    
+
     return { sites: filtered };
   }
 
   async getUserArtifacts({ page = 1, limit = 20, search, category, museum } = {}) {
     let filtered = [...MOCK_MUSEUM_ARTIFACTS.filter(a => a.status === 'approved')];
-    
+
     if (search) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(artifact => 
+      filtered = filtered.filter(artifact =>
         artifact.name.toLowerCase().includes(searchLower) ||
         artifact.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (category) {
       filtered = filtered.filter(artifact => artifact.category === category);
     }
-    
+
     if (museum) {
       filtered = filtered.filter(artifact => artifact.museum === museum);
     }
-    
+
     const startIndex = (page - 1) * limit;
     const items = filtered.slice(startIndex, startIndex + limit);
-    
+
     return { items, total: filtered.length, page, limit };
   }
 
   async getUpcomingEvents({ search, date, museum } = {}) {
     let filtered = [...MOCK_EVENTS];
-    
+
     if (search) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(event => 
+      filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchLower) ||
         event.description.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (date) {
       filtered = filtered.filter(event => event.date === date);
     }
-    
+
     if (museum) {
       filtered = filtered.filter(event => event.museum === museum);
     }
-    
+
     return { events: filtered };
   }
 

@@ -1,17 +1,23 @@
 import mockApi from './mockApi.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true' || import.meta.env.MODE === 'development'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL
     this.useMockAPI = USE_MOCK_API
     this.backendChecked = false
+    // Check backend availability on initialization
+    this.checkBackendAvailability()
   }
 
   async checkBackendAvailability() {
     if (this.backendChecked) return !this.useMockAPI
+
+    console.log('=== CHECKING BACKEND AVAILABILITY ===');
+    console.log('API Base URL:', this.baseURL);
+    console.log('Initial useMockAPI:', this.useMockAPI);
 
     try {
       const controller = new AbortController()
@@ -29,18 +35,19 @@ class ApiClient {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Backend connected:', data.message || 'Health check passed')
+        console.log('✅ Backend connected:', data.message || 'Health check passed')
         this.useMockAPI = false
       } else {
-        console.warn('Backend health check failed with status:', response.status)
+        console.warn('❌ Backend health check failed with status:', response.status)
         this.useMockAPI = true
       }
     } catch (error) {
-      console.warn('Backend not available, enabling mock API:', error.message)
+      console.warn('❌ Backend not available, enabling mock API:', error.message)
       this.useMockAPI = true
     }
 
     this.backendChecked = true
+    console.log('Final useMockAPI:', this.useMockAPI);
     return !this.useMockAPI
   }
 
@@ -553,6 +560,9 @@ class ApiClient {
 
   // Museum Admin endpoints
   async getMuseumProfile() {
+    // Force check backend availability before making the call
+    await this.checkBackendAvailability();
+
     if (this.useMockAPI) {
       return mockApi.getMuseumProfile()
     }
@@ -571,13 +581,51 @@ class ApiClient {
   }
 
   async updateMuseumProfile(profileData) {
+    console.log('=== UPDATE MUSEUM PROFILE API CALL ===');
+    console.log('Using mock API:', this.useMockAPI);
+    console.log('Profile data:', profileData);
+
+    // Force check backend availability before making the call
+    await this.checkBackendAvailability();
+
     if (this.useMockAPI) {
+      console.log('Using mock API for update');
       return mockApi.updateMuseumProfile(profileData)
     }
-    return this.request('/museum-admin/profile', {
+
+    console.log('Using real API for update');
+    return this.request('/museums/profile', {
       method: 'PUT',
       body: profileData,
     })
+  }
+
+  async uploadMuseumLogo(logoFile) {
+    if (this.useMockAPI) {
+      return mockApi.uploadMuseumLogo(logoFile)
+    }
+
+    const formData = new FormData()
+    formData.append('logo', logoFile)
+
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${this.baseURL}/museums/profile/logo`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      let message = 'Logo upload failed'
+      try {
+        const errJson = await response.json()
+        message = errJson?.error?.message || errJson?.message || message
+      } catch { }
+      throw new Error(message)
+    }
+    return response.json()
   }
 
   async getMuseumArtifacts({ page = 1, limit = 20, category, search } = {}) {
