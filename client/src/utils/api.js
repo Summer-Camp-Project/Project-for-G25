@@ -899,6 +899,34 @@ class ApiClient {
     })
   }
 
+  // Standard HTTP methods for general API usage
+  async get(url, params = {}) {
+    const queryString = Object.keys(params).length > 0 ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request(`${url}${queryString}`, {
+      method: 'GET'
+    });
+  }
+
+  async post(url, data = {}) {
+    return this.request(url, {
+      method: 'POST',
+      body: data
+    });
+  }
+
+  async put(url, data = {}) {
+    return this.request(url, {
+      method: 'PUT',
+      body: data
+    });
+  }
+
+  async delete(url) {
+    return this.request(url, {
+      method: 'DELETE'
+    });
+  }
+
   // File upload
   async uploadFile(file, type = 'image') {
     const formData = new FormData()
