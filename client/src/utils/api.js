@@ -12,11 +12,11 @@ class ApiClient {
 
   async checkBackendAvailability() {
     if (this.backendChecked) return !this.useMockAPI
-    
+
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 3000)
-      
+
       const response = await fetch(`${this.baseURL}/health`, {
         method: 'GET',
         signal: controller.signal,
@@ -24,9 +24,9 @@ class ApiClient {
           'Content-Type': 'application/json'
         }
       })
-      
+
       clearTimeout(timeoutId)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log('Backend connected:', data.message || 'Health check passed')
@@ -39,7 +39,7 @@ class ApiClient {
       console.warn('Backend not available, enabling mock API:', error.message)
       this.useMockAPI = true
     }
-    
+
     this.backendChecked = true
     return !this.useMockAPI
   }
@@ -47,7 +47,7 @@ class ApiClient {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`
     const token = localStorage.getItem('token')
-    
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -57,21 +57,31 @@ class ApiClient {
       ...options,
     }
 
-    if (config.body && typeof config.body === 'object') {
+    if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
       config.body = JSON.stringify(config.body)
     }
 
     try {
       const response = await fetch(url, config)
-      const data = await response.json()
+      let data
+
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        // If response is not JSON, use the text
+        data = { message: await response.text() }
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong')
+        // Extract more specific error message
+        const errorMessage = data?.error?.message || data?.message || `HTTP ${response.status}: ${response.statusText}`
+        console.error('API Error:', { url, status: response.status, error: data })
+        throw new Error(errorMessage)
       }
 
       return data
     } catch (error) {
-      console.error('API request failed:', error)
+      console.error('API request failed:', { url, error: error.message })
       throw error
     }
   }
@@ -79,24 +89,24 @@ class ApiClient {
   // Auth endpoints
   async login(credentials) {
     console.log('API Login attempt with credentials:', { email: credentials.email, password: '***' })
-    
+
     try {
       await this.checkBackendAvailability()
-      
+
       if (this.useMockAPI) {
         console.log('Using mock API for login')
         return mockApi.login(credentials)
       }
-      
+
       console.log('Using real backend for login')
       const result = await this.request('/auth/login', {
         method: 'POST',
         body: credentials,
       })
-      
+
       console.log('Login successful:', { success: result.success, hasToken: !!result.token, hasUser: !!result.user })
       return result
-      
+
     } catch (error) {
       console.error('Login failed, falling back to mock API:', error.message)
       // Fallback to mock API if backend fails
@@ -115,20 +125,20 @@ class ApiClient {
       ...userData,
       password: '[HIDDEN]'
     })
-    
+
     await this.checkBackendAvailability()
-    
+
     if (this.useMockAPI) {
       console.log('🔄 API REGISTER: Using mock API')
       return mockApi.register(userData)
     }
-    
+
     console.log('🔄 API REGISTER: Using real backend')
     const result = await this.request('/auth/register', {
       method: 'POST',
       body: userData,
     })
-    
+
     console.log('✅ API REGISTER: Backend response:', {
       success: result?.success,
       hasToken: !!result?.token,
@@ -136,7 +146,7 @@ class ApiClient {
       userRole: result?.user?.role,
       userName: result?.user?.name || result?.user?.firstName
     })
-    
+
     return result
   }
 
@@ -144,7 +154,7 @@ class ApiClient {
     if (this.useMockAPI) {
       return mockApi.logout()
     }
-    
+
     return this.request('/auth/logout', {
       method: 'POST',
     })
@@ -159,7 +169,7 @@ class ApiClient {
       }
       throw new Error('No valid session')
     }
-    
+
     return this.request('/auth/refresh', {
       method: 'POST',
       body: { refreshToken }
@@ -172,9 +182,9 @@ class ApiClient {
         const token = localStorage.getItem('token')
         return mockApi.getCurrentUser(token)
       }
-      
+
       const result = await this.request('/auth/me')
-      
+
       // Ensure we return the expected structure
       if (result && typeof result === 'object') {
         // If the result already has a 'user' property, return as-is
@@ -186,21 +196,21 @@ class ApiClient {
           return { user: result }
         }
       }
-      
+
       // If we get here, the result is unexpected
       console.warn('Unexpected response structure from getCurrentUser:', result)
       return { user: null }
-      
+
     } catch (error) {
       console.error('getCurrentUser failed:', error)
-      
+
       // If token is invalid, clear it and throw error
       if (error.message.includes('Token is not valid') || error.message.includes('invalid token')) {
         console.warn('Invalid token detected, clearing localStorage')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
       }
-      
+
       // Try fallback to mock API if real API fails
       try {
         const token = localStorage.getItem('token')
@@ -210,68 +220,150 @@ class ApiClient {
       } catch (mockError) {
         console.error('Mock API fallback also failed:', mockError)
       }
-      
+
       throw error
     }
   }
 
 
-  // Museum endpoints
+  // Museum endpoints (align with backend /api/museums)
   async getMuseums() {
-    return this.request('/museum')
+    return this.request('/museums')
   }
 
   async getMuseumById(id) {
-    return this.request(`/museum/${id}`)
+    return this.request(`/museums/${id}`)
   }
 
   async createMuseum(museumData) {
-    return this.request('/museum', {
+    return this.request('/museums', {
       method: 'POST',
       body: museumData,
     })
   }
 
   async updateMuseum(id, museumData) {
-    return this.request(`/museum/${id}`, {
+    return this.request(`/museums/${id}`, {
       method: 'PUT',
       body: museumData,
     })
   }
 
   async deleteMuseum(id) {
-    return this.request(`/museum/${id}`, {
+    return this.request(`/museums/${id}`, {
       method: 'DELETE',
     })
   }
 
-  // Artifact endpoints
+  // Artifact endpoints (align with backend /api/artifacts)
   async getArtifacts(filters = {}) {
     const queryParams = new URLSearchParams(filters).toString()
-    return this.request(`/virtual-museum/artifacts${queryParams ? `?${queryParams}` : ''}`)
+    return this.request(`/artifacts${queryParams ? `?${queryParams}` : ''}`)
   }
 
   async getArtifactById(id) {
-    return this.request(`/virtual-museum/artifacts/${id}`)
+    return this.request(`/artifacts/${id}`)
   }
 
   async createArtifact(artifactData) {
-    return this.request('/virtual-museum/artifacts', {
+    return this.request('/artifacts', {
       method: 'POST',
       body: artifactData,
     })
   }
 
   async updateArtifact(id, artifactData) {
-    return this.request(`/virtual-museum/artifacts/${id}`, {
+    return this.request(`/artifacts/${id}`, {
       method: 'PUT',
       body: artifactData,
     })
   }
 
   async deleteArtifact(id) {
-    return this.request(`/virtual-museum/artifacts/${id}`, {
+    return this.request(`/artifacts/${id}`, {
       method: 'DELETE',
+    })
+  }
+
+  async uploadArtifactImages(id, images) {
+    const formData = new FormData()
+    images.forEach((file) => formData.append('images', file))
+
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${this.baseURL}/artifacts/${id}/images`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      let message = 'Image upload failed'
+      try {
+        const errJson = await response.json()
+        message = errJson?.error?.message || errJson?.message || message
+      } catch { }
+      throw new Error(message)
+    }
+    return response.json()
+  }
+
+  async updateArtifactImages(id, images) {
+    const formData = new FormData()
+    images.forEach((file) => formData.append('images', file))
+
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${this.baseURL}/artifacts/${id}/images`, {
+      method: 'PUT',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      let message = 'Image update failed'
+      try {
+        const errJson = await response.json()
+        message = errJson?.error?.message || errJson?.message || message
+      } catch { }
+      throw new Error(message)
+    }
+    return response.json()
+  }
+
+  async uploadArtifactModel(id, modelFile) {
+    const formData = new FormData()
+    formData.append('model', modelFile)
+
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${this.baseURL}/artifacts/${id}/model`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const err = await response.text().catch(() => '')
+      throw new Error(err || '3D model upload failed')
+    }
+    return response.json()
+  }
+
+  async updateArtifactStatus(id, status) {
+    return this.request(`/artifacts/${id}/status`, {
+      method: 'PUT',
+      body: { status },
+    })
+  }
+
+  async toggleArtifactFeatured(id, featured) {
+    return this.request(`/artifacts/${id}/featured`, {
+      method: 'PUT',
+      body: { featured },
     })
   }
 
@@ -464,7 +556,18 @@ class ApiClient {
     if (this.useMockAPI) {
       return mockApi.getMuseumProfile()
     }
-    return this.request('/museum-admin/profile')
+    // Try to get current user first, then extract museum info
+    try {
+      const userData = await this.getCurrentUser()
+      if (userData?.user?.museumId) {
+        const museum = await this.getMuseumById(userData.user.museumId)
+        return { museum }
+      }
+      return { museum: null }
+    } catch (error) {
+      console.warn('Could not get museum profile:', error.message)
+      return { museum: null }
+    }
   }
 
   async updateMuseumProfile(profileData) {
@@ -755,7 +858,7 @@ class ApiClient {
     formData.append('type', type)
 
     const token = localStorage.getItem('token')
-    
+
     const response = await fetch(`${this.baseURL}/upload`, {
       method: 'POST',
       headers: {

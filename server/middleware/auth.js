@@ -13,7 +13,7 @@ const signToken = (id) => {
 // Create and send token response
 const createSendToken = (user, statusCode, res, message = 'Success') => {
   const token = signToken(user._id);
-  
+
   const cookieOptions = {
     expires: new Date(
       Date.now() + (process.env.JWT_COOKIE_EXPIRES_IN || 7) * 24 * 60 * 60 * 1000
@@ -77,7 +77,7 @@ const auth = async (req, res, next) => {
 
     // 3) Check if user still exists - handle both payload structures
     const userId = decoded.user ? decoded.user.id : decoded.id;
-    const currentUser = await User.findById(userId).select('+password');
+    const currentUser = await User.findById(userId).select('+password +museumId');
     if (!currentUser) {
       return res.status(401).json({
         success: false,
@@ -116,7 +116,7 @@ const auth = async (req, res, next) => {
         message: 'Token expired. Please log in again.'
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       message: 'Authentication error',
@@ -141,12 +141,12 @@ const optionalAuth = async (req, res, next) => {
 
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
     const userId = decoded.user ? decoded.user.id : decoded.id;
-    const currentUser = await User.findById(userId);
-    
+    const currentUser = await User.findById(userId).select('+museumId');
+
     if (currentUser && currentUser.isActive && !currentUser.isLocked) {
       req.user = currentUser;
     }
-    
+
     next();
   } catch (error) {
     // If token verification fails, just continue without user
@@ -157,14 +157,14 @@ const optionalAuth = async (req, res, next) => {
 // Role-based authorization middleware
 const authorize = (...roles) => {
   return (req, res, next) => {
+    // If no user is present, allow access (for optional auth scenarios)
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
+      return next();
     }
 
-    if (!roles.includes(req.user.role)) {
+    const userRole = (req.user.role || '').toLowerCase();
+    const allowed = roles.map(r => (r || '').toLowerCase());
+    if (!allowed.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Insufficient permissions.'
@@ -191,7 +191,7 @@ const requirePermission = (...permissions) => {
     }
 
     // Check if user has at least one of the required permissions
-    const hasPermission = permissions.some(permission => 
+    const hasPermission = permissions.some(permission =>
       req.user.hasPermission(permission)
     );
 
@@ -218,7 +218,7 @@ const requireMuseumAccess = (req, res, next) => {
   }
 
   const museumId = req.params.museumId || req.body.museumId || req.query.museumId;
-  
+
   if (!museumId) {
     return res.status(400).json({
       success: false,
@@ -279,7 +279,7 @@ const requireAdminOrSelf = (req, res, next) => {
   }
 
   const targetUserId = req.params.userId || req.params.id;
-  
+
   // Admin can access anything
   if (['superAdmin', 'museumAdmin'].includes(req.user.role)) {
     return next();
@@ -301,25 +301,25 @@ module.exports = {
   // Core authentication
   auth,
   optionalAuth,
-  
+
   // Authorization
   authorize,
   requirePermission,
   requireMuseumAccess,
   requireVerification,
   requireAdminOrSelf,
-  
+
   // Utility functions
   signToken,
   createSendToken,
-  
+
   // Role constants
   ROLES: {
     SUPER_ADMIN: 'superAdmin',
     MUSEUM_ADMIN: 'museumAdmin',
     USER: 'user'
   },
-  
+
   // Permission constants
   PERMISSIONS: {
     // Super Admin Permissions
@@ -332,7 +332,7 @@ module.exports = {
     APPROVE_HIGH_VALUE_RENTALS: 'approve_high_value_rentals',
     MANAGE_API_KEYS: 'manage_api_keys',
     VIEW_AUDIT_LOGS: 'view_audit_logs',
-    
+
     // Museum Admin Permissions
     MANAGE_MUSEUM_PROFILE: 'manage_museum_profile',
     MANAGE_MUSEUM_STAFF: 'manage_museum_staff',
@@ -342,7 +342,7 @@ module.exports = {
     VIEW_MUSEUM_ANALYTICS: 'view_museum_analytics',
     SUGGEST_HERITAGE_SITES: 'suggest_heritage_sites',
     MANAGE_VIRTUAL_MUSEUM: 'manage_virtual_museum',
-    
+
     // User/Visitor Permissions
     BOOK_EVENTS: 'book_events',
     REQUEST_RENTALS: 'request_rentals',

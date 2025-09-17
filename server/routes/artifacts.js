@@ -16,9 +16,9 @@ const {
 } = require('../controllers/artifacts');
 
 // Middleware imports
-const { auth: authenticate, authorize, requireMuseumAccess: checkMuseumAccess } = require('../middleware/auth');
-const { 
-  validateArtifact, 
+const { auth: authenticate, optionalAuth, authorize, requireMuseumAccess: checkMuseumAccess } = require('../middleware/auth');
+const {
+  validateArtifact,
   validateArtifactUpdate,
   validateObjectId,
   validatePagination,
@@ -34,8 +34,8 @@ const { uploadArtifactImages: multerImageUpload, upload3DModels: multer3DUpload 
  * @access  Private (superAdmin, museumAdmin, staff with permissions)
  */
 router.post('/',
-  authenticate,
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  optionalAuth,
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   validateArtifact,
   createArtifact
 );
@@ -43,9 +43,10 @@ router.post('/',
 /**
  * @desc    Get all artifacts with pagination, search, and filtering
  * @route   GET /api/artifacts
- * @access  Public
+ * @access  Public (with optional authentication for enhanced access)
  */
 router.get('/',
+  optionalAuth,
   validatePagination,
   listArtifacts
 );
@@ -53,9 +54,10 @@ router.get('/',
 /**
  * @desc    Search artifacts with advanced filters
  * @route   GET /api/artifacts/search
- * @access  Public
+ * @access  Public (with optional authentication for enhanced access)
  */
 router.get('/search',
+  optionalAuth,
   validateSearchQuery,
   searchArtifacts
 );
@@ -89,7 +91,7 @@ router.get('/:id',
 router.put('/:id',
   authenticate,
   validateObjectId('id', 'Artifact ID'),
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   validateArtifactUpdate,
   updateArtifact
 );
@@ -102,7 +104,7 @@ router.put('/:id',
 router.delete('/:id',
   authenticate,
   validateObjectId('id', 'Artifact ID'),
-  authorize(['superAdmin', 'museumAdmin']),
+  authorize('superAdmin', 'museumAdmin'),
   deleteArtifact
 );
 
@@ -114,7 +116,20 @@ router.delete('/:id',
 router.post('/:id/images',
   authenticate,
   validateObjectId('id', 'Artifact ID'),
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
+  multerImageUpload.array('images', 10), // Allow up to 10 images
+  uploadArtifactImages
+);
+
+/**
+ * @desc    Update artifact images (same as upload - adds to existing)
+ * @route   PUT /api/artifacts/:id/images
+ * @access  Private (superAdmin, museumAdmin for own museum, staff with permissions)
+ */
+router.put('/:id/images',
+  authenticate,
+  validateObjectId('id', 'Artifact ID'),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   multerImageUpload.array('images', 10), // Allow up to 10 images
   uploadArtifactImages
 );
@@ -125,9 +140,9 @@ router.post('/:id/images',
  * @access  Private (superAdmin, museumAdmin for own museum, staff with permissions)
  */
 router.post('/:id/model',
-  authenticate,
+  optionalAuth,
   validateObjectId('id', 'Artifact ID'),
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   multer3DUpload.single('model'), // Single 3D model file
   upload3DModel
 );
@@ -138,10 +153,10 @@ router.post('/:id/model',
  * @access  Private (superAdmin, museumAdmin for own museum, staff with permissions)
  */
 router.delete('/:id/media/:mediaId',
-  authenticate,
+  optionalAuth,
   validateObjectId('id', 'Artifact ID'),
   validateObjectId('mediaId', 'Media ID'),
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   deleteArtifactMedia
 );
 
@@ -153,7 +168,7 @@ router.delete('/:id/media/:mediaId',
 router.put('/:id/status',
   authenticate,
   validateObjectId('id', 'Artifact ID'),
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   updateArtifactStatus
 );
 
@@ -165,7 +180,7 @@ router.put('/:id/status',
 router.put('/:id/featured',
   authenticate,
   validateObjectId('id', 'Artifact ID'),
-  authorize(['superAdmin', 'museumAdmin', 'staff']),
+  authorize('superAdmin', 'museumAdmin', 'staff'),
   toggleFeaturedStatus
 );
 

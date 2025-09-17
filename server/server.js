@@ -90,8 +90,14 @@ app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static file serving for uploads
-app.use('/uploads', express.static('uploads'));
+// Static file serving for uploads with CORS headers
+app.use('/uploads', (req, res, next) => {
+  // Set CORS headers for static files
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static('uploads'));
 
 // Logging middleware
 app.use(morgan('combined'));
@@ -103,16 +109,16 @@ const notificationSocketService = new NotificationSocketService(io);
 // Socket.IO connection handling for chat (keep existing functionality)
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
-  
+
   socket.on('join-chat', (userId) => {
     socket.join(`user-${userId}`);
     console.log(`User ${userId} joined chat`);
   });
-  
+
   socket.on('send-message', (data) => {
     io.to(`user-${data.userId}`).emit('new-message', data);
   });
-  
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
@@ -150,7 +156,7 @@ app.get('/api/health', async (req, res) => {
     // Check database connection status
     const dbStatus = dbUtils.getConnectionStatus();
     const isDbConnected = dbUtils.isConnected();
-    
+
     let dbStats = null;
     if (isDbConnected) {
       try {
@@ -159,7 +165,7 @@ app.get('/api/health', async (req, res) => {
         console.error('Error getting db stats:', error.message);
       }
     }
-    
+
     const healthStatus = {
       status: isDbConnected ? 'OK' : 'DEGRADED',
       message: 'EthioHeritage360 Server is running',
@@ -173,10 +179,10 @@ app.get('/api/health', async (req, res) => {
       memory: process.memoryUsage(),
       nodeVersion: process.version
     };
-    
+
     const statusCode = isDbConnected ? 200 : 503;
     res.status(statusCode).json(healthStatus);
-    
+
   } catch (error) {
     res.status(500).json({
       status: 'ERROR',

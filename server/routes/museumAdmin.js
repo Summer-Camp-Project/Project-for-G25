@@ -277,7 +277,7 @@ router.get('/quick-stats', async (req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const { q, type = 'all' } = req.query;
-    
+
     if (!q || q.trim().length < 2) {
       return res.status(400).json({
         success: false,
@@ -310,9 +310,9 @@ router.get('/search', async (req, res) => {
           { accessionNumber: searchQuery }
         ]
       })
-      .limit(10)
-      .select('name description accessionNumber status category media')
-      .populate('createdBy', 'name');
+        .limit(10)
+        .select('name description accessionNumber status category media')
+        .populate('createdBy', 'name');
     }
 
     if (type === 'all' || type === 'rentals') {
@@ -326,9 +326,9 @@ router.get('/search', async (req, res) => {
           { museum: museum._id, artifact: { $in: artifacts.map(a => a._id) } }
         ]
       })
-      .limit(10)
-      .populate('artifact', 'name accessionNumber')
-      .populate('renter', 'name email');
+        .limit(10)
+        .populate('artifact', 'name accessionNumber')
+        .populate('renter', 'name email');
     }
 
     if (type === 'all' || type === 'staff') {
@@ -340,8 +340,8 @@ router.get('/search', async (req, res) => {
           { email: searchQuery }
         ]
       })
-      .limit(10)
-      .select('name email profile');
+        .limit(10)
+        .select('name email profile');
     }
 
     res.json({

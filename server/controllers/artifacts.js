@@ -11,6 +11,15 @@ const { validationResult } = require('express-validator');
  */
 exports.createArtifact = async (req, res) => {
   try {
+    console.log('=== CREATE ARTIFACT DEBUG ===');
+    console.log('Request user:', req.user ? {
+      id: req.user._id,
+      role: req.user.role,
+      museumId: req.user.museumId,
+      email: req.user.email
+    } : 'No user');
+    console.log('Request body:', req.body);
+
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -27,8 +36,36 @@ exports.createArtifact = async (req, res) => {
     // Extract artifact data from request body
     const artifactData = {
       ...req.body,
-      createdBy: req.user.id
+      createdBy: req.user?.id || req.user?._id || null
     };
+
+    // Normalize basic fields coming from UI
+    if (artifactData.period && typeof artifactData.period === 'string') {
+      artifactData.period = { era: artifactData.period };
+    }
+    if (artifactData.origin && typeof artifactData.origin === 'string') {
+      artifactData.origin = { region: artifactData.origin };
+    }
+
+    // Infer museum from logged-in user if not provided
+    if (!artifactData.museum && req.user && req.user.museumId) {
+      artifactData.museum = req.user.museumId;
+      console.log('Inferred museum from user:', req.user.museumId);
+    }
+
+    if (!artifactData.museum) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MUSEUM_REQUIRED',
+          message: 'Museum is required to create an artifact. Please ensure you are logged in as a museum admin or provide a museum ID.',
+          details: {
+            userHasMuseumId: !!(req.user && req.user.museumId),
+            userRole: req.user ? req.user.role : 'not authenticated'
+          }
+        }
+      });
+    }
 
     // Verify museum exists and user has access
     const museum = await Museum.findById(artifactData.museum);
@@ -43,16 +80,20 @@ exports.createArtifact = async (req, res) => {
     }
 
     // Check museum access permissions
-    if (req.user.role !== 'superAdmin' && 
-        req.user.role !== 'museumAdmin' && 
-        museum.createdBy.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: 'ACCESS_DENIED',
-          message: 'Not authorized to add artifacts to this museum'
-        }
-      });
+    if (req.user && req.user.role !== 'superAdmin') {
+      const userMuseumId = (req.user.museumId && req.user.museumId.toString()) || null;
+      const targetMuseumId = museum._id.toString();
+
+      // Museum admin and staff must belong to the same museum
+      if (!userMuseumId || userMuseumId !== targetMuseumId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'ACCESS_DENIED',
+            message: 'Not authorized to add artifacts to this museum'
+          }
+        });
+      }
     }
 
     // Generate unique accession number if not provided
@@ -77,7 +118,7 @@ exports.createArtifact = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating artifact:', error);
-    
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -107,15 +148,20 @@ exports.createArtifact = async (req, res) => {
 exports.listArtifacts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 100; // Increased limit to show more artifacts
     const skip = (page - 1) * limit;
 
-    // Build query object
-    let query = { 
-      isActive: true,
-      status: { $in: ['on_display', 'published', 'approved'] },
-      visibility: 'public'
-    };
+    // Build query object - show all artifacts for authenticated users
+    let query = {};
+
+    // For public access, filter by status and visibility
+    if (!req.user) {
+      query.isActive = true;
+      query.status = { $in: ['on_display', 'published', 'approved'] };
+      query.visibility = 'public';
+    }
+    // For authenticated users, show ALL artifacts by default
+    // No default filtering applied - user sees everything
 
     // Apply filters
     if (req.query.museum) query.museum = req.query.museum;
@@ -124,6 +170,13 @@ exports.listArtifacts = async (req, res) => {
     if (req.query.condition) query.condition = req.query.condition;
     if (req.query.featured !== undefined) query.featured = req.query.featured === 'true';
     if (req.query.period) query['period.era'] = req.query.period;
+
+    // Debug logging
+    console.log('=== LIST ARTIFACTS DEBUG ===');
+    console.log('User authenticated:', !!req.user);
+    console.log('User role:', req.user?.role);
+    console.log('Query parameters:', req.query);
+    console.log('Final query:', JSON.stringify(query, null, 2));
 
     // Build sort object
     let sortObj = {};
@@ -411,9 +464,9 @@ exports.updateArtifact = async (req, res) => {
 
     // Check permissions
     const museum = await Museum.findById(artifact.museum);
-    if (req.user.role !== 'superAdmin' && 
-        museum.createdBy.toString() !== req.user.id &&
-        artifact.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'superAdmin' &&
+      museum.admin.toString() !== req.user._id.toString() &&
+      artifact.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         error: {
@@ -423,13 +476,23 @@ exports.updateArtifact = async (req, res) => {
       });
     }
 
-    // Update artifact
+    // Update artifact - only validate fields that are being updated
+    const updateData = { ...req.body };
+
+    // Handle period and origin normalization if they're being updated
+    if (updateData.period && typeof updateData.period === 'string') {
+      updateData.period = { era: updateData.period };
+    }
+    if (updateData.origin && typeof updateData.origin === 'string') {
+      updateData.origin = { region: updateData.origin };
+    }
+
     const updatedArtifact = await Artifact.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true, runValidators: true }
+      updateData,
+      { new: true, runValidators: false } // Don't run validators for partial updates
     ).populate('museum', 'name location')
-     .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email');
 
     res.status(200).json({
       success: true,
@@ -439,7 +502,7 @@ exports.updateArtifact = async (req, res) => {
 
   } catch (error) {
     console.error('Error updating artifact:', error);
-    
+
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -481,8 +544,8 @@ exports.deleteArtifact = async (req, res) => {
 
     // Check permissions
     const museum = await Museum.findById(artifact.museum);
-    if (req.user.role !== 'superAdmin' && 
-        museum.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'superAdmin' &&
+      museum.admin.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         error: {
@@ -492,8 +555,8 @@ exports.deleteArtifact = async (req, res) => {
       });
     }
 
-    // Soft delete
-    await artifact.softDelete();
+    // Hard delete - actually remove from database
+    await Artifact.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
@@ -520,6 +583,12 @@ exports.deleteArtifact = async (req, res) => {
  */
 exports.uploadArtifactImages = async (req, res) => {
   try {
+    console.log('=== UPLOAD IMAGES DEBUG ===');
+    console.log('Artifact ID:', req.params.id);
+    console.log('User:', req.user?.email, req.user?.role);
+    console.log('Files received:', req.files?.length || 0);
+    console.log('Method:', req.method);
+
     const artifact = await Artifact.findById(req.params.id);
     if (!artifact) {
       return res.status(404).json({
@@ -541,26 +610,73 @@ exports.uploadArtifactImages = async (req, res) => {
       });
     }
 
+    // Debug: Check file details
+    console.log('Uploaded files details:');
+    req.files.forEach((file, index) => {
+      console.log(`File ${index + 1}:`, {
+        originalname: file.originalname,
+        filename: file.filename,
+        mimetype: file.mimetype,
+        size: file.size,
+        path: file.path
+      });
+    });
+
+    // Ensure media structure exists
+    if (!artifact.media) {
+      artifact.media = { images: [], videos: [] };
+    }
+    if (!Array.isArray(artifact.media.images)) {
+      artifact.media.images = [];
+    }
+
     // Process uploaded images
-    const uploadedImages = req.files.map(file => ({
-      url: `/uploads/artifacts/images/${file.filename}`,
-      caption: req.body.caption || '',
-      isPrimary: artifact.media.images.length === 0, // First image is primary
-      uploadedAt: new Date()
-    }));
+    const uploadedImages = req.files.map(file => {
+      // Verify file exists and has content
+      const fs = require('fs');
+      const filePath = file.path;
+      const stats = fs.statSync(filePath);
+      console.log(`File ${file.filename} stats:`, {
+        size: stats.size,
+        exists: fs.existsSync(filePath),
+        path: filePath
+      });
+
+      if (stats.size === 0) {
+        console.error(`WARNING: File ${file.filename} has 0 bytes!`);
+      }
+
+      return {
+        url: `/uploads/artifacts/images/${file.filename}`,
+        caption: req.body.caption || '',
+        isPrimary: false,
+        uploadedAt: new Date()
+      };
+    });
 
     // Add images to artifact
+    const wasEmpty = artifact.media.images.length === 0;
     artifact.media.images.push(...uploadedImages);
-    await artifact.save();
+    if (wasEmpty && artifact.media.images.length > 0) {
+      artifact.media.images[0].isPrimary = true;
+    }
+
+    console.log('Before save - artifact.media.images:', artifact.media.images);
+
+    // Use findByIdAndUpdate to avoid validation issues with the entire document
+    await Artifact.findByIdAndUpdate(
+      req.params.id,
+      { 'media.images': artifact.media.images },
+      { new: true, runValidators: false }
+    );
+
+    console.log('After save - artifact.media.images:', artifact.media.images);
 
     res.status(200).json({
       success: true,
       data: {
-        uploadedImages: uploadedImages.map(img => ({
-          url: img.url,
-          filename: img.url.split('/').pop(),
-          size: req.files.find(f => img.url.includes(f.filename))?.size
-        }))
+        uploaded: uploadedImages.length,
+        images: artifact.media.images.map(img => ({ url: img.url, isPrimary: img.isPrimary }))
       },
       message: 'Images uploaded successfully'
     });
