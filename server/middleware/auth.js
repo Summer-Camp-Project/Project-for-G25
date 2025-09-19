@@ -168,7 +168,7 @@ const authorize = (...roles) => {
     }
 
     const userRole = (req.user.role || '').toLowerCase();
-    const allowed = roles.map(r => (r || '').toLowerCase());
+    const allowed = roles.map(r => (r || '').toString().toLowerCase());
     if (!allowed.includes(userRole)) {
       return res.status(403).json({
         success: false,

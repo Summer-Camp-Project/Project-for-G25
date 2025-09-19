@@ -121,12 +121,21 @@ const userSchema = new mongoose.Schema({
     maxLength: [100, 'Department cannot exceed 100 characters']
   },
   hireDate: Date,
-  // User Preferences
+  // Enhanced User Preferences
   preferences: {
     language: {
       type: String,
       enum: ['en', 'am', 'om', 'ti'],
       default: 'en'
+    },
+    timezone: {
+      type: String,
+      default: 'Africa/Addis_Ababa'
+    },
+    currency: {
+      type: String,
+      enum: ['ETB', 'USD', 'EUR'],
+      default: 'ETB'
     },
     notifications: {
       email: {
@@ -140,12 +149,24 @@ const userSchema = new mongoose.Schema({
       inApp: {
         type: Boolean,
         default: true
+      },
+      sms: {
+        type: Boolean,
+        default: false
+      },
+      marketing: {
+        type: Boolean,
+        default: false
+      },
+      reminders: {
+        type: Boolean,
+        default: true
       }
     },
     privacy: {
       profileVisibility: {
         type: String,
-        enum: ['public', 'private'],
+        enum: ['public', 'private', 'friends-only'],
         default: 'public'
       },
       showEmail: {
@@ -155,18 +176,51 @@ const userSchema = new mongoose.Schema({
       showPhone: {
         type: Boolean,
         default: false
+      },
+      showLocation: {
+        type: Boolean,
+        default: false
+      },
+      dataTracking: {
+        type: Boolean,
+        default: true
       }
     },
     dashboard: {
       theme: {
         type: String,
-        enum: ['light', 'dark'],
+        enum: ['light', 'dark', 'auto'],
         default: 'light'
       },
       defaultView: {
         type: String,
-        enum: ['grid', 'list'],
+        enum: ['grid', 'list', 'card'],
         default: 'grid'
+      },
+      itemsPerPage: {
+        type: Number,
+        default: 12,
+        min: 6,
+        max: 50
+      },
+      autoPlay: {
+        type: Boolean,
+        default: true
+      }
+    },
+    accessibility: {
+      highContrast: {
+        type: Boolean,
+        default: false
+      },
+      fontSize: {
+        type: String,
+        enum: ['small', 'medium', 'large'],
+        default: 'medium'
+      },
+      screenReader: {
+        type: Boolean,
+        default: false
       }
     }
   },
@@ -179,7 +233,7 @@ const userSchema = new mongoose.Schema({
   },
   ipAddress: String,
   
-  // User Statistics
+  // Enhanced User Statistics
   stats: {
     artifactsViewed: {
       type: Number,
@@ -200,6 +254,142 @@ const userSchema = new mongoose.Schema({
     artifactsBookmarked: {
       type: Number,
       default: 0
+    },
+    totalTimeSpent: {
+      type: Number,
+      default: 0 // in minutes
+    },
+    averageSessionTime: {
+      type: Number,
+      default: 0 // in minutes
+    },
+    totalPoints: {
+      type: Number,
+      default: 0
+    },
+    level: {
+      type: Number,
+      default: 1
+    },
+    streakDays: {
+      type: Number,
+      default: 0
+    },
+    achievementsUnlocked: {
+      type: Number,
+      default: 0
+    }
+  },
+
+  // Social Features
+  social: {
+    followers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    following: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
+    friends: [{
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'accepted', 'blocked'],
+        default: 'pending'
+      },
+      since: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    profileViews: {
+      type: Number,
+      default: 0
+    },
+    isPublicProfile: {
+      type: Boolean,
+      default: true
+    }
+  },
+
+  // Activity Tracking
+  activityLog: [{
+    action: {
+      type: String,
+      enum: [
+        'login', 'logout', 'view_artifact', 'book_tour', 'write_review',
+        'bookmark_artifact', 'share_content', 'attend_event', 'complete_course',
+        'earn_achievement', 'update_profile', 'follow_user', 'visit_museum'
+      ]
+    },
+    details: {
+      type: mongoose.Schema.Types.Mixed
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    ipAddress: String,
+    userAgent: String
+  }],
+
+  // Gamification
+  gamification: {
+    badges: [{
+      id: String,
+      name: String,
+      description: String,
+      icon: String,
+      earnedAt: {
+        type: Date,
+        default: Date.now
+      },
+      category: {
+        type: String,
+        enum: ['exploration', 'learning', 'social', 'achievement']
+      }
+    }],
+    currentStreak: {
+      type: Number,
+      default: 0
+    },
+    longestStreak: {
+      type: Number,
+      default: 0
+    },
+    lastActivityDate: Date,
+    weeklyGoals: {
+      artifactsToView: {
+        type: Number,
+        default: 5
+      },
+      toursToBook: {
+        type: Number,
+        default: 1
+      },
+      eventsToAttend: {
+        type: Number,
+        default: 1
+      }
+    },
+    weeklyProgress: {
+      artifactsViewed: {
+        type: Number,
+        default: 0
+      },
+      toursBooked: {
+        type: Number,
+        default: 0
+      },
+      eventsAttended: {
+        type: Number,
+        default: 0
+      },
+      weekStartDate: Date
     }
   },
 
@@ -609,6 +799,206 @@ userSchema.statics.getPlatformStats = async function() {
     }
   };
 };
+
+// Advanced methods for new features
+
+// Method to log activity
+userSchema.methods.logActivity = async function(action, details = {}, req = null) {
+  const activityEntry = {
+    action,
+    details,
+    timestamp: new Date(),
+    ipAddress: req?.ip || req?.connection?.remoteAddress,
+    userAgent: req?.get('User-Agent')
+  };
+  
+  this.activityLog.push(activityEntry);
+  
+  // Keep only last 100 activities
+  if (this.activityLog.length > 100) {
+    this.activityLog = this.activityLog.slice(-100);
+  }
+  
+  return await this.save();
+};
+
+// Method to add points and update level
+userSchema.methods.addPoints = async function(points, reason = '') {
+  this.stats.totalPoints += points;
+  
+  // Level up logic (every 1000 points = 1 level)
+  const newLevel = Math.floor(this.stats.totalPoints / 1000) + 1;
+  if (newLevel > this.stats.level) {
+    this.stats.level = newLevel;
+    await this.logActivity('level_up', { newLevel, points, reason });
+  }
+  
+  return await this.save();
+};
+
+// Method to update streak
+userSchema.methods.updateStreak = async function() {
+  const today = new Date();
+  const lastActivity = this.gamification.lastActivityDate;
+  
+  if (lastActivity) {
+    const daysDiff = Math.floor((today - lastActivity) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff === 1) {
+      // Continue streak
+      this.gamification.currentStreak += 1;
+    } else if (daysDiff > 1) {
+      // Reset streak
+      this.gamification.currentStreak = 1;
+    }
+    // If daysDiff === 0, same day, don't update streak
+  } else {
+    // First activity
+    this.gamification.currentStreak = 1;
+  }
+  
+  // Update longest streak
+  if (this.gamification.currentStreak > this.gamification.longestStreak) {
+    this.gamification.longestStreak = this.gamification.currentStreak;
+  }
+  
+  this.gamification.lastActivityDate = today;
+  return await this.save();
+};
+
+// Method to earn badge
+userSchema.methods.earnBadge = async function(badgeData) {
+  const existingBadge = this.gamification.badges.find(b => b.id === badgeData.id);
+  if (!existingBadge) {
+    this.gamification.badges.push({
+      ...badgeData,
+      earnedAt: new Date()
+    });
+    this.stats.achievementsUnlocked += 1;
+    await this.addPoints(100, `Earned badge: ${badgeData.name}`);
+    await this.logActivity('earn_achievement', { badge: badgeData.name });
+    return await this.save();
+  }
+  return this;
+};
+
+// Social methods
+userSchema.methods.follow = async function(userId) {
+  if (!this.social.following.includes(userId)) {
+    this.social.following.push(userId);
+    
+    // Add to target user's followers
+    const targetUser = await this.constructor.findById(userId);
+    if (targetUser && !targetUser.social.followers.includes(this._id)) {
+      targetUser.social.followers.push(this._id);
+      await targetUser.save();
+    }
+    
+    await this.logActivity('follow_user', { userId });
+    return await this.save();
+  }
+  return this;
+};
+
+userSchema.methods.unfollow = async function(userId) {
+  const index = this.social.following.indexOf(userId);
+  if (index > -1) {
+    this.social.following.splice(index, 1);
+    
+    // Remove from target user's followers
+    const targetUser = await this.constructor.findById(userId);
+    if (targetUser) {
+      const followerIndex = targetUser.social.followers.indexOf(this._id);
+      if (followerIndex > -1) {
+        targetUser.social.followers.splice(followerIndex, 1);
+        await targetUser.save();
+      }
+    }
+    
+    return await this.save();
+  }
+  return this;
+};
+
+// Method to increment profile views
+userSchema.methods.incrementProfileViews = async function() {
+  this.social.profileViews += 1;
+  return await this.save();
+};
+
+// Method to get user recommendations
+userSchema.methods.getRecommendations = async function() {
+  const recommendations = {
+    users: [],
+    artifacts: [],
+    events: [],
+    museums: []
+  };
+  
+  // Find users with similar interests
+  if (this.interests && this.interests.length > 0) {
+    recommendations.users = await this.constructor.find({
+      _id: { $ne: this._id },
+      interests: { $in: this.interests },
+      isActive: true,
+      'preferences.privacy.profileVisibility': 'public'
+    }).limit(10).select('firstName lastName avatar interests');
+  }
+  
+  return recommendations;
+};
+
+// Method to reset weekly progress
+userSchema.methods.resetWeeklyProgress = async function() {
+  const now = new Date();
+  const weekStartDate = this.gamification.weeklyProgress.weekStartDate;
+  
+  if (!weekStartDate || (now - weekStartDate) >= (7 * 24 * 60 * 60 * 1000)) {
+    this.gamification.weeklyProgress = {
+      artifactsViewed: 0,
+      toursBooked: 0,
+      eventsAttended: 0,
+      weekStartDate: now
+    };
+    return await this.save();
+  }
+  return this;
+};
+
+// Method to check and award weekly achievements
+userSchema.methods.checkWeeklyAchievements = async function() {
+  const progress = this.gamification.weeklyProgress;
+  const goals = this.gamification.weeklyGoals;
+  
+  // Check if weekly goals are met
+  if (progress.artifactsViewed >= goals.artifactsToView &&
+      progress.toursBooked >= goals.toursToBook &&
+      progress.eventsAttended >= goals.eventsToAttend) {
+    
+    await this.earnBadge({
+      id: 'weekly_achiever',
+      name: 'Weekly Achiever',
+      description: 'Completed all weekly goals',
+      icon: 'trophy',
+      category: 'achievement'
+    });
+  }
+};
+
+// Virtual for follower count
+userSchema.virtual('followerCount').get(function() {
+  return this.social?.followers?.length || 0;
+});
+
+// Virtual for following count
+userSchema.virtual('followingCount').get(function() {
+  return this.social?.following?.length || 0;
+});
+
+// Virtual for badge count
+userSchema.virtual('badgeCount').get(function() {
+  return this.gamification?.badges?.length || 0;
+});
 
 module.exports = mongoose.model('User', userSchema);
 

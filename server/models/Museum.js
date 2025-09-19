@@ -129,7 +129,21 @@ const museumSchema = new mongoose.Schema({
     totalArtifacts: { type: Number, default: 0 },
     totalTours: { type: Number, default: 0 },
     monthlyVisitors: { type: Number, default: 0 },
-    lastVisitorUpdate: { type: Date, default: Date.now }
+    weeklyVisitors: { type: Number, default: 0 },
+    dailyVisitors: { type: Number, default: 0 },
+    yearlyVisitors: { type: Number, default: 0 },
+    totalRevenue: { type: Number, default: 0 },
+    averageVisitDuration: { type: Number, default: 0 }, // in minutes
+    peakHours: [{
+      hour: Number,
+      visitCount: { type: Number, default: 0 }
+    }],
+    popularArtifacts: [{
+      artifact: { type: mongoose.Schema.Types.ObjectId, ref: 'Artifact' },
+      viewCount: { type: Number, default: 0 }
+    }],
+    lastVisitorUpdate: { type: Date, default: Date.now },
+    lastStatsReset: { type: Date, default: Date.now }
   },
   features: {
     hasVirtualTour: { type: Boolean, default: false },

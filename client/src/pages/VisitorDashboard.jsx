@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Eye, Calendar, MapPin, MessageSquare, Star, Play, Image, BookOpen, RefreshCw } from 'lucide-react';
+import { 
+  Heart, Eye, Calendar, MapPin, MessageSquare, Star, Play, Image, BookOpen, RefreshCw,
+  Trophy, Target, Users, TrendingUp, Award, Zap, Activity, Bell, Settings, UserPlus,
+  Share2, Compass, Camera, Gift, Clock, ThumbsUp, MessageCircle, Bookmark
+} from 'lucide-react';
 import VisitorSidebar from '../components/dashboard/VisitorSidebar';
 import { useAuth } from '../hooks/useAuth';
 import bookingService from '../services/bookingService';
 import { toast } from 'sonner';
+import { io } from 'socket.io-client';
 
 // Import actual images
 import museumImg from '../assets/museum.jpg';
@@ -33,6 +38,32 @@ const VisitorDashboard = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [achievements, setAchievements] = useState([]);
+
+  // Enhanced user features state
+  const [userStats, setUserStats] = useState({
+    totalPoints: 0,
+    level: 1,
+    streakDays: 0,
+    artifactsViewed: 0,
+    toursCompleted: 0,
+    averageRating: 0
+  });
+  const [weeklyProgress, setWeeklyProgress] = useState({
+    artifactsViewed: 0,
+    toursBooked: 0,
+    eventsAttended: 0,
+    artifactsToView: 5,
+    toursToBook: 1,
+    eventsToAttend: 1
+  });
+  const [badges, setBadges] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [activityFeed, setActivityFeed] = useState([]);
+  const [recommendations, setRecommendations] = useState({ users: [], artifacts: [], events: [] });
+  const [socket, setSocket] = useState(null);
+  const [isOnline, setIsOnline] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   
   // Booking related state
   const [bookingStats, setBookingStats] = useState({
@@ -422,6 +453,214 @@ const VisitorDashboard = () => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Gamification & Progress Section - NEW */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* User Level & Points */}
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-purple-100 rounded-lg">
+                    <Trophy className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Level {userStats.level}</h3>
+                    <p className="text-sm text-gray-600">Heritage Explorer</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-purple-600">{userStats.totalPoints}</p>
+                  <p className="text-xs text-gray-500">Total Points</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress to Level {userStats.level + 1}</span>
+                  <span>{userStats.totalPoints % 1000}/1000</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${((userStats.totalPoints % 1000) / 1000) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Goals */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Target className="h-5 w-5 mr-2 text-green-600" />
+                  Weekly Goals
+                </h3>
+                <button className="text-green-600 hover:text-green-700 text-sm font-medium">
+                  Update Goals
+                </button>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { label: 'Artifacts Viewed', current: weeklyProgress.artifactsViewed, goal: weeklyProgress.artifactsToView, icon: Camera },
+                  { label: 'Tours Booked', current: weeklyProgress.toursBooked, goal: weeklyProgress.toursToBook, icon: Calendar },
+                  { label: 'Events Attended', current: weeklyProgress.eventsAttended, goal: weeklyProgress.eventsToAttend, icon: MapPin }
+                ].map(({ label, current, goal, icon: Icon }) => (
+                  <div key={label} className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2">
+                        <Icon className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">{label}</span>
+                      </div>
+                      <span className="text-sm font-medium">{current}/{goal}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className="bg-gradient-to-r from-green-400 to-blue-500 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min((current / goal) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Streak & Activity */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-3">
+                  <Zap className="h-8 w-8 text-orange-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">{userStats.streakDays}</h3>
+                <p className="text-sm text-gray-600">Day Streak</p>
+              </div>
+              <div className="space-y-2 text-center">
+                <div className="flex items-center justify-center space-x-2">
+                  {[...Array(7)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-2 h-2 rounded-full ${
+                        i < (userStats.streakDays % 7) ? 'bg-orange-500' : 'bg-gray-200'
+                      }`}
+                    ></div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">Keep exploring to maintain your streak!</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Badges & Achievements - NEW */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
+                <Award className="h-6 w-6 mr-2 text-yellow-600" />
+                Recent Badges
+              </h2>
+              <button className="text-amber-600 hover:text-amber-700 font-medium">View All Badges</button>
+            </div>
+            {badges.length === 0 ? (
+              <div className="text-center py-8">
+                <Award className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-2">No badges earned yet</p>
+                <p className="text-sm text-gray-400">Complete activities to earn your first badge!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {badges.slice(0, 6).map((badge, index) => (
+                  <div key={badge.id || index} className="text-center p-3 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="text-3xl mb-2">{badge.icon || '🏆'}</div>
+                    <h4 className="text-sm font-medium text-gray-800 mb-1">{badge.name}</h4>
+                    <p className="text-xs text-gray-500">{badge.description}</p>
+                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-yellow-200 text-yellow-800 rounded-full">
+                      {badge.category || 'achievement'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Social Features - NEW */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Activity Feed */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Activity className="h-5 w-5 mr-2 text-blue-600" />
+                  Recent Activity
+                </h3>
+                <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</button>
+              </div>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {activityFeed.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Activity className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No recent activity</p>
+                  </div>
+                ) : (
+                  activityFeed.slice(0, 5).map((activity, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800">{activity.description || activity.action}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(activity.timestamp).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Social Connections */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-green-600" />
+                  Connect with Others
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">{followers.length}</p>
+                  <p className="text-sm text-gray-600">Followers</p>
+                </div>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-600">{following.length}</p>
+                  <p className="text-sm text-gray-600">Following</p>
+                </div>
+              </div>
+              {recommendations.users && recommendations.users.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">People to Follow</h4>
+                  <div className="space-y-2">
+                    {recommendations.users.slice(0, 3).map((recommendedUser) => (
+                      <div key={recommendedUser._id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={recommendedUser.avatar || '/default-avatar.png'}
+                            alt={recommendedUser.firstName}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {recommendedUser.firstName} {recommendedUser.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {recommendedUser.interests?.slice(0, 2).join(', ')}
+                            </p>
+                          </div>
+                        </div>
+                        <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                          <UserPlus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Recently Viewed */}
