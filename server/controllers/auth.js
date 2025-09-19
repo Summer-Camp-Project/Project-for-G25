@@ -594,6 +594,406 @@ const changePassword = async (req, res) => {
   }
 };
 
+// =============== ADVANCED USER FEATURES ===============
+
+// @desc    Get user statistics and analytics
+// @route   GET /api/auth/stats
+// @access  Private
+const getUserStats = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select('profile.stats profile.gamification profile.activity');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Default stats structure
+    const defaultStats = {
+      totalPoints: 0,
+      level: 1,
+      streakDays: 0,
+      artifactsViewed: 0,
+      toursCompleted: 0,
+      eventsAttended: 0,
+      averageRating: 0
+    };
+
+    const stats = {
+      ...defaultStats,
+      ...user.profile?.stats,
+      ...user.profile?.gamification
+    };
+
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Update user preferences
+// @route   PUT /api/auth/preferences
+// @access  Private
+const updatePreferences = async (req, res) => {
+  try {
+    const { language, timezone, currency, notifications } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update preferences
+    if (!user.profile) user.profile = {};
+    if (!user.profile.preferences) user.profile.preferences = {};
+
+    if (language) user.profile.preferences.language = language;
+    if (timezone) user.profile.preferences.timezone = timezone;
+    if (currency) user.profile.preferences.currency = currency;
+    if (notifications) user.profile.preferences.notifications = { ...user.profile.preferences.notifications, ...notifications };
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Preferences updated successfully',
+      preferences: user.profile.preferences
+    });
+  } catch (error) {
+    console.error('Update preferences error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Follow another user
+// @route   POST /api/auth/follow/:userId
+// @access  Private
+const followUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+
+    if (userId === currentUserId) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot follow yourself'
+      });
+    }
+
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(userId)
+    ]);
+
+    if (!currentUser || !targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Initialize social arrays if they don't exist
+    if (!currentUser.profile) currentUser.profile = {};
+    if (!currentUser.profile.social) currentUser.profile.social = {};
+    if (!currentUser.profile.social.following) currentUser.profile.social.following = [];
+    
+    if (!targetUser.profile) targetUser.profile = {};
+    if (!targetUser.profile.social) targetUser.profile.social = {};
+    if (!targetUser.profile.social.followers) targetUser.profile.social.followers = [];
+
+    // Check if already following
+    if (currentUser.profile.social.following.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Already following this user'
+      });
+    }
+
+    // Add to following/followers lists
+    currentUser.profile.social.following.push(userId);
+    targetUser.profile.social.followers.push(currentUserId);
+
+    await Promise.all([
+      currentUser.save(),
+      targetUser.save()
+    ]);
+
+    res.json({
+      success: true,
+      message: 'User followed successfully'
+    });
+  } catch (error) {
+    console.error('Follow user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Unfollow a user
+// @route   DELETE /api/auth/follow/:userId
+// @access  Private
+const unfollowUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+
+    const [currentUser, targetUser] = await Promise.all([
+      User.findById(currentUserId),
+      User.findById(userId)
+    ]);
+
+    if (!currentUser || !targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Remove from following/followers lists
+    if (currentUser.profile?.social?.following) {
+      currentUser.profile.social.following = currentUser.profile.social.following.filter(
+        id => id.toString() !== userId
+      );
+    }
+
+    if (targetUser.profile?.social?.followers) {
+      targetUser.profile.social.followers = targetUser.profile.social.followers.filter(
+        id => id.toString() !== currentUserId
+      );
+    }
+
+    await Promise.all([
+      currentUser.save(),
+      targetUser.save()
+    ]);
+
+    res.json({
+      success: true,
+      message: 'User unfollowed successfully'
+    });
+  } catch (error) {
+    console.error('Unfollow user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Get user activity log
+// @route   GET /api/auth/activity
+// @access  Private
+const getUserActivity = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select('profile.activity');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const activity = user.profile?.activity?.feed || [];
+
+    res.json({
+      success: true,
+      activity: activity.slice(0, 50) // Limit to last 50 activities
+    });
+  } catch (error) {
+    console.error('Get user activity error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Get personalized recommendations
+// @route   GET /api/auth/recommendations
+// @access  Private
+const getRecommendations = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select('profile.interests profile.social');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get users with similar interests (simplified algorithm)
+    const currentFollowing = user.profile?.social?.following || [];
+    const userInterests = user.profile?.interests || [];
+
+    let recommendedUsers = [];
+    if (userInterests.length > 0) {
+      recommendedUsers = await User.find({
+        _id: { $ne: req.user.id, $nin: currentFollowing },
+        'profile.interests': { $in: userInterests },
+        isActive: true
+      })
+      .select('firstName lastName email profile.interests profile.avatar')
+      .limit(10);
+    }
+
+    // Mock recommendations for other content types
+    const recommendations = {
+      users: recommendedUsers,
+      artifacts: [], // Would be populated from artifact service
+      events: [],    // Would be populated from events service
+      tours: []      // Would be populated from tours service
+    };
+
+    res.json({
+      success: true,
+      recommendations
+    });
+  } catch (error) {
+    console.error('Get recommendations error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Award badge to user (admin only)
+// @route   POST /api/auth/badge
+// @access  Private (admin)
+const earnBadge = async (req, res) => {
+  try {
+    const { userId, badgeId, name, description, icon, category } = req.body;
+
+    // Check if current user is admin
+    if (req.user.role !== 'superAdmin' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Initialize badges array if it doesn't exist
+    if (!user.profile) user.profile = {};
+    if (!user.profile.gamification) user.profile.gamification = {};
+    if (!user.profile.gamification.badges) user.profile.gamification.badges = [];
+
+    // Check if badge already exists
+    const existingBadge = user.profile.gamification.badges.find(b => b.badgeId === badgeId);
+    if (existingBadge) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already has this badge'
+      });
+    }
+
+    // Add new badge
+    const newBadge = {
+      badgeId,
+      name,
+      description,
+      icon,
+      category,
+      earnedAt: new Date()
+    };
+
+    user.profile.gamification.badges.push(newBadge);
+
+    // Update points (optional)
+    if (!user.profile.gamification.totalPoints) user.profile.gamification.totalPoints = 0;
+    user.profile.gamification.totalPoints += 100; // Award 100 points for badge
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Badge awarded successfully',
+      badge: newBadge
+    });
+  } catch (error) {
+    console.error('Earn badge error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// @desc    Update weekly goals
+// @route   PUT /api/auth/weekly-goals
+// @access  Private
+const updateWeeklyGoals = async (req, res) => {
+  try {
+    const { artifactsToView, toursToBook, eventsToAttend } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Initialize goals structure if it doesn't exist
+    if (!user.profile) user.profile = {};
+    if (!user.profile.gamification) user.profile.gamification = {};
+    if (!user.profile.gamification.weeklyGoals) user.profile.gamification.weeklyGoals = {};
+
+    // Update goals
+    if (artifactsToView !== undefined) user.profile.gamification.weeklyGoals.artifactsToView = artifactsToView;
+    if (toursToBook !== undefined) user.profile.gamification.weeklyGoals.toursToBook = toursToBook;
+    if (eventsToAttend !== undefined) user.profile.gamification.weeklyGoals.eventsToAttend = eventsToAttend;
+
+    // Set week start if not set
+    if (!user.profile.gamification.weeklyGoals.weekStart) {
+      user.profile.gamification.weeklyGoals.weekStart = new Date();
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Weekly goals updated successfully',
+      goals: user.profile.gamification.weeklyGoals
+    });
+  } catch (error) {
+    console.error('Update weekly goals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -603,5 +1003,13 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updateProfile,
-  changePassword
+  changePassword,
+  getUserStats,
+  updatePreferences,
+  followUser,
+  unfollowUser,
+  getUserActivity,
+  getRecommendations,
+  earnBadge,
+  updateWeeklyGoals
 };
