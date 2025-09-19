@@ -18,6 +18,7 @@ import VisitorDashboard from './pages/VisitorDashboard'
 import UserTourPage from './components/pages/UserTourPage'
 import UserProfile from './pages/UserProfile'
 import Learning from './pages/Learning'
+import Courses from './pages/Courses'
 import CourseDetail from './pages/CourseDetail'
 import AdminSupport from './pages/AdminSupport';
 import Support from './pages/Support';
@@ -156,6 +157,13 @@ function App() {
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
               <Learning />
+              <Footer />
+            </>
+          } />
+          <Route path="/courses" element={
+            <>
+              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <Courses />
               <Footer />
             </>
           } />

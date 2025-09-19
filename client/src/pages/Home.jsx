@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Eye, Bot, Video, MapPin, BookOpen, Star, Users, Globe, Calendar, ArrowRight, Play, Sparkles, Shield, Award } from 'lucide-react';
+import { Search, Eye, Bot, Video, MapPin, BookOpen, Star, Users, Globe, Calendar, ArrowRight, Play, Sparkles, Shield, Award, Clock } from 'lucide-react';
 import heroBg from '../assets/hero-bg.jpg';
 import obeliskHero from '../assets/obelisk-hero.jpg';
 import artifacts from '../assets/artifacts.jpg';
@@ -612,6 +612,259 @@ const Home = () => {
                   <div className="text-sm text-muted-foreground">UNESCO Sites</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Educational Courses Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 to-secondary/5 relative overflow-hidden">
+        {/* Background Decorations */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 w-32 h-32 border border-primary rounded-full animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 border border-secondary rounded-full animate-bounce"></div>
+          <div className="absolute top-1/3 right-1/4 w-16 h-16 border border-accent rounded-full animate-ping"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center bg-accent/10 text-accent rounded-full px-4 py-2 mb-4">
+              <BookOpen className="w-4 h-4 mr-2" />
+              <span className="text-sm font-semibold">Learn & Discover</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              Educational <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">Heritage Courses</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Immerse yourself in Ethiopia's rich history through our comprehensive educational programs. 
+              Learn from experts and earn certificates while exploring ancient civilizations.
+            </p>
+          </div>
+          
+          {/* Course Categories */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-sm text-card-foreground mb-1">Ancient History</h3>
+              <p className="text-xs text-muted-foreground">6 Courses</p>
+            </div>
+            
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary/70 rounded-xl mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Star className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-sm text-card-foreground mb-1">Art & Culture</h3>
+              <p className="text-xs text-muted-foreground">8 Courses</p>
+            </div>
+            
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent/70 rounded-xl mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Globe className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-sm text-card-foreground mb-1">Language</h3>
+              <p className="text-xs text-muted-foreground">4 Courses</p>
+            </div>
+            
+            <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary via-secondary to-accent rounded-xl mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-bold text-sm text-card-foreground mb-1">Architecture</h3>
+              <p className="text-xs text-muted-foreground">5 Courses</p>
+            </div>
+          </div>
+          
+          {/* Featured Courses */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {/* Course 1 */}
+            <div className="bg-card rounded-3xl overflow-hidden border border-border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
+              <div className="h-48 bg-gradient-to-br from-primary/20 to-secondary/20 relative overflow-hidden">
+                <img 
+                  src={obeliskHero} 
+                  alt="Kingdom of Aksum Course" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
+                    Beginner
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <div className="flex items-center text-sm">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>6 hours</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-card-foreground mb-2">Kingdom of Aksum</h3>
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                  Discover the ancient Aksumite Empire, its trade networks, monumental obelisks, and lasting influence on Ethiopian culture.
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Users className="w-4 h-4 mr-1" />
+                    <span>1,200+ enrolled</span>
+                  </div>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
+                    ))}
+                    <span className="text-sm text-muted-foreground ml-1">4.9</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/courses/aksum')}
+                  className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center group"
+                >
+                  Start Learning
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Course 2 */}
+            <div className="bg-card rounded-3xl overflow-hidden border border-border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
+              <div className="h-48 bg-gradient-to-br from-secondary/20 to-accent/20 relative overflow-hidden">
+                <img 
+                  src={architecture} 
+                  alt="Rock-Hewn Churches Course" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-xs font-semibold">
+                    Intermediate
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <div className="flex items-center text-sm">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>8 hours</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-card-foreground mb-2">Rock-Hewn Churches</h3>
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                  Explore the architectural marvels of Lalibela and other rock-hewn churches, their construction techniques and spiritual significance.
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Users className="w-4 h-4 mr-1" />
+                    <span>850+ enrolled</span>
+                  </div>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
+                    ))}
+                    <span className="text-sm text-muted-foreground ml-1">4.8</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/courses/rock-churches')}
+                  className="w-full bg-secondary text-secondary-foreground py-3 rounded-xl font-semibold hover:bg-secondary/90 transition-colors flex items-center justify-center group"
+                >
+                  Start Learning
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Course 3 */}
+            <div className="bg-card rounded-3xl overflow-hidden border border-border shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
+              <div className="h-48 bg-gradient-to-br from-accent/20 to-primary/20 relative overflow-hidden">
+                <img 
+                  src={culture} 
+                  alt="Ethiopian Cultural Traditions Course" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute top-4 left-4">
+                  <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-semibold">
+                    Beginner
+                  </span>
+                </div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <div className="flex items-center text-sm">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>4 hours</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-card-foreground mb-2">Cultural Traditions</h3>
+                <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
+                  Learn about Ethiopian festivals, ceremonies, traditional crafts, music, and dance that define the country's cultural identity.
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Users className="w-4 h-4 mr-1" />
+                    <span>950+ enrolled</span>
+                  </div>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
+                    ))}
+                    <span className="text-sm text-muted-foreground ml-1">4.7</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => navigate('/courses/traditions')}
+                  className="w-full bg-accent text-accent-foreground py-3 rounded-xl font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center group"
+                >
+                  Start Learning
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Learning Benefits */}
+          <div className="bg-card/30 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-border/50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                  <Award className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-card-foreground mb-2">Earn Certificates</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Complete courses and earn verified certificates to showcase your heritage knowledge.
+                </p>
+              </div>
+              
+              <div>
+                <div className="w-16 h-16 bg-gradient-to-br from-secondary to-accent rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                  <Bot className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-card-foreground mb-2">AI-Powered Learning</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Get personalized recommendations and interactive assistance throughout your learning journey.
+                </p>
+              </div>
+              
+              <div>
+                <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-card-foreground mb-2">Expert Instructors</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Learn from renowned archaeologists, historians, and cultural experts from Ethiopia.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center mt-8">
+              <button 
+                onClick={() => navigate('/courses')}
+                className="bg-gradient-to-r from-primary via-secondary to-accent text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center mx-auto"
+              >
+                Explore All Courses
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </button>
             </div>
           </div>
         </div>

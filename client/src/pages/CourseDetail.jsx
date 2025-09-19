@@ -1,75 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
-  Clock, 
-  BookOpen, 
-  Star, 
   Play, 
+  Clock, 
+  Users, 
+  Star, 
+  Award, 
+  BookOpen, 
   CheckCircle, 
-  LockKeyhole, 
-  Trophy, 
+  Circle, 
+  Download, 
   Share2,
+  Heart,
+  MessageSquare,
+  ChevronRight,
+  Globe,
+  User,
+  Calendar,
+  Target,
+  Book,
   Bookmark,
-  MessageCircle,
-  Users,
+  LockKeyhole,
   BarChart,
-  Download
+  Trophy,
+  MessageCircle
 } from 'lucide-react';
-import learningService from '../services/learningService';
-import { useAuth } from '../hooks/useAuth';
-import Footer from '../components/common/Footer';
 import Navbar from '../components/common/Navbar';
+import Footer from '../components/common/Footer';
+import { useAuth } from '../hooks/useAuth';
 
-const CourseDetail = ({ darkMode, toggleDarkMode }) => {
+const CourseDetail = ({ darkMode: propDarkMode, toggleDarkMode: propToggleDarkMode }) => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { user, isEnrolled, enrollInCourse } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  
+  // State
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
   const [currentTab, setCurrentTab] = useState('overview');
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
 
+  // Use props for dark mode if available, otherwise use local state
+  const darkMode = propDarkMode !== undefined ? propDarkMode : false;
+  const toggleDarkMode = propToggleDarkMode || (() => {});
+
+  // Initialize course with mock data if not found
   useEffect(() => {
-    const fetchCourseDetails = async () => {
-      try {
-        // Try to get course from service
-        const courseData = await learningService.getCourseById(courseId);
-        setCourse(courseData);
+    if (!course && !loading) {
+      setCourse(getMockCourse(courseId));
+    }
+  }, [course, loading, courseId]);
 
-        // Try to get lessons
-        const lessonsData = await learningService.getLessons(courseId);
-        setLessons(lessonsData);
-
-        // Check enrollment status if user is logged in
-        if (user) {
-          const isUserEnrolled = isEnrolled ? isEnrolled(courseId) : false;
-          setEnrolled(isUserEnrolled);
-          
-          // Get progress if enrolled
-          if (isUserEnrolled && course) {
-            const progressData = await learningService.getLearningProgress();
-            const courseProgress = progressData?.courses?.find(c => c.courseId === courseId);
-            setProgress(courseProgress?.progressPercentage || 0);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching course details:', error);
-        // Fallback to mock data
-        const mockCourse = getMockCourse(courseId);
-        setCourse(mockCourse);
-        setLessons(mockCourse.lessons || []);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  // Fetch course details
+  useEffect(() => {
     fetchCourseDetails();
-  }, [courseId, user, isEnrolled]);
+    fetchLessons();
+  }, [courseId]);
+
+  const fetchCourseDetails = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/learning/courses/${courseId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setCourse(data.course);
+      }
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+    }
+  };
+
+  const fetchLessons = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/learning/courses/${courseId}/lessons`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setLessons(data.lessons);
+      }
+    } catch (error) {
+      console.error('Error fetching lessons:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEnroll = async () => {
     if (!user) {
@@ -78,15 +99,10 @@ const CourseDetail = ({ darkMode, toggleDarkMode }) => {
     }
 
     try {
-      if (enrollInCourse) {
-        await enrollInCourse(courseId);
-        setEnrolled(true);
-        setShowEnrollmentModal(true);
-      } else {
-        // Fallback if no enrollment function is available
-        setEnrolled(true);
-        setShowEnrollmentModal(true);
-      }
+      // TODO: Implement actual enrollment API call
+      // For now, just simulate enrollment
+      setEnrolled(true);
+      setShowEnrollmentModal(true);
     } catch (error) {
       console.error('Error enrolling in course:', error);
     }

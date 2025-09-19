@@ -471,6 +471,14 @@ const Learning = () => {
                 <BookOpen className="w-5 h-5 mr-2" />
                 Start Learning
               </button>
+              <Link to="/courses">
+                <button 
+                  className="border-2 border-primary-foreground/30 text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:bg-primary-foreground/10 transition-colors flex items-center justify-center"
+                >
+                  <ArrowRight className="w-5 h-5 mr-2" />
+                  Browse All Courses
+                </button>
+              </Link>
               <button 
                 onClick={() => setActiveTab('progress')}
                 className="border-2 border-primary-foreground/30 text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:bg-primary-foreground/10 transition-colors flex items-center justify-center"
