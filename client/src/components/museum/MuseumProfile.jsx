@@ -25,6 +25,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import api from '../../utils/api';
+import museumStatsService from '../../services/museumStatsService';
 
 const MuseumProfile = () => {
   const [profileData, setProfileData] = useState({
@@ -46,34 +47,76 @@ const MuseumProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [stats, setStats] = useState({
+    totalArtifacts: 0,
+    totalStaff: 0,
+    totalEvents: 0,
+    activeRentals: 0,
+    loading: true
+  });
 
-  // Load museum profile data
+  // Load museum profile data and statistics
   useEffect(() => {
-    const loadMuseumProfile = async () => {
+    const loadMuseumData = async () => {
       try {
         setLoading(true);
-        const response = await api.getMuseumProfile();
-        if (response.data) {
+
+        // Load profile data and statistics in parallel
+        const [profileResponse, statsResponse] = await Promise.all([
+          api.getMuseumProfile(),
+          museumStatsService.getMuseumStats()
+        ]);
+
+        // Set profile data
+        if (profileResponse.data) {
           setProfileData({
             ...profileData,
-            ...response.data,
+            ...profileResponse.data,
             loading: false,
             error: ''
           });
         }
+
+        // Set statistics
+        if (statsResponse.data) {
+          setStats({
+            totalArtifacts: statsResponse.data.totalArtifacts || 0,
+            totalStaff: statsResponse.data.totalStaff || 0,
+            totalEvents: statsResponse.data.totalEvents || 0,
+            activeRentals: statsResponse.data.activeRentals || 0,
+            loading: false
+          });
+        } else {
+          // Set default values if no data
+          setStats({
+            totalArtifacts: 0,
+            totalStaff: 0,
+            totalEvents: 0,
+            activeRentals: 0,
+            loading: false
+          });
+        }
       } catch (error) {
-        console.error('Failed to load museum profile:', error);
+        console.error('Failed to load museum data:', error);
         setProfileData(prev => ({
           ...prev,
           loading: false,
           error: error.message || 'Failed to load museum profile'
         }));
+        // Set default statistics values on error
+        setStats({
+          totalArtifacts: 0,
+          totalStaff: 0,
+          totalEvents: 0,
+          activeRentals: 0,
+          loading: false
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    loadMuseumProfile();
+    loadMuseumData();
   }, []);
 
   const handleInputChange = (field, value) => {
@@ -560,7 +603,11 @@ const MuseumProfile = () => {
                   <Grid item xs={6}>
                     <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ color: '#8B5A3C', fontWeight: 'bold' }}>
-                        150
+                        {stats.loading ? (
+                          <CircularProgress size={24} sx={{ color: '#8B5A3C' }} />
+                        ) : (
+                          stats.totalArtifacts
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Artifacts
@@ -570,7 +617,11 @@ const MuseumProfile = () => {
                   <Grid item xs={6}>
                     <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ color: '#8B5A3C', fontWeight: 'bold' }}>
-                        25
+                        {stats.loading ? (
+                          <CircularProgress size={24} sx={{ color: '#8B5A3C' }} />
+                        ) : (
+                          stats.totalStaff
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Staff
@@ -580,7 +631,11 @@ const MuseumProfile = () => {
                   <Grid item xs={6}>
                     <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ color: '#8B5A3C', fontWeight: 'bold' }}>
-                        12
+                        {stats.loading ? (
+                          <CircularProgress size={24} sx={{ color: '#8B5A3C' }} />
+                        ) : (
+                          stats.totalEvents
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Events
@@ -590,10 +645,14 @@ const MuseumProfile = () => {
                   <Grid item xs={6}>
                     <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
                       <Typography variant="h4" sx={{ color: '#8B5A3C', fontWeight: 'bold' }}>
-                        8
+                        {stats.loading ? (
+                          <CircularProgress size={24} sx={{ color: '#8B5A3C' }} />
+                        ) : (
+                          stats.activeRentals
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Rentals
+                        Active Rentals
                       </Typography>
                     </Box>
                   </Grid>

@@ -721,10 +721,10 @@ const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${artifact.status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : artifact.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : artifact.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
                         }`}>
                         {artifact.status}
                       </span>
@@ -1004,8 +1004,8 @@ const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                         key={item.id}
                         onClick={() => setActiveSection(item.id)}
                         className={`w-full flex items-start space-x-3 p-3 rounded-lg text-left transition-colors ${activeSection === item.id
-                            ? 'text-white border'
-                            : 'text-black hover:bg-gray-50 hover:text-black'
+                          ? 'text-white border'
+                          : 'text-black hover:bg-gray-50 hover:text-black'
                           }`}
                         style={{
                           backgroundColor: activeSection === item.id ? '#8B5A3C' : 'transparent',
