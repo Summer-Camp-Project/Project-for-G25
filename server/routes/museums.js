@@ -49,6 +49,73 @@ router.get('/',
 );
 
 /**
+ * @desc    Get museum profile (for museum admin's own museum)
+ * @route   GET /api/museums/profile
+ * @access  Private (museumAdmin, staff)
+ */
+router.get('/profile',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  getMuseumProfile
+);
+
+/**
+ * @desc    Update museum profile (for museum admin's own museum)
+ * @route   PUT /api/museums/profile
+ * @access  Private (museumAdmin, staff)
+ */
+router.put('/profile',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  updateMuseumProfile
+);
+
+/**
+ * @desc    Upload museum logo
+ * @route   POST /api/museums/profile/logo
+ * @access  Private (museumAdmin, staff)
+ */
+router.post('/profile/logo',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  multerLogoUpload.single('logo'),
+  uploadMuseumLogo
+);
+
+/**
+ * @desc    Get museum dashboard statistics
+ * @route   GET /api/museums/dashboard/stats
+ * @access  Private (museumAdmin, staff)
+ */
+router.get('/dashboard/stats',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  require('../controllers/museumDashboard').getMuseumDashboardStats
+);
+
+/**
+ * @desc    Get recent artifacts for museum dashboard
+ * @route   GET /api/museums/dashboard/recent-artifacts
+ * @access  Private (museumAdmin, staff)
+ */
+router.get('/dashboard/recent-artifacts',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  require('../controllers/museumDashboard').getRecentArtifacts
+);
+
+/**
+ * @desc    Get pending tasks for museum dashboard
+ * @route   GET /api/museums/dashboard/pending-tasks
+ * @access  Private (museumAdmin, staff)
+ */
+router.get('/dashboard/pending-tasks',
+  authenticate,
+  authorize(['museumAdmin', 'staff']),
+  require('../controllers/museumDashboard').getPendingTasks
+);
+
+/**
  * @desc    Get single museum by ID
  * @route   GET /api/museums/:id
  * @access  Public
@@ -119,40 +186,6 @@ router.get('/:id/stats',
   validateObjectId('id', 'Museum ID'),
   authorize(['superAdmin', 'museumAdmin', 'staff']),
   getMuseumStats
-);
-
-/**
- * @desc    Get museum profile (for museum admin's own museum)
- * @route   GET /api/museums/profile
- * @access  Private (museumAdmin, staff)
- */
-router.get('/profile',
-  authenticate,
-  authorize(['museumAdmin', 'staff']),
-  getMuseumProfile
-);
-
-/**
- * @desc    Update museum profile (for museum admin's own museum)
- * @route   PUT /api/museums/profile
- * @access  Private (museumAdmin, staff)
- */
-router.put('/profile',
-  authenticate,
-  authorize(['museumAdmin', 'staff']),
-  updateMuseumProfile
-);
-
-/**
- * @desc    Upload museum logo
- * @route   POST /api/museums/profile/logo
- * @access  Private (museumAdmin, staff)
- */
-router.post('/profile/logo',
-  authenticate,
-  authorize(['museumAdmin', 'staff']),
-  multerLogoUpload.single('logo'),
-  uploadMuseumLogo
 );
 
 module.exports = router;

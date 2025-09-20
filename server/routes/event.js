@@ -12,7 +12,12 @@ const {
   getEventTypesAndCategories,
   registerForEvent,
   cancelEventRegistration,
-  addEventReview
+  addEventReview,
+  bulkUpdateEventStatus,
+  duplicateEvent,
+  getEventAnalytics,
+  exportEventAttendees,
+  getUpcomingEvents
 } = require('../controllers/event');
 
 const router = express.Router();
@@ -291,5 +296,68 @@ router.post('/:id/review', [
     .isLength({ max: 1000 })
     .withMessage('Comment must not exceed 1000 characters')
 ], addEventReview);
+
+/**
+ * @route   GET /api/events/upcoming
+ * @desc    Get upcoming events for dashboard
+ * @access  Museum Admin or Super Admin
+ */
+router.get('/upcoming', [
+  auth,
+  requireMuseumAdminOrHigher,
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50')
+], getUpcomingEvents);
+
+/**
+ * @route   PUT /api/events/bulk/status
+ * @desc    Bulk update event status
+ * @access  Museum Admin or Super Admin
+ */
+router.put('/bulk/status', [
+  auth,
+  requireMuseumAdminOrHigher,
+  body('eventIds')
+    .isArray({ min: 1 })
+    .withMessage('Event IDs must be a non-empty array'),
+  body('eventIds.*')
+    .isMongoId()
+    .withMessage('Invalid event ID'),
+  body('status')
+    .isIn(['draft', 'published', 'cancelled', 'completed', 'archived'])
+    .withMessage('Invalid status')
+], bulkUpdateEventStatus);
+
+/**
+ * @route   POST /api/events/:id/duplicate
+ * @desc    Duplicate event
+ * @access  Museum Admin or Super Admin
+ */
+router.post('/:id/duplicate', [
+  auth,
+  requireMuseumAdminOrHigher,
+  param('id').isMongoId().withMessage('Invalid event ID')
+], duplicateEvent);
+
+/**
+ * @route   GET /api/events/:id/analytics
+ * @desc    Get event analytics
+ * @access  Museum Admin or Super Admin
+ */
+router.get('/:id/analytics', [
+  auth,
+  requireMuseumAdminOrHigher,
+  param('id').isMongoId().withMessage('Invalid event ID')
+], getEventAnalytics);
+
+/**
+ * @route   GET /api/events/:id/export/attendees
+ * @desc    Export event attendees
+ * @access  Museum Admin or Super Admin
+ */
+router.get('/:id/export/attendees', [
+  auth,
+  requireMuseumAdminOrHigher,
+  param('id').isMongoId().withMessage('Invalid event ID')
+], exportEventAttendees);
 
 module.exports = router;

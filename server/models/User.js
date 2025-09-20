@@ -63,14 +63,14 @@ const userSchema = new mongoose.Schema({
       'manage_all_users', 'manage_all_museums', 'approve_museum_registrations',
       'manage_heritage_sites', 'view_platform_analytics', 'manage_system_settings',
       'approve_high_value_rentals', 'manage_api_keys', 'view_audit_logs',
-      
+
       // Museum Admin Permissions  
       'manage_museum_profile', 'manage_museum_staff', 'manage_artifacts',
       'create_events', 'approve_local_rentals', 'view_museum_analytics',
       'suggest_heritage_sites', 'manage_virtual_museum',
-      
+
       // User/Visitor Permissions
-      'book_events', 'request_rentals', 'view_virtual_museum', 
+      'book_events', 'request_rentals', 'view_virtual_museum',
       'leave_reviews', 'manage_profile'
     ]
   }],
@@ -178,7 +178,7 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
   ipAddress: String,
-  
+
   // User Statistics
   stats: {
     artifactsViewed: {
@@ -222,7 +222,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
+
   // Subscription/Membership
   membership: {
     type: {
@@ -257,7 +257,7 @@ const userSchema = new mongoose.Schema({
       zipCode: String
     }
   },
-  
+
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -267,7 +267,7 @@ const userSchema = new mongoose.Schema({
     default: 0
   },
   lockUntil: Date,
-  
+
   // Timestamps
   deletedAt: {
     type: Date,
@@ -287,7 +287,7 @@ userSchema.index({ museumId: 1 });
 userSchema.index({ createdAt: -1 });
 
 // Virtual for user's full name
-userSchema.virtual('fullName').get(function() {
+userSchema.virtual('fullName').get(function () {
   if (this.firstName && this.lastName) {
     return `${this.firstName} ${this.lastName}`;
   }
@@ -295,7 +295,7 @@ userSchema.virtual('fullName').get(function() {
 });
 
 // Virtual for role display name
-userSchema.virtual('roleDisplayName').get(function() {
+userSchema.virtual('roleDisplayName').get(function () {
   const roleMap = {
     'superAdmin': 'Super Administrator (Owner)',
     'museumAdmin': 'Museum Administrator',
@@ -306,7 +306,7 @@ userSchema.virtual('roleDisplayName').get(function() {
 });
 
 // Virtual for checking if account is locked
-userSchema.virtual('isLocked').get(function() {
+userSchema.virtual('isLocked').get(function () {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
@@ -338,7 +338,7 @@ userSchema.index({ createdAt: -1, role: 1 }); // Recent users by role
 userSchema.index({ 'interests': 1, isActive: 1 }); // Users by interests
 
 // Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
 
@@ -353,7 +353,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Pre-save middleware to set permissions based on role
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   if (this.isModified('role') || this.isNew) {
     switch (this.role) {
       case 'superAdmin':
@@ -388,19 +388,19 @@ userSchema.pre('save', function(next) {
 });
 
 // Query middleware to exclude soft deleted users
-userSchema.pre(/^find/, function(next) {
+userSchema.pre(/^find/, function (next) {
   this.where({ deletedAt: null });
   next();
 });
 
 // Instance method to check password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Instance method to increment login attempts
-userSchema.methods.incLoginAttempts = function() {
+userSchema.methods.incLoginAttempts = function () {
   // If we have a previous lock that has expired, restart at 1
   if (this.lockUntil && this.lockUntil < Date.now()) {
     return this.updateOne({
@@ -408,74 +408,74 @@ userSchema.methods.incLoginAttempts = function() {
       $set: { loginAttempts: 1 }
     });
   }
-  
+
   const updates = { $inc: { loginAttempts: 1 } };
-  
+
   // Lock account after 5 failed attempts for 2 hours
   if (this.loginAttempts + 1 >= 5 && !this.isLocked) {
     updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 }; // 2 hours
   }
-  
+
   return this.updateOne(updates);
 };
 
 // Instance method to reset login attempts
-userSchema.methods.resetLoginAttempts = function() {
+userSchema.methods.resetLoginAttempts = function () {
   return this.updateOne({
     $unset: { loginAttempts: 1, lockUntil: 1 }
   });
 };
 
 // Static method to find user by email
-userSchema.statics.findByEmail = function(email) {
+userSchema.statics.findByEmail = function (email) {
   return this.findOne({ email: email.toLowerCase() });
 };
 
 // Static method to find active users
-userSchema.statics.findActive = function() {
+userSchema.statics.findActive = function () {
   return this.find({ isActive: true });
 };
 
 // Static method to find users by role
-userSchema.statics.findByRole = function(role) {
+userSchema.statics.findByRole = function (role) {
   return this.find({ role, isActive: true });
 };
 
 // Method to check permissions
-userSchema.methods.hasPermission = function(permission) {
+userSchema.methods.hasPermission = function (permission) {
   return this.permissions.includes(permission) || this.role === 'superAdmin';
 };
 
 // Method to check if user can access museum
-userSchema.methods.canAccessMuseum = function(museumId) {
+userSchema.methods.canAccessMuseum = function (museumId) {
   if (this.role === 'superAdmin') return true;
   if (this.role === 'museumAdmin' && this.museumId && this.museumId.toString() === museumId.toString()) return true;
   return false;
 };
 
 // Static method to create super admin
-userSchema.statics.createSuperAdmin = async function(userData) {
+userSchema.statics.createSuperAdmin = async function (userData) {
   userData.role = 'superAdmin';
   userData.isVerified = true;
   userData.isActive = true;
-  
+
   const superAdmin = new this(userData);
   return await superAdmin.save();
 };
 
 // Static method to create museum admin
-userSchema.statics.createMuseumAdmin = async function(userData, museumId) {
+userSchema.statics.createMuseumAdmin = async function (userData, museumId) {
   userData.role = 'museumAdmin';
   userData.museumId = museumId;
   userData.isVerified = true;
   userData.isActive = true;
-  
+
   const museumAdmin = new this(userData);
   return await museumAdmin.save();
 };
 
 // Method to update last login
-userSchema.methods.updateLastLogin = async function(ipAddress) {
+userSchema.methods.updateLastLogin = async function (ipAddress) {
   this.lastLogin = new Date();
   this.loginCount += 1;
   if (ipAddress) this.ipAddress = ipAddress;
@@ -483,29 +483,29 @@ userSchema.methods.updateLastLogin = async function(ipAddress) {
 };
 
 // Method to soft delete
-userSchema.methods.softDelete = async function() {
+userSchema.methods.softDelete = async function () {
   this.deletedAt = new Date();
   this.isActive = false;
   return await this.save();
 };
 
 // Method to check if user is super admin
-userSchema.methods.isSuperAdmin = function() {
+userSchema.methods.isSuperAdmin = function () {
   return this.role === 'superAdmin';
 };
 
 // Method to check if user is museum admin
-userSchema.methods.isMuseumAdmin = function() {
+userSchema.methods.isMuseumAdmin = function () {
   return this.role === 'museumAdmin';
 };
 
 // Method to check if user is regular user/visitor
-userSchema.methods.isUser = function() {
+userSchema.methods.isUser = function () {
   return this.role === 'user';
 };
 
 // Method to add bookmark
-userSchema.methods.addBookmark = async function(artifactId) {
+userSchema.methods.addBookmark = async function (artifactId) {
   if (!this.bookmarkedArtifacts.includes(artifactId)) {
     this.bookmarkedArtifacts.push(artifactId);
     this.stats.artifactsBookmarked += 1;
@@ -515,7 +515,7 @@ userSchema.methods.addBookmark = async function(artifactId) {
 };
 
 // Method to remove bookmark
-userSchema.methods.removeBookmark = async function(artifactId) {
+userSchema.methods.removeBookmark = async function (artifactId) {
   const index = this.bookmarkedArtifacts.indexOf(artifactId);
   if (index > -1) {
     this.bookmarkedArtifacts.splice(index, 1);
@@ -526,7 +526,7 @@ userSchema.methods.removeBookmark = async function(artifactId) {
 };
 
 // Method to add favorite museum
-userSchema.methods.addFavoriteMuseum = async function(museumId) {
+userSchema.methods.addFavoriteMuseum = async function (museumId) {
   if (!this.favoriteMuseums.includes(museumId)) {
     this.favoriteMuseums.push(museumId);
     return await this.save();
@@ -535,7 +535,7 @@ userSchema.methods.addFavoriteMuseum = async function(museumId) {
 };
 
 // Method to remove favorite museum
-userSchema.methods.removeFavoriteMuseum = async function(museumId) {
+userSchema.methods.removeFavoriteMuseum = async function (museumId) {
   const index = this.favoriteMuseums.indexOf(museumId);
   if (index > -1) {
     this.favoriteMuseums.splice(index, 1);
@@ -545,31 +545,31 @@ userSchema.methods.removeFavoriteMuseum = async function(museumId) {
 };
 
 // Method to increment artifact views
-userSchema.methods.incrementArtifactViews = async function() {
+userSchema.methods.incrementArtifactViews = async function () {
   this.stats.artifactsViewed += 1;
   return await this.save();
 };
 
 // Method to increment events attended
-userSchema.methods.incrementEventsAttended = async function() {
+userSchema.methods.incrementEventsAttended = async function () {
   this.stats.eventsAttended += 1;
   return await this.save();
 };
 
 // Method to increment tours booked
-userSchema.methods.incrementToursBooked = async function() {
+userSchema.methods.incrementToursBooked = async function () {
   this.stats.toursBooked += 1;
   return await this.save();
 };
 
 // Method to increment reviews written
-userSchema.methods.incrementReviewsWritten = async function() {
+userSchema.methods.incrementReviewsWritten = async function () {
   this.stats.reviewsWritten += 1;
   return await this.save();
 };
 
 // Static method to get user hierarchy level
-userSchema.statics.getHierarchyLevel = function(role) {
+userSchema.statics.getHierarchyLevel = function (role) {
   const levels = {
     'superAdmin': 3,
     'museumAdmin': 2,
@@ -579,24 +579,24 @@ userSchema.statics.getHierarchyLevel = function(role) {
 };
 
 // Method to check if user can manage another user
-userSchema.methods.canManageUser = function(targetUser) {
+userSchema.methods.canManageUser = function (targetUser) {
   const currentLevel = this.constructor.getHierarchyLevel(this.role);
   const targetLevel = this.constructor.getHierarchyLevel(targetUser.role);
   return currentLevel > targetLevel;
 };
 
 // Static method to find museum admins by museum
-userSchema.statics.findMuseumAdmins = function(museumId) {
+userSchema.statics.findMuseumAdmins = function (museumId) {
   return this.find({ role: 'museumAdmin', museumId, isActive: true });
 };
 
 // Static method to get platform statistics
-userSchema.statics.getPlatformStats = async function() {
+userSchema.statics.getPlatformStats = async function () {
   const totalUsers = await this.countDocuments({ isActive: true });
   const superAdmins = await this.countDocuments({ role: 'superAdmin', isActive: true });
   const museumAdmins = await this.countDocuments({ role: 'museumAdmin', isActive: true });
   const regularUsers = await this.countDocuments({ role: 'user', isActive: true });
-  
+
   return {
     total: totalUsers,
     superAdmins,
@@ -608,6 +608,67 @@ userSchema.statics.getPlatformStats = async function() {
       user: regularUsers
     }
   };
+};
+
+// Instance method to check if user has a specific permission
+userSchema.methods.hasPermission = function (permission) {
+  // Super admin has all permissions
+  if (this.role === 'superAdmin') {
+    return true;
+  }
+
+  // Define role permissions mapping
+  const rolePermissions = {
+    'user': [
+      'book_events',
+      'request_rentals',
+      'view_virtual_museum',
+      'leave_reviews',
+      'manage_profile'
+    ],
+    'museumAdmin': [
+      'manage_museum_profile',
+      'manage_museum_staff',
+      'manage_artifacts',
+      'create_events',
+      'approve_local_rentals',
+      'view_museum_analytics',
+      'suggest_heritage_sites',
+      'manage_virtual_museum',
+      'book_events',
+      'request_rentals',
+      'view_virtual_museum',
+      'leave_reviews',
+      'manage_profile'
+    ],
+    'superAdmin': [
+      'manage_all_users',
+      'manage_all_museums',
+      'approve_museum_registrations',
+      'manage_heritage_sites',
+      'view_platform_analytics',
+      'manage_system_settings',
+      'approve_high_value_rentals',
+      'manage_api_keys',
+      'view_audit_logs',
+      'manage_museum_profile',
+      'manage_museum_staff',
+      'manage_artifacts',
+      'create_events',
+      'approve_local_rentals',
+      'view_museum_analytics',
+      'suggest_heritage_sites',
+      'manage_virtual_museum',
+      'book_events',
+      'request_rentals',
+      'view_virtual_museum',
+      'leave_reviews',
+      'manage_profile'
+    ]
+  };
+
+  const permissions = rolePermissions[this.role] || [];
+  return permissions.includes(permission);
 };
 
 module.exports = mongoose.model('User', userSchema);

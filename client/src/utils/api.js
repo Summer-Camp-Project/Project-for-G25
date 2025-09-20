@@ -566,17 +566,20 @@ class ApiClient {
     if (this.useMockAPI) {
       return mockApi.getMuseumProfile()
     }
-    // Try to get current user first, then extract museum info
+
+    console.log('=== GET MUSEUM PROFILE API CALL ===');
+    console.log('Using mock API:', this.useMockAPI);
+
     try {
-      const userData = await this.getCurrentUser()
-      if (userData?.user?.museumId) {
-        const museum = await this.getMuseumById(userData.user.museumId)
-        return { museum }
-      }
-      return { museum: null }
+      const response = await this.request('/museums/profile', {
+        method: 'GET',
+      });
+
+      console.log('Museum profile API response:', response);
+      return response;
     } catch (error) {
-      console.warn('Could not get museum profile:', error.message)
-      return { museum: null }
+      console.error('Could not get museum profile:', error.message);
+      throw error;
     }
   }
 
@@ -626,6 +629,85 @@ class ApiClient {
       throw new Error(message)
     }
     return response.json()
+  }
+
+  // Museum Dashboard endpoints
+  async getMuseumDashboardStats() {
+    await this.checkBackendAvailability();
+
+    if (this.useMockAPI) {
+      return {
+        totalArtifacts: 45,
+        artifactsInStorage: 12,
+        activeRentals: 3,
+        monthlyVisitors: 0
+      }
+    }
+
+    console.log('=== GET MUSEUM DASHBOARD STATS API CALL ===');
+
+    try {
+      const response = await this.request('/museums/dashboard/stats', {
+        method: 'GET',
+      });
+
+      console.log('Dashboard stats API response:', response);
+      return response;
+    } catch (error) {
+      console.error('Could not get dashboard stats:', error.message);
+      throw error;
+    }
+  }
+
+  async getRecentArtifacts() {
+    await this.checkBackendAvailability();
+
+    if (this.useMockAPI) {
+      return [
+        { id: 1, name: 'Ancient Vase', status: 'on_display', lastUpdated: '2025-08-01' },
+        { id: 2, name: 'Historical Painting', status: 'in_storage', lastUpdated: '2025-08-05' }
+      ]
+    }
+
+    console.log('=== GET RECENT ARTIFACTS API CALL ===');
+
+    try {
+      const response = await this.request('/museums/dashboard/recent-artifacts', {
+        method: 'GET',
+      });
+
+      console.log('Recent artifacts API response:', response);
+      return response;
+    } catch (error) {
+      console.error('Could not get recent artifacts:', error.message);
+      throw error;
+    }
+  }
+
+  async getPendingTasks() {
+    await this.checkBackendAvailability();
+
+    if (this.useMockAPI) {
+      return [
+        { id: 1, type: 'rental_request', title: '3 Rental requests awaiting approval', priority: 'medium' },
+        { id: 2, type: 'draft_event', title: '2 Virtual museum submissions in review', priority: 'low' },
+        { id: 3, type: 'staff_approval', title: '1 New staff member to onboard', priority: 'high' }
+      ]
+    }
+
+    console.log('=== GET PENDING TASKS API CALL ===');
+
+    try {
+      const response = await this.request('/museums/dashboard/pending-tasks', {
+        method: 'GET',
+      });
+
+      console.log('Pending tasks API response:', response);
+      return response;
+    } catch (error) {
+      console.error('Could not get pending tasks:', error.message);
+      throw error;
+    }
   }
 
   async getMuseumArtifacts({ page = 1, limit = 20, category, search } = {}) {

@@ -739,12 +739,23 @@ exports.getMuseumStats = async (req, res) => {
  */
 exports.getMuseumProfile = async (req, res) => {
   try {
-    // Get museum ID from user's profile
-    const museumId = req.user.museumId;
-
     console.log('=== GET MUSEUM PROFILE DEBUG ===');
     console.log('User:', req.user);
-    console.log('Museum ID:', museumId);
+
+    // Get museum ID from user's profile
+    let museumId = req.user.museumId;
+
+    // If museumId is not directly available, try to find it from the Museum collection
+    if (!museumId) {
+      console.log('No museumId in user, searching by admin field...');
+      const museum = await Museum.findOne({ admin: req.user._id });
+      if (museum) {
+        museumId = museum._id;
+        console.log('Found museum by admin:', museumId);
+      }
+    }
+
+    console.log('Using museumId:', museumId);
 
     if (!museumId) {
       return res.status(400).json({
@@ -843,8 +854,23 @@ exports.getMuseumProfile = async (req, res) => {
  */
 exports.updateMuseumProfile = async (req, res) => {
   try {
+    console.log('=== UPDATE MUSEUM PROFILE DEBUG ===');
+    console.log('User:', req.user);
+
     // Get museum ID from user's profile
-    const museumId = req.user.museumId;
+    let museumId = req.user.museumId;
+
+    // If museumId is not directly available, try to find it from the Museum collection
+    if (!museumId) {
+      console.log('No museumId in user, searching by admin field...');
+      const museum = await Museum.findOne({ admin: req.user._id });
+      if (museum) {
+        museumId = museum._id;
+        console.log('Found museum by admin:', museumId);
+      }
+    }
+
+    console.log('Using museumId:', museumId);
 
     if (!museumId) {
       return res.status(400).json({
@@ -1017,8 +1043,23 @@ exports.updateMuseumProfile = async (req, res) => {
  */
 exports.uploadMuseumLogo = async (req, res) => {
   try {
+    console.log('=== UPLOAD MUSEUM LOGO DEBUG ===');
+    console.log('User:', req.user);
+
     // Get museum ID from user's profile
-    const museumId = req.user.museumId;
+    let museumId = req.user.museumId;
+
+    // If museumId is not directly available, try to find it from the Museum collection
+    if (!museumId) {
+      console.log('No museumId in user, searching by admin field...');
+      const museum = await Museum.findOne({ admin: req.user._id });
+      if (museum) {
+        museumId = museum._id;
+        console.log('Found museum by admin:', museumId);
+      }
+    }
+
+    console.log('Using museumId:', museumId);
 
     if (!museumId) {
       return res.status(400).json({

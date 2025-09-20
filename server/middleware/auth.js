@@ -168,7 +168,9 @@ const authorize = (...roles) => {
     }
 
     const userRole = (req.user.role || '').toLowerCase();
-    const allowed = roles.map(r => (r || '').toLowerCase());
+    // Flatten the roles array in case it's nested (e.g., when passed as ['admin', 'user'])
+    const flatRoles = roles.flat();
+    const allowed = flatRoles.map(r => (r || '').toLowerCase());
     if (!allowed.includes(userRole)) {
       return res.status(403).json({
         success: false,

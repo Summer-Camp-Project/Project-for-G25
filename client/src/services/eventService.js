@@ -135,6 +135,71 @@ export const addEventReview = async (eventId, reviewData) => {
 };
 
 /**
+ * Bulk update event status
+ */
+export const bulkUpdateEventStatus = async (eventIds, status) => {
+  try {
+    const response = await api.put('/events/bulk/status', { eventIds, status });
+    return response.data;
+  } catch (error) {
+    console.error('Bulk update event status error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Duplicate event
+ */
+export const duplicateEvent = async (eventId) => {
+  try {
+    const response = await api.post(`/events/${eventId}/duplicate`);
+    return response.data;
+  } catch (error) {
+    console.error('Duplicate event error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get event analytics
+ */
+export const getEventAnalytics = async (eventId) => {
+  try {
+    const response = await api.get(`/events/${eventId}/analytics`);
+    return response.data;
+  } catch (error) {
+    console.error('Get event analytics error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export event attendees
+ */
+export const exportEventAttendees = async (eventId) => {
+  try {
+    const response = await api.get(`/events/${eventId}/export/attendees`);
+    return response.data;
+  } catch (error) {
+    console.error('Export event attendees error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get upcoming events
+ */
+export const getUpcomingEvents = async (limit = 5) => {
+  try {
+    const response = await api.get('/events/upcoming', { params: { limit } });
+    return response.data;
+  } catch (error) {
+    console.error('Get upcoming events error:', error);
+    throw error;
+  }
+};
+
+/**
  * Validate event data
  */
 export const validateEventData = (eventData) => {
@@ -335,6 +400,11 @@ export default {
   registerForEvent,
   cancelEventRegistration,
   addEventReview,
+  bulkUpdateEventStatus,
+  duplicateEvent,
+  getEventAnalytics,
+  exportEventAttendees,
+  getUpcomingEvents,
   validateEventData,
   formatEventData,
   formatEventForDisplay

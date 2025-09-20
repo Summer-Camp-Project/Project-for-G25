@@ -699,6 +699,316 @@ const addEventReview = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Bulk update event status
+ * @route   PUT /api/events/bulk/status
+ * @access  Museum Admin or Super Admin
+ */
+const bulkUpdateEventStatus = async (req, res) => {
+  try {
+    const { eventIds, status } = req.body;
+
+    if (!eventIds || !Array.isArray(eventIds) || eventIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event IDs array is required'
+      });
+    }
+
+    if (!status || !['draft', 'published', 'cancelled', 'completed', 'archived'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid status is required'
+      });
+    }
+
+    // Build query based on user role
+    const query = { _id: { $in: eventIds } };
+    if (req.user.role !== 'superAdmin') {
+      if (!req.user.museumId) {
+        return res.status(403).json({
+          success: false,
+          message: 'User not associated with any museum'
+        });
+      }
+      query.museum = req.user.museumId;
+    }
+
+    const result = await Event.updateMany(query, { status });
+
+    res.json({
+      success: true,
+      message: `Successfully updated ${result.modifiedCount} events`,
+      data: {
+        updatedCount: result.modifiedCount,
+        totalRequested: eventIds.length
+      }
+    });
+  } catch (error) {
+    console.error('Bulk update event status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update event status',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Duplicate event
+ * @route   POST /api/events/:id/duplicate
+ * @access  Museum Admin or Super Admin
+ */
+const duplicateEvent = async (req, res) => {
+  try {
+    const originalEvent = await Event.findById(req.params.id);
+    if (!originalEvent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check if user has access to this event
+    if (req.user.role !== 'superAdmin' && originalEvent.museum.toString() !== req.user.museumId?.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this event'
+      });
+    }
+
+    // Create duplicate with modified title and reset status
+    const duplicateData = originalEvent.toObject();
+    delete duplicateData._id;
+    delete duplicateData.createdAt;
+    delete duplicateData.updatedAt;
+    delete duplicateData.__v;
+
+    duplicateData.title = `${duplicateData.title} (Copy)`;
+    duplicateData.status = 'draft';
+    duplicateData.organizer = req.user._id;
+    duplicateData.registration.currentRegistrations = 0;
+    duplicateData.attendees = [];
+    duplicateData.reviews = [];
+    duplicateData.statistics = {
+      totalViews: 0,
+      totalRegistrations: 0,
+      totalAttendees: 0,
+      averageRating: 0,
+      totalReviews: 0
+    };
+
+    // Adjust dates to future
+    const now = new Date();
+    const eventDuration = new Date(duplicateData.schedule.endDate) - new Date(duplicateData.schedule.startDate);
+    duplicateData.schedule.startDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
+    duplicateData.schedule.endDate = new Date(duplicateData.schedule.startDate.getTime() + eventDuration);
+
+    const duplicatedEvent = new Event(duplicateData);
+    await duplicatedEvent.save();
+
+    // Populate the duplicated event
+    await duplicatedEvent.populate([
+      { path: 'museum', select: 'name location' },
+      { path: 'organizer', select: 'name email' }
+    ]);
+
+    res.status(201).json({
+      success: true,
+      data: duplicatedEvent,
+      message: 'Event duplicated successfully'
+    });
+  } catch (error) {
+    console.error('Duplicate event error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to duplicate event',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get event analytics
+ * @route   GET /api/events/:id/analytics
+ * @access  Museum Admin or Super Admin
+ */
+const getEventAnalytics = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check if user has access to this event
+    if (req.user.role !== 'superAdmin' && event.museum.toString() !== req.user.museumId?.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this event'
+      });
+    }
+
+    // Calculate analytics
+    const analytics = {
+      basic: {
+        totalViews: event.statistics.totalViews,
+        totalRegistrations: event.statistics.totalRegistrations,
+        totalAttendees: event.statistics.totalAttendees,
+        averageRating: event.statistics.averageRating,
+        totalReviews: event.statistics.totalReviews
+      },
+      registration: {
+        capacity: event.registration.capacity,
+        currentRegistrations: event.registration.currentRegistrations,
+        occupancyRate: event.registration.capacity > 0 ?
+          (event.registration.currentRegistrations / event.registration.capacity) * 100 : 0,
+        availableSpots: event.availableSpots
+      },
+      attendeeBreakdown: {
+        registered: event.attendees.filter(a => a.status === 'registered').length,
+        confirmed: event.attendees.filter(a => a.status === 'confirmed').length,
+        attended: event.attendees.filter(a => a.status === 'attended').length,
+        cancelled: event.attendees.filter(a => a.status === 'cancelled').length,
+        noShow: event.attendees.filter(a => a.status === 'no_show').length
+      },
+      revenue: {
+        totalRevenue: event.attendees.reduce((sum, attendee) => {
+          if (attendee.paymentStatus === 'paid') {
+            const fee = event.registration.fees[attendee.ticketType] || event.registration.fees.adult;
+            return sum + fee;
+          }
+          return sum;
+        }, 0),
+        currency: event.registration.currency
+      },
+      reviews: {
+        averageRating: event.statistics.averageRating,
+        totalReviews: event.statistics.totalReviews,
+        ratingDistribution: [1, 2, 3, 4, 5].map(rating => ({
+          rating,
+          count: event.reviews.filter(r => r.rating === rating).length
+        }))
+      }
+    };
+
+    res.json({
+      success: true,
+      data: analytics
+    });
+  } catch (error) {
+    console.error('Get event analytics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch event analytics',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Export event attendees
+ * @route   GET /api/events/:id/export/attendees
+ * @access  Museum Admin or Super Admin
+ */
+const exportEventAttendees = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id)
+      .populate('attendees.user', 'name email phone');
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found'
+      });
+    }
+
+    // Check if user has access to this event
+    if (req.user.role !== 'superAdmin' && event.museum.toString() !== req.user.museumId?.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this event'
+      });
+    }
+
+    // Prepare CSV data
+    const csvData = event.attendees.map(attendee => ({
+      'Name': attendee.user?.name || 'N/A',
+      'Email': attendee.user?.email || 'N/A',
+      'Phone': attendee.user?.phone || 'N/A',
+      'Registration Date': attendee.registeredAt.toISOString().split('T')[0],
+      'Status': attendee.status,
+      'Ticket Type': attendee.ticketType || 'N/A',
+      'Payment Status': attendee.paymentStatus || 'N/A',
+      'Special Requirements': attendee.specialRequirements || 'N/A'
+    }));
+
+    // Convert to CSV format
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${event.title.replace(/[^a-z0-9]/gi, '_')}_attendees.csv"`);
+    res.send(csvContent);
+  } catch (error) {
+    console.error('Export event attendees error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export attendees',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get upcoming events for dashboard
+ * @route   GET /api/events/upcoming
+ * @access  Museum Admin or Super Admin
+ */
+const getUpcomingEvents = async (req, res) => {
+  try {
+    const { limit = 5 } = req.query;
+
+    // Build query based on user role
+    const query = {
+      'schedule.startDate': { $gte: new Date() },
+      status: 'published'
+    };
+
+    if (req.user.role !== 'superAdmin') {
+      if (!req.user.museumId) {
+        return res.status(403).json({
+          success: false,
+          message: 'User not associated with any museum'
+        });
+      }
+      query.museum = req.user.museumId;
+    }
+
+    const events = await Event.find(query)
+      .populate('museum', 'name')
+      .sort({ 'schedule.startDate': 1 })
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      data: events
+    });
+  } catch (error) {
+    console.error('Get upcoming events error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch upcoming events',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllEvents,
   getEventById,
@@ -709,5 +1019,10 @@ module.exports = {
   getEventTypesAndCategories,
   registerForEvent,
   cancelEventRegistration,
-  addEventReview
+  addEventReview,
+  bulkUpdateEventStatus,
+  duplicateEvent,
+  getEventAnalytics,
+  exportEventAttendees,
+  getUpcomingEvents
 };

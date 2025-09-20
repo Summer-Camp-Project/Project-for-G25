@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MuseumAdminSidebar from '../dashboard/MuseumAdminSidebar';
 import {
   Box, Typography, Container, Grid, Paper, Button, TextField,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -578,338 +579,453 @@ const ArtifactManagement = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white">
-      <Container maxWidth="xl" sx={{ py: 6 }}>
-        {/* Enhanced Header with Brand Colors */}
-        <Box sx={{ mb: 6 }}>
-          {/* Badge */}
-          <div className="inline-flex items-center bg-amber-100 text-amber-800 rounded-full px-4 py-2 mb-4">
-            <Sparkles className="w-4 h-4 mr-2" />
-            <span className="text-sm font-semibold">Museum Dashboard</span>
-          </div>
+    <div className="flex min-h-screen" style={{ backgroundColor: 'white' }}>
+      <MuseumAdminSidebar />
 
-          {/* Main Title */}
-          <Typography
-            variant="h3"
-            component="h1"
-            gutterBottom
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 3,
-              fontWeight: 'bold',
-              background: 'linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              mb: 2
-            }}
-          >
-            <div className="w-12 h-12 bg-gradient-to-br from-amber-600 to-amber-800 rounded-2xl flex items-center justify-center">
-              <Package className="w-6 h-6 text-white" />
-            </div>
-            Artifact Management
-          </Typography>
+      <div
+        className="flex-1 overflow-auto"
+        onWheel={(e) => {
+          // Only allow scrolling when mouse is over the main content
+          e.stopPropagation();
+        }}
+      >
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" sx={{ mb: 1, display: 'flex', alignItems: 'center', color: 'black' }}>
+              <Package className="mr-3" size={32} style={{ color: '#8B5A3C' }} />
+              Artifact Management
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary">
+              Preserve and showcase your museum's precious artifacts with our comprehensive management system
+            </Typography>
+          </Box>
 
-          <Typography
-            variant="h6"
-            sx={{
-              color: '#6B7280',
-              fontWeight: 'normal',
-              mb: 3
-            }}
-          >
-            Preserve and showcase your museum's precious artifacts with our comprehensive management system
-          </Typography>
-        </Box>
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={3}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Package sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Total Artifacts</Typography>
+                  <Typography variant="h4" color="inherit">{artifacts.length}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>In Collection</Typography>
+                </Box>
+              </Paper>
+            </Grid>
 
-        {/* Enhanced Stats Cards with Brand Colors */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-3xl font-bold text-amber-800">{artifacts.length}</div>
-                <div className="text-sm text-gray-600 font-medium">Total Artifacts</div>
-              </div>
-              <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
+            <Grid item xs={12} md={3}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Eye sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">On Display</Typography>
+                  <Typography variant="h4" color="inherit">
+                    {artifacts.filter(a => a.status === 'on_display').length}
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Currently Exhibited</Typography>
+                </Box>
+              </Paper>
+            </Grid>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-3xl font-bold text-amber-800">
-                  {artifacts.filter(a => a.status === 'on_display').length}
-                </div>
-                <div className="text-sm text-gray-600 font-medium">On Display</div>
-              </div>
-              <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-                <Eye className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
+            <Grid item xs={12} md={3}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Shield sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Under Conservation</Typography>
+                  <Typography variant="h4" color="inherit">
+                    {artifacts.filter(a => a.status === 'under_conservation').length}
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Being Restored</Typography>
+                </Box>
+              </Paper>
+            </Grid>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-3xl font-bold text-amber-800">
-                  {artifacts.filter(a => a.status === 'under_conservation').length}
-                </div>
-                <div className="text-sm text-gray-600 font-medium">Under Conservation</div>
-              </div>
-              <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
+            <Grid item xs={12} md={3}>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Star sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Featured</Typography>
+                  <Typography variant="h4" color="inherit">
+                    {artifacts.filter(a => a.featured).length}
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Highlighted Items</Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-3xl font-bold text-amber-800">
-                  {artifacts.filter(a => a.featured).length}
-                </div>
-                <div className="text-sm text-gray-600 font-medium">Featured</div>
-              </div>
-              <div className="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center">
-                <Star className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Controls with Brand Colors */}
-        <div className="bg-white rounded-3xl p-6 mb-6 border border-gray-200 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            {/* Search */}
-            <div className="md:col-span-4">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-amber-600 w-5 h-5" />
-                <input
-                  type="text"
+          {/* Controls */}
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Grid container spacing={3} alignItems="center">
+              {/* Search */}
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
                   placeholder="Search artifacts..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Filter */}
-            <div className="md:col-span-3">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all bg-white"
-              >
-                <option value="all">All Statuses</option>
-                <option value="on_display">On Display</option>
-                <option value="in_storage">In Storage</option>
-                <option value="under_conservation">Under Conservation</option>
-                <option value="on_loan">On Loan</option>
-              </select>
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="md:col-span-3">
-              <div className="flex bg-gray-50 rounded-2xl p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all ${viewMode === 'grid'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                  Grid
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all ${viewMode === 'table'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                >
-                  <List className="w-4 h-4" />
-                  Table
-                </button>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="md:col-span-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => fetchArtifacts()}
-                  disabled={loading}
-                  className="flex-1 bg-amber-600 text-white py-3 px-4 rounded-2xl hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </button>
-                <button
-                  onClick={() => setOpenDialog(true)}
-                  className="flex-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-2xl hover:from-amber-700 hover:to-amber-800 transition-all flex items-center justify-center gap-2 shadow-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Artifacts Display */}
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-            <Typography>Loading artifacts...</Typography>
-          </Box>
-        ) : filteredArtifacts.length === 0 ? (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200, textAlign: 'center' }}>
-            <Package size={64} color="#ccc" />
-            <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
-              {artifacts.length === 0 ? 'No artifacts found' : 'No artifacts match your filters'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {artifacts.length === 0 ? 'Start by adding your first artifact' : 'Try adjusting your search or filter criteria'}
-            </Typography>
-          </Box>
-        ) : (
-          viewMode === 'grid' ? renderGridView() : renderTableView()
-        )}
-
-        {/* Add Artifact Dialog */}
-        <Dialog open={openDialog} onClose={() => { setOpenDialog(false); resetForm(); }} maxWidth="md" fullWidth>
-          <DialogTitle>{isEditing ? 'Edit Artifact' : 'Add New Artifact'}</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              {/* Museum is inferred from current user's museum profile; no manual selection */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Artifact Name"
-                  value={newArtifact.name}
-                  onChange={(e) => setNewArtifact({ ...newArtifact, name: e.target.value })}
+                  InputProps={{
+                    startAdornment: <Search className="mr-2" size={20} style={{ color: '#8B5A3C' }} />
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#8B5A3C',
+                      },
+                    },
+                  }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={newArtifact.category}
-                    label="Category"
-                    onChange={(e) => setNewArtifact({ ...newArtifact, category: e.target.value })}
-                  >
-                    <MenuItem value="sculptures">Sculptures</MenuItem>
-                    <MenuItem value="pottery">Pottery</MenuItem>
-                    <MenuItem value="jewelry">Jewelry</MenuItem>
-                    <MenuItem value="tools">Tools</MenuItem>
-                    <MenuItem value="weapons">Weapons</MenuItem>
-                    <MenuItem value="textiles">Textiles</MenuItem>
-                    <MenuItem value="religious-items">Religious Items</MenuItem>
-                    <MenuItem value="manuscripts">Manuscripts</MenuItem>
-                    <MenuItem value="coins">Coins</MenuItem>
-                    <MenuItem value="paintings">Paintings</MenuItem>
-                    <MenuItem value="household-items">Household Items</MenuItem>
-                    <MenuItem value="musical-instruments">Musical Instruments</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Historical Period</InputLabel>
-                  <Select
-                    value={newArtifact.period}
-                    label="Historical Period"
-                    onChange={(e) => setNewArtifact({ ...newArtifact, period: e.target.value })}
-                  >
-                    <MenuItem value="prehistoric">Prehistoric</MenuItem>
-                    <MenuItem value="ancient">Ancient</MenuItem>
-                    <MenuItem value="medieval">Medieval</MenuItem>
-                    <MenuItem value="modern">Modern</MenuItem>
-                    <MenuItem value="contemporary">Contemporary</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Material"
-                  value={newArtifact.material}
-                  onChange={(e) => setNewArtifact({ ...newArtifact, material: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Origin"
-                  value={newArtifact.origin}
-                  onChange={(e) => setNewArtifact({ ...newArtifact, origin: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Location"
-                  value={newArtifact.location}
-                  onChange={(e) => setNewArtifact({ ...newArtifact, location: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
+
+              {/* Filter */}
+              <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
                   <Select
-                    value={newArtifact.status}
+                    value={filterStatus}
                     label="Status"
-                    onChange={(e) => setNewArtifact({ ...newArtifact, status: e.target.value })}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    sx={{
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#8B5A3C',
+                      },
+                    }}
                   >
-                    <MenuItem value="in_storage">In Storage</MenuItem>
+                    <MenuItem value="all">All Statuses</MenuItem>
                     <MenuItem value="on_display">On Display</MenuItem>
+                    <MenuItem value="in_storage">In Storage</MenuItem>
                     <MenuItem value="under_conservation">Under Conservation</MenuItem>
                     <MenuItem value="on_loan">On Loan</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Condition</InputLabel>
-                  <Select
-                    value={newArtifact.condition}
-                    label="Condition"
-                    onChange={(e) => setNewArtifact({ ...newArtifact, condition: e.target.value })}
+
+              {/* View Mode Toggle */}
+              <Grid item xs={12} md={3}>
+                <Paper sx={{ p: 1, display: 'flex', backgroundColor: '#f5f5f5' }}>
+                  <Button
+                    onClick={() => setViewMode('grid')}
+                    variant={viewMode === 'grid' ? 'contained' : 'text'}
+                    size="small"
+                    startIcon={<Grid3X3 size={16} />}
+                    sx={{
+                      flex: 1,
+                      backgroundColor: viewMode === 'grid' ? '#8B5A3C' : 'transparent',
+                      color: viewMode === 'grid' ? 'white' : '#8B5A3C',
+                      '&:hover': {
+                        backgroundColor: viewMode === 'grid' ? '#8B5A3C' : 'rgba(139, 90, 60, 0.1)',
+                      },
+                    }}
                   >
-                    <MenuItem value="excellent">Excellent</MenuItem>
-                    <MenuItem value="good">Good</MenuItem>
-                    <MenuItem value="fair">Fair</MenuItem>
-                    <MenuItem value="fragile">Fragile</MenuItem>
-                  </Select>
-                </FormControl>
+                    Grid
+                  </Button>
+                  <Button
+                    onClick={() => setViewMode('table')}
+                    variant={viewMode === 'table' ? 'contained' : 'text'}
+                    size="small"
+                    startIcon={<List size={16} />}
+                    sx={{
+                      flex: 1,
+                      backgroundColor: viewMode === 'table' ? '#8B5A3C' : 'transparent',
+                      color: viewMode === 'table' ? 'white' : '#8B5A3C',
+                      '&:hover': {
+                        backgroundColor: viewMode === 'table' ? '#8B5A3C' : 'rgba(139, 90, 60, 0.1)',
+                      },
+                    }}
+                  >
+                    Table
+                  </Button>
+                </Paper>
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description (required, min 10 characters)"
-                  multiline
-                  rows={4}
-                  value={newArtifact.description}
-                  onChange={(e) => setNewArtifact({ ...newArtifact, description: e.target.value })}
-                  error={newArtifact.description.length > 0 && newArtifact.description.length < 10}
-                  helperText={newArtifact.description.length > 0 && newArtifact.description.length < 10 ? 'Description must be at least 10 characters' : `${newArtifact.description.length}/2000 characters`}
-                />
+
+              {/* Actions */}
+              <Grid item xs={12} md={2}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshCw size={16} />}
+                    onClick={() => fetchArtifacts()}
+                    disabled={loading}
+                    sx={{ borderColor: '#8B5A3C', color: '#8B5A3C', '&:hover': { borderColor: '#8B5A3C', backgroundColor: 'white' } }}
+                  >
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<Plus size={16} />}
+                    onClick={() => setOpenDialog(true)}
+                    sx={{
+                      backgroundColor: '#8B5A3C',
+                      color: 'white',
+                      '&:hover': { backgroundColor: '#8B5A3C' }
+                    }}
+                  >
+                    Add
+                  </Button>
+                </Box>
               </Grid>
-              <Grid item xs={12}>
+            </Grid>
+          </Paper>
+
+          {/* Artifacts Display */}
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <Typography>Loading artifacts...</Typography>
+            </Box>
+          ) : filteredArtifacts.length === 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200, textAlign: 'center' }}>
+              <Package size={64} color="#ccc" />
+              <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+                {artifacts.length === 0 ? 'No artifacts found' : 'No artifacts match your filters'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {artifacts.length === 0 ? 'Start by adding your first artifact' : 'Try adjusting your search or filter criteria'}
+              </Typography>
+            </Box>
+          ) : (
+            viewMode === 'grid' ? renderGridView() : renderTableView()
+          )}
+
+          {/* Add Artifact Dialog */}
+          <Dialog open={openDialog} onClose={() => { setOpenDialog(false); resetForm(); }} maxWidth="md" fullWidth>
+            <DialogTitle>{isEditing ? 'Edit Artifact' : 'Add New Artifact'}</DialogTitle>
+            <DialogContent>
+              <Grid container spacing={3} sx={{ mt: 1 }}>
+                {/* Museum is inferred from current user's museum profile; no manual selection */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Artifact Name"
+                    value={newArtifact.name}
+                    onChange={(e) => setNewArtifact({ ...newArtifact, name: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={newArtifact.category}
+                      label="Category"
+                      onChange={(e) => setNewArtifact({ ...newArtifact, category: e.target.value })}
+                    >
+                      <MenuItem value="sculptures">Sculptures</MenuItem>
+                      <MenuItem value="pottery">Pottery</MenuItem>
+                      <MenuItem value="jewelry">Jewelry</MenuItem>
+                      <MenuItem value="tools">Tools</MenuItem>
+                      <MenuItem value="weapons">Weapons</MenuItem>
+                      <MenuItem value="textiles">Textiles</MenuItem>
+                      <MenuItem value="religious-items">Religious Items</MenuItem>
+                      <MenuItem value="manuscripts">Manuscripts</MenuItem>
+                      <MenuItem value="coins">Coins</MenuItem>
+                      <MenuItem value="paintings">Paintings</MenuItem>
+                      <MenuItem value="household-items">Household Items</MenuItem>
+                      <MenuItem value="musical-instruments">Musical Instruments</MenuItem>
+                      <MenuItem value="other">Other</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Historical Period</InputLabel>
+                    <Select
+                      value={newArtifact.period}
+                      label="Historical Period"
+                      onChange={(e) => setNewArtifact({ ...newArtifact, period: e.target.value })}
+                    >
+                      <MenuItem value="prehistoric">Prehistoric</MenuItem>
+                      <MenuItem value="ancient">Ancient</MenuItem>
+                      <MenuItem value="medieval">Medieval</MenuItem>
+                      <MenuItem value="modern">Modern</MenuItem>
+                      <MenuItem value="contemporary">Contemporary</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Material"
+                    value={newArtifact.material}
+                    onChange={(e) => setNewArtifact({ ...newArtifact, material: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Origin"
+                    value={newArtifact.origin}
+                    onChange={(e) => setNewArtifact({ ...newArtifact, origin: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label="Location"
+                    value={newArtifact.location}
+                    onChange={(e) => setNewArtifact({ ...newArtifact, location: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={newArtifact.status}
+                      label="Status"
+                      onChange={(e) => setNewArtifact({ ...newArtifact, status: e.target.value })}
+                    >
+                      <MenuItem value="in_storage">In Storage</MenuItem>
+                      <MenuItem value="on_display">On Display</MenuItem>
+                      <MenuItem value="under_conservation">Under Conservation</MenuItem>
+                      <MenuItem value="on_loan">On Loan</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Condition</InputLabel>
+                    <Select
+                      value={newArtifact.condition}
+                      label="Condition"
+                      onChange={(e) => setNewArtifact({ ...newArtifact, condition: e.target.value })}
+                    >
+                      <MenuItem value="excellent">Excellent</MenuItem>
+                      <MenuItem value="good">Good</MenuItem>
+                      <MenuItem value="fair">Fair</MenuItem>
+                      <MenuItem value="fragile">Fragile</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description (required, min 10 characters)"
+                    multiline
+                    rows={4}
+                    value={newArtifact.description}
+                    onChange={(e) => setNewArtifact({ ...newArtifact, description: e.target.value })}
+                    error={newArtifact.description.length > 0 && newArtifact.description.length < 10}
+                    helperText={newArtifact.description.length > 0 && newArtifact.description.length < 10 ? 'Description must be at least 10 characters' : `${newArtifact.description.length}/2000 characters`}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFormImageSelect}
+                    style={{ display: 'none' }}
+                    id="form-image-upload-input"
+                  />
+                  <label htmlFor="form-image-upload-input">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={<Upload size={16} />}
+                      fullWidth
+                      sx={{ height: 100, borderStyle: 'dashed' }}
+                    >
+                      {formImages.length > 0 ? `Selected ${formImages.length} image(s)` : 'Upload Images'}
+                    </Button>
+                  </label>
+                  {formImages.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Selected images:
+                      </Typography>
+                      {formImages.map((file, index) => (
+                        <Typography key={index} variant="body2" sx={{ mt: 0.5 }}>
+                          • {file.name}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => { setOpenDialog(false); resetForm(); }}>Cancel</Button>
+              <Button onClick={handleSaveArtifact} variant="contained" disabled={saving || uploadingFormImages}>
+                {saving ? (uploadingFormImages ? 'Uploading Images...' : 'Saving...') : (isEditing ? 'Save Changes' : 'Add Artifact')}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Artifact Detail Dialog */}
+          <Dialog open={!!selectedArtifact} onClose={() => setSelectedArtifact(null)} maxWidth="md" fullWidth>
+            {selectedArtifact && (
+              <>
+                <DialogTitle>{selectedArtifact.name}</DialogTitle>
+                <DialogContent>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      {selectedArtifact.media?.images && selectedArtifact.media.images.length > 0 ? (
+                        <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1, overflow: 'hidden' }}>
+                          <img
+                            src={selectedArtifact.media.images[0].url.startsWith('http')
+                              ? selectedArtifact.media.images[0].url
+                              : `http://localhost:5000${selectedArtifact.media.images[0].url}`}
+                            alt={selectedArtifact.name}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              borderRadius: '4px'
+                            }}
+                            onLoad={() => console.log('Detail image loaded successfully:', selectedArtifact.media.images[0].url)}
+                            onError={(e) => console.error('Detail image failed to load:', selectedArtifact.media.images[0].url, e)}
+                          />
+                        </Box>
+                      ) : (
+                        <Box sx={{ bgcolor: 'grey.200', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1 }}>
+                          <Camera size={60} color="#666" />
+                        </Box>
+                      )}
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="h6" gutterBottom>Details</Typography>
+                      <Typography><strong>Category:</strong> {selectedArtifact.category}</Typography>
+                      <Typography><strong>Period:</strong> {selectedArtifact.period?.era || selectedArtifact.period || 'Unknown'}</Typography>
+                      <Typography><strong>Origin:</strong> {selectedArtifact.origin?.region || selectedArtifact.origin || 'Unknown'}</Typography>
+                      <Typography><strong>Date Added:</strong> {new Date(selectedArtifact.createdAt).toLocaleDateString()}</Typography>
+                      <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                        <Chip label={selectedArtifact.status.replace('_', ' ')} color={statusColors[selectedArtifact.status]} />
+                        <Chip label={selectedArtifact.condition} color={conditionColors[selectedArtifact.condition]} variant="outlined" />
+                        {selectedArtifact.featured && <Chip label="Featured" color="warning" />}
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" gutterBottom>Description</Typography>
+                      <Typography>{selectedArtifact.description}</Typography>
+                    </Grid>
+                  </Grid>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setSelectedArtifact(null)}>Close</Button>
+                  <Button variant="contained">Edit</Button>
+                </DialogActions>
+              </>
+            )}
+          </Dialog>
+
+          {/* Image Upload Dialog */}
+          <Dialog open={uploadDialogOpen} onClose={() => {
+            console.log('Upload dialog closing');
+            setUploadDialogOpen(false);
+            setSelectedImages([]);
+            setSelectedArtifactForUpload(null);
+          }} maxWidth="sm" fullWidth>
+            <DialogTitle>Upload Images for {selectedArtifactForUpload?.name}</DialogTitle>
+            {console.log('Upload dialog is open:', uploadDialogOpen, 'Selected artifact:', selectedArtifactForUpload?.name)}
+            <DialogContent>
+              <Box sx={{ mt: 2 }}>
                 <input
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={handleFormImageSelect}
+                  onChange={handleImageSelect}
                   style={{ display: 'none' }}
-                  id="form-image-upload-input"
+                  id="image-upload-input"
                 />
-                <label htmlFor="form-image-upload-input">
+                <label htmlFor="image-upload-input">
                   <Button
                     variant="outlined"
                     component="span"
@@ -917,171 +1033,62 @@ const ArtifactManagement = () => {
                     fullWidth
                     sx={{ height: 100, borderStyle: 'dashed' }}
                   >
-                    {formImages.length > 0 ? `Selected ${formImages.length} image(s)` : 'Upload Images'}
+                    Select Images
                   </Button>
                 </label>
-                {formImages.length > 0 && (
+                {selectedImages.length > 0 && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" color="text.secondary">
-                      Selected images:
+                      Selected {selectedImages.length} image(s):
                     </Typography>
-                    {formImages.map((file, index) => (
-                      <Typography key={index} variant="body2" sx={{ mt: 0.5 }}>
+                    {selectedImages.map((file, index) => (
+                      <Typography key={index} variant="body2" sx={{ mt: 1 }}>
                         • {file.name}
                       </Typography>
                     ))}
                   </Box>
                 )}
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => { setOpenDialog(false); resetForm(); }}>Cancel</Button>
-            <Button onClick={handleSaveArtifact} variant="contained" disabled={saving || uploadingFormImages}>
-              {saving ? (uploadingFormImages ? 'Uploading Images...' : 'Saving...') : (isEditing ? 'Save Changes' : 'Add Artifact')}
-            </Button>
-          </DialogActions>
-        </Dialog>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => { setUploadDialogOpen(false); setSelectedImages([]); setSelectedArtifactForUpload(null); }}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleImageUpload(selectedArtifactForUpload)}
+                variant="contained"
+                disabled={selectedImages.length === 0 || uploadingImages}
+              >
+                {uploadingImages ? 'Uploading...' : 'Upload Images'}
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        {/* Artifact Detail Dialog */}
-        <Dialog open={!!selectedArtifact} onClose={() => setSelectedArtifact(null)} maxWidth="md" fullWidth>
-          {selectedArtifact && (
-            <>
-              <DialogTitle>{selectedArtifact.name}</DialogTitle>
-              <DialogContent>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    {selectedArtifact.media?.images && selectedArtifact.media.images.length > 0 ? (
-                      <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1, overflow: 'hidden' }}>
-                        <img
-                          src={selectedArtifact.media.images[0].url.startsWith('http')
-                            ? selectedArtifact.media.images[0].url
-                            : `http://localhost:5000${selectedArtifact.media.images[0].url}`}
-                          alt={selectedArtifact.name}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            borderRadius: '4px'
-                          }}
-                          onLoad={() => console.log('Detail image loaded successfully:', selectedArtifact.media.images[0].url)}
-                          onError={(e) => console.error('Detail image failed to load:', selectedArtifact.media.images[0].url, e)}
-                        />
-                      </Box>
-                    ) : (
-                      <Box sx={{ bgcolor: 'grey.200', height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 1 }}>
-                        <Camera size={60} color="#666" />
-                      </Box>
-                    )}
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>Details</Typography>
-                    <Typography><strong>Category:</strong> {selectedArtifact.category}</Typography>
-                    <Typography><strong>Period:</strong> {selectedArtifact.period?.era || selectedArtifact.period || 'Unknown'}</Typography>
-                    <Typography><strong>Origin:</strong> {selectedArtifact.origin?.region || selectedArtifact.origin || 'Unknown'}</Typography>
-                    <Typography><strong>Date Added:</strong> {new Date(selectedArtifact.createdAt).toLocaleDateString()}</Typography>
-                    <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                      <Chip label={selectedArtifact.status.replace('_', ' ')} color={statusColors[selectedArtifact.status]} />
-                      <Chip label={selectedArtifact.condition} color={conditionColors[selectedArtifact.condition]} variant="outlined" />
-                      {selectedArtifact.featured && <Chip label="Featured" color="warning" />}
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom>Description</Typography>
-                    <Typography>{selectedArtifact.description}</Typography>
-                  </Grid>
-                </Grid>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setSelectedArtifact(null)}>Close</Button>
-                <Button variant="contained">Edit</Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogContent>
+              <Typography>
+                Are you sure you want to delete the artifact "{artifactToDelete?.name}"?
+                This action cannot be undone.
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+              <Button onClick={confirmDeleteArtifact} color="error" variant="contained">
+                Delete
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        {/* Image Upload Dialog */}
-        <Dialog open={uploadDialogOpen} onClose={() => {
-          console.log('Upload dialog closing');
-          setUploadDialogOpen(false);
-          setSelectedImages([]);
-          setSelectedArtifactForUpload(null);
-        }} maxWidth="sm" fullWidth>
-          <DialogTitle>Upload Images for {selectedArtifactForUpload?.name}</DialogTitle>
-          {console.log('Upload dialog is open:', uploadDialogOpen, 'Selected artifact:', selectedArtifactForUpload?.name)}
-          <DialogContent>
-            <Box sx={{ mt: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageSelect}
-                style={{ display: 'none' }}
-                id="image-upload-input"
-              />
-              <label htmlFor="image-upload-input">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<Upload size={16} />}
-                  fullWidth
-                  sx={{ height: 100, borderStyle: 'dashed' }}
-                >
-                  Select Images
-                </Button>
-              </label>
-              {selectedImages.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Selected {selectedImages.length} image(s):
-                  </Typography>
-                  {selectedImages.map((file, index) => (
-                    <Typography key={index} variant="body2" sx={{ mt: 1 }}>
-                      • {file.name}
-                    </Typography>
-                  ))}
-                </Box>
-              )}
+          {snackbar.open && (
+            <Box sx={{ position: 'fixed', bottom: 16, left: 16, bgcolor: snackbar.severity === 'error' ? 'error.main' : 'success.main', color: 'white', px: 2, py: 1, borderRadius: 1 }}
+              onAnimationEnd={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+              {snackbar.message}
             </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => { setUploadDialogOpen(false); setSelectedImages([]); setSelectedArtifactForUpload(null); }}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => handleImageUpload(selectedArtifactForUpload)}
-              variant="contained"
-              disabled={selectedImages.length === 0 || uploadingImages}
-            >
-              {uploadingImages ? 'Uploading...' : 'Upload Images'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-          <DialogTitle>Confirm Delete</DialogTitle>
-          <DialogContent>
-            <Typography>
-              Are you sure you want to delete the artifact "{artifactToDelete?.name}"?
-              This action cannot be undone.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button onClick={confirmDeleteArtifact} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {snackbar.open && (
-          <Box sx={{ position: 'fixed', bottom: 16, left: 16, bgcolor: snackbar.severity === 'error' ? 'error.main' : 'success.main', color: 'white', px: 2, py: 1, borderRadius: 1 }}
-            onAnimationEnd={() => setSnackbar(prev => ({ ...prev, open: false }))}>
-            {snackbar.message}
-          </Box>
-        )}
-      </Container>
+          )}
+        </Container>
+      </div>
     </div>
   );
 };

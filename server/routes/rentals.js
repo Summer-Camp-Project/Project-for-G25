@@ -71,6 +71,18 @@ router.get('/stats',
   rentalController.getRentalStats
 );
 
+// GET /api/rentals/museum-stats - Get museum-specific rental statistics
+router.get('/museum-stats',
+  auth,
+  rentalController.getMuseumRentalStats
+);
+
+// GET /api/rentals/artifacts/:museumId? - Get artifacts for museum (for dropdown)
+router.get('/artifacts/:museumId?',
+  auth,
+  rentalController.getMuseumArtifacts
+);
+
 // GET /api/rentals/pending-approval - Get rentals pending approval (Admin only)
 router.get('/pending-approval',
   authorize(ROLES.MUSEUM_ADMIN, ROLES.SUPER_ADMIN),
@@ -289,6 +301,80 @@ router.post('/:id/review',
   ],
   validateRequest,
   rentalController.addReview
+);
+
+// ======================
+// BIDIRECTIONAL RENTAL ROUTES
+// ======================
+
+// POST /api/rentals/museum-to-superadmin - Museum requests Super Admin for 3D digitization
+router.post('/museum-to-superadmin',
+  [
+    auth,
+    requirePermission(PERMISSIONS.REQUEST_RENTALS),
+    body('artifactId').isMongoId().withMessage('Valid artifact ID is required'),
+    body('virtualMuseumDetails.purpose').isIn(['3d_modeling', 'virtual_exhibition', 'educational_content', 'research', 'other']).withMessage('Valid purpose is required'),
+    body('purpose').isLength({ min: 10, max: 1000 }).withMessage('Purpose must be between 10 and 1000 characters'),
+    body('requestedDuration.startDate').isISO8601().withMessage('Valid start date is required'),
+    body('requestedDuration.endDate').isISO8601().withMessage('Valid end date is required'),
+    body('pricing.dailyRate').isNumeric().withMessage('Valid daily rate is required'),
+    body('pricing.totalAmount').isNumeric().withMessage('Valid total amount is required'),
+    body('pricing.securityDeposit').isNumeric().withMessage('Valid security deposit is required')
+  ],
+  validateRequest,
+  rentalController.createMuseumToSuperAdminRequest
+);
+
+// POST /api/rentals/superadmin-to-museum - Super Admin requests Museum for 3D digitization
+router.post('/superadmin-to-museum',
+  [
+    auth,
+    requirePermission(PERMISSIONS.REQUEST_RENTALS),
+    body('artifactId').isMongoId().withMessage('Valid artifact ID is required'),
+    body('museumId').isMongoId().withMessage('Valid museum ID is required'),
+    body('virtualMuseumDetails.purpose').isIn(['3d_modeling', 'virtual_exhibition', 'educational_content', 'research', 'other']).withMessage('Valid purpose is required'),
+    body('requestedDuration.startDate').isISO8601().withMessage('Valid start date is required'),
+    body('requestedDuration.endDate').isISO8601().withMessage('Valid end date is required'),
+    body('pricing.dailyRate').isNumeric().withMessage('Valid daily rate is required')
+  ],
+  validateRequest,
+  rentalController.createSuperAdminToMuseumRequest
+);
+
+// POST /api/rentals/:id/upload-model - Upload 3D model (Super Admin only)
+router.post('/:id/upload-model',
+  [
+    auth,
+    requirePermission(PERMISSIONS.APPROVE_LOCAL_RENTALS),
+    param('id').isMongoId().withMessage('Valid rental ID is required'),
+    body('modelId').notEmpty().withMessage('Model ID is required'),
+    body('modelUrl').isURL().withMessage('Valid model URL is required'),
+    body('fileSize').isNumeric().withMessage('Valid file size is required')
+  ],
+  validateRequest,
+  rentalController.uploadModel
+);
+
+// PUT /api/rentals/:id/approve-model - Approve 3D model (Museum Admin)
+router.put('/:id/approve-model',
+  [
+    auth,
+    requirePermission(PERMISSIONS.APPROVE_LOCAL_RENTALS),
+    param('id').isMongoId().withMessage('Valid rental ID is required'),
+    body('notes').optional().isLength({ max: 500 }).withMessage('Notes cannot exceed 500 characters')
+  ],
+  validateRequest,
+  rentalController.approveModel
+);
+
+// GET /api/rentals/virtual-museum-ready - Get virtual museum ready artifacts (Public)
+router.get('/virtual-museum-ready',
+  [
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50')
+  ],
+  validateRequest,
+  rentalController.getVirtualMuseumReady
 );
 
 module.exports = router;

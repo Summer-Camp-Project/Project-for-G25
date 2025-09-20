@@ -41,6 +41,9 @@ const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
+    console.log('Validation errors:', errors.array()); // Debug log
+    console.log('Request body:', req.body); // Debug log
+
     const extractedErrors = [];
     errors.array().map(err => extractedErrors.push({
       field: err.path || err.param,

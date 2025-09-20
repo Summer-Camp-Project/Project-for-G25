@@ -1156,18 +1156,24 @@ const StaffManagement = () => {
   // ======================
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#FAFAFA' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: 'white' }}>
       <MuseumAdminSidebar />
 
-      <div className="flex-1 overflow-auto">
+      <div
+        className="flex-1 overflow-auto"
+        onWheel={(e) => {
+          // Only allow scrolling when mouse is over the main content
+          e.stopPropagation();
+        }}
+      >
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
           {/* Header */}
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" component="h1" sx={{ mb: 1, display: 'flex', alignItems: 'center', color: '#2D2A26' }}>
-              <Users className="mr-3" size={32} style={{ color: '#8B4513' }} />
+            <Typography variant="h4" component="h1" sx={{ mb: 1, display: 'flex', alignItems: 'center', color: 'black' }}>
+              <Users className="mr-3" size={32} style={{ color: '#8B5A3C' }} />
               Staff Management
             </Typography>
-            <Typography variant="subtitle1" sx={{ color: '#8D6E63' }}>
+            <Typography variant="subtitle1" color="text.secondary">
               Manage your museum team, roles, schedules, and performance
             </Typography>
           </Box>
@@ -1175,44 +1181,60 @@ const StaffManagement = () => {
           {/* Stats Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, textAlign: 'center', background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)', color: 'white' }}>
-                <Typography variant="h4">{stats.totalStaff}</Typography>
-                <Typography variant="body2">Total Staff</Typography>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Users sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Total Staff</Typography>
+                  <Typography variant="h4" color="inherit">{stats.totalStaff}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Team Members</Typography>
+                </Box>
               </Paper>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, textAlign: 'center', background: 'linear-gradient(135deg, #654321 0%, #5D4037 100%)', color: 'white' }}>
-                <Typography variant="h4">{stats.activeStaff}</Typography>
-                <Typography variant="body2">Active</Typography>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <UserCheck sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Active Staff</Typography>
+                  <Typography variant="h4" color="inherit">{stats.activeStaff}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Currently Working</Typography>
+                </Box>
               </Paper>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, textAlign: 'center', background: 'linear-gradient(135deg, #6D4C41 0%, #795548 100%)', color: 'white' }}>
-                <Typography variant="h4">{roles.length}</Typography>
-                <Typography variant="body2">Roles</Typography>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Shield sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Roles</Typography>
+                  <Typography variant="h4" color="inherit">{roles.length}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Different Positions</Typography>
+                </Box>
               </Paper>
             </Grid>
             <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, textAlign: 'center', background: 'linear-gradient(135deg, #8D6E63 0%, #BCAAA4 100%)', color: 'white' }}>
-                <Typography variant="h4">{stats.avgRating.toFixed(1)}</Typography>
-                <Typography variant="body2">Avg Rating</Typography>
+              <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
+                <Award sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography color="inherit" variant="body2">Avg Rating</Typography>
+                  <Typography variant="h4" color="inherit">{stats.avgRating.toFixed(1)}</Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>Team Performance</Typography>
+                </Box>
               </Paper>
             </Grid>
           </Grid>
 
           {/* Actions */}
-          <Paper sx={{ p: 3, mb: 3, backgroundColor: '#FFFFFF', border: '1px solid #D7CCC8' }}>
+          <Paper sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6" sx={{ color: '#2D2A26' }}>Team Management</Typography>
+              <Typography variant="h6" sx={{ color: 'black' }}>Team Management</Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button
                   variant="outlined"
                   startIcon={<RefreshCw size={16} />}
                   onClick={loadStaff}
                   sx={{
-                    borderColor: '#8B4513',
-                    color: '#8B4513',
-                    '&:hover': { borderColor: '#654321', backgroundColor: '#F5F5F5' }
+                    borderColor: '#8B5A3C',
+                    color: '#8B5A3C',
+                    '&:hover': { borderColor: '#8B5A3C', backgroundColor: 'white' }
                   }}
                 >
                   Refresh
@@ -1222,9 +1244,9 @@ const StaffManagement = () => {
                   startIcon={<Settings size={16} />}
                   onClick={() => setTabValue(1)}
                   sx={{
-                    borderColor: '#8B4513',
-                    color: '#8B4513',
-                    '&:hover': { borderColor: '#654321', backgroundColor: '#F5F5F5' }
+                    borderColor: '#8B5A3C',
+                    color: '#8B5A3C',
+                    '&:hover': { borderColor: '#8B5A3C', backgroundColor: 'white' }
                   }}
                 >
                   Manage Roles
@@ -1234,8 +1256,9 @@ const StaffManagement = () => {
                   startIcon={<Plus size={16} />}
                   onClick={() => setOpenAddDialog(true)}
                   sx={{
-                    backgroundColor: '#8B4513',
-                    '&:hover': { backgroundColor: '#654321' }
+                    backgroundColor: '#8B5A3C',
+                    color: 'white',
+                    '&:hover': { backgroundColor: '#8B5A3C' }
                   }}
                 >
                   Add Staff Member
@@ -1245,19 +1268,19 @@ const StaffManagement = () => {
           </Paper>
 
           {/* Tabs */}
-          <Paper sx={{ mb: 3, backgroundColor: '#FFFFFF', border: '1px solid #D7CCC8' }}>
+          <Paper sx={{ mb: 3 }}>
             <Tabs
               value={tabValue}
               onChange={(e, newValue) => setTabValue(newValue)}
               sx={{
                 '& .MuiTab-root': {
-                  color: '#8D6E63',
+                  color: 'black',
                   '&.Mui-selected': {
-                    color: '#8B4513'
+                    color: '#8B5A3C'
                   }
                 },
                 '& .MuiTabs-indicator': {
-                  backgroundColor: '#8B4513'
+                  backgroundColor: '#8B5A3C'
                 }
               }}
             >

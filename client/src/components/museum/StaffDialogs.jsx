@@ -103,15 +103,23 @@ export const PermissionsDialog = ({ open, onClose, staff, onUpdate }) => {
                 key={permission}
                 label={permission.replace('_', ' ')}
                 onDelete={() => handlePermissionToggle(permission)}
-                color="primary"
                 size="small"
+                sx={{
+                  backgroundColor: '#8B5A3C',
+                  color: 'white',
+                  '&:hover': { backgroundColor: '#8B5A3C' }
+                }}
               />
             ))}
           </Box>
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} startIcon={<X size={16} />}>
+        <Button
+          onClick={onClose}
+          startIcon={<X size={16} />}
+          sx={{ color: '#8B5A3C' }}
+        >
           Cancel
         </Button>
         <Button
@@ -119,6 +127,11 @@ export const PermissionsDialog = ({ open, onClose, staff, onUpdate }) => {
           variant="contained"
           startIcon={<Save size={16} />}
           disabled={loading}
+          sx={{
+            backgroundColor: '#8B5A3C',
+            color: 'white',
+            '&:hover': { backgroundColor: '#8B5A3C' }
+          }}
         >
           {loading ? <CircularProgress size={20} /> : 'Save Permissions'}
         </Button>

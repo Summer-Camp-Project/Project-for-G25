@@ -27,6 +27,7 @@ const tourPackageRoutes = require('./routes/TourPackage');
 const bookingRoutes = require('./routes/Booking');
 const messageRoutes = require('./routes/Message');
 const virtualMuseumRoutes = require('./routes/virtualMuseum');
+const virtualMuseumManagementRoutes = require('./routes/virtualMuseumManagement');
 const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
 const learningRoutes = require('./routes/learning');
@@ -141,6 +142,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 app.use('/api/museums', museumRoutes); // Added museum management API
+app.use('/api/museums/settings', require('./routes/museumSettings')); // Added museum settings API
 app.use('/api/artifacts', artifactRoutes); // Added artifact management API
 app.use('/api/staff', staffRoutes); // Added staff management API
 app.use('/api/events', eventRoutes); // Added event management API
@@ -150,6 +152,7 @@ app.use('/api/tour-packages', tourPackageRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/virtual-museum', virtualMuseumRoutes);
+app.use('/api/virtual-museum', virtualMuseumManagementRoutes);
 app.use('/api/map', mapRoutes);
 // app.use('/api/chat', chatRoutes);
 app.use('/api/learning', learningRoutes);

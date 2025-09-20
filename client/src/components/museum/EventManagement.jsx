@@ -5,7 +5,8 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
   FormControl, InputLabel, Select, MenuItem, Card, CardContent,
-  CardActions, Avatar, Badge, Tabs, Tab, Alert, Snackbar, CircularProgress
+  CardActions, Avatar, Badge, Tabs, Tab, Alert, Snackbar, CircularProgress,
+  Checkbox, Tooltip, Menu, MenuItem as MenuItemComponent
 } from '@mui/material';
 import {
   Calendar,
@@ -23,7 +24,16 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  X
+  X,
+  Copy,
+  Download,
+  BarChart3,
+  Filter,
+  Search,
+  MoreVertical,
+  Star,
+  Calendar as CalendarIcon,
+  UserCheck
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 
@@ -45,6 +55,13 @@ const EventManagement = () => {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [openAnalyticsDialog, setOpenAnalyticsDialog] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [selectedEvents, setSelectedEvents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -192,6 +209,75 @@ const EventManagement = () => {
     }
   };
 
+  const handleDuplicateEvent = async (id) => {
+    try {
+      const response = await eventService.duplicateEvent(id);
+      setEvents([response.data, ...events]);
+      setSuccess('Event duplicated successfully');
+      loadStats(); // Refresh stats
+    } catch (err) {
+      console.error('Duplicate event error:', err);
+      setError(err.message || 'Failed to duplicate event');
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status) => {
+    if (selectedEvents.length === 0) {
+      setError('Please select events to update');
+      return;
+    }
+
+    try {
+      await eventService.bulkUpdateEventStatus(selectedEvents, status);
+      setEvents(events.map(event =>
+        selectedEvents.includes(event._id) ? { ...event, status } : event
+      ));
+      setSelectedEvents([]);
+      setSuccess(`Successfully updated ${selectedEvents.length} events to ${status}`);
+      loadStats(); // Refresh stats
+    } catch (err) {
+      console.error('Bulk update error:', err);
+      setError(err.message || 'Failed to update events');
+    }
+  };
+
+  const handleViewAnalytics = async (eventId) => {
+    try {
+      const analytics = await eventService.getEventAnalytics(eventId);
+      setAnalyticsData(analytics.data);
+      setOpenAnalyticsDialog(true);
+    } catch (err) {
+      console.error('Get analytics error:', err);
+      setError(err.message || 'Failed to load analytics');
+    }
+  };
+
+  const handleExportAttendees = async (eventId) => {
+    try {
+      await eventService.exportEventAttendees(eventId);
+      setSuccess('Attendees exported successfully');
+    } catch (err) {
+      console.error('Export attendees error:', err);
+      setError(err.message || 'Failed to export attendees');
+    }
+  };
+
+  const handleSelectEvent = (eventId) => {
+    setSelectedEvents(prev =>
+      prev.includes(eventId)
+        ? prev.filter(id => id !== eventId)
+        : [...prev, eventId]
+    );
+  };
+
+  const handleSelectAllEvents = () => {
+    if (selectedEvents.length === events.length) {
+      setSelectedEvents([]);
+    } else {
+      setSelectedEvents(events.map(event => event._id));
+    }
+  };
+
   const renderEventsList = () => {
     if (loading) {
       return (
@@ -214,11 +300,33 @@ const EventManagement = () => {
       );
     }
 
+    // Filter events based on search and filters
+    const filteredEvents = events.filter(event => {
+      const displayEvent = eventService.formatEventForDisplay(event);
+      if (!displayEvent) return false;
+
+      const matchesSearch = !searchTerm ||
+        displayEvent.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        displayEvent.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = !statusFilter || displayEvent.status === statusFilter;
+      const matchesType = !typeFilter || displayEvent.type === typeFilter;
+
+      return matchesSearch && matchesStatus && matchesType;
+    });
+
     return (
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  checked={selectedEvents.length === filteredEvents.length && filteredEvents.length > 0}
+                  indeterminate={selectedEvents.length > 0 && selectedEvents.length < filteredEvents.length}
+                  onChange={handleSelectAllEvents}
+                />
+              </TableCell>
               <TableCell>Event</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Date</TableCell>
@@ -229,13 +337,19 @@ const EventManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {events.map((event) => {
+            {filteredEvents.map((event) => {
               const displayEvent = eventService.formatEventForDisplay(event);
               if (!displayEvent) {
                 return null; // Skip invalid events
               }
               return (
-                <TableRow key={event._id}>
+                <TableRow key={event._id} hover>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedEvents.includes(event._id)}
+                      onChange={() => handleSelectEvent(event._id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Box>
                       <Typography variant="subtitle2">{displayEvent.title}</Typography>
@@ -274,18 +388,41 @@ const EventManagement = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <IconButton size="small" onClick={() => setSelectedEvent(event)}>
-                      <Eye size={16} />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => {
-                      setEditingEvent(event);
-                      setOpenEditDialog(true);
-                    }}>
-                      <Edit size={16} />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDeleteEvent(event._id)}>
-                      <Delete size={16} />
-                    </IconButton>
+                    <Box display="flex" gap={0.5}>
+                      <Tooltip title="View Details">
+                        <IconButton size="small" onClick={() => setSelectedEvent(event)}>
+                          <Eye size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Event">
+                        <IconButton size="small" onClick={() => {
+                          setEditingEvent(event);
+                          setOpenEditDialog(true);
+                        }}>
+                          <Edit size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Duplicate Event">
+                        <IconButton size="small" onClick={() => handleDuplicateEvent(event._id)}>
+                          <Copy size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="View Analytics">
+                        <IconButton size="small" onClick={() => handleViewAnalytics(event._id)}>
+                          <BarChart3 size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Export Attendees">
+                        <IconButton size="small" onClick={() => handleExportAttendees(event._id)}>
+                          <Download size={16} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Event">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteEvent(event._id)}>
+                          <Delete size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               );
@@ -297,15 +434,21 @@ const EventManagement = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen" style={{ backgroundColor: 'white' }}>
       <MuseumAdminSidebar />
 
-      <div className="flex-1 overflow-auto">
+      <div
+        className="flex-1 overflow-auto"
+        onWheel={(e) => {
+          // Only allow scrolling when mouse is over the main content
+          e.stopPropagation();
+        }}
+      >
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
           {/* Header */}
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" component="h1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-              <Calendar className="mr-3" size={32} />
+            <Typography variant="h4" component="h1" sx={{ mb: 1, display: 'flex', alignItems: 'center', color: 'black' }}>
+              <Calendar className="mr-3" size={32} style={{ color: '#8B5A3C' }} />
               Event Management
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">
@@ -337,7 +480,7 @@ const EventManagement = () => {
 
           {/* Actions */}
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">Events & Exhibitions</Typography>
               <Box display="flex" gap={1}>
                 <Button
@@ -352,11 +495,114 @@ const EventManagement = () => {
                   variant="contained"
                   startIcon={<Plus size={16} />}
                   onClick={() => setOpenCreateDialog(true)}
+                  sx={{
+                    backgroundColor: '#8B5A3C',
+                    color: 'white',
+                    '&:hover': { backgroundColor: '#8B5A3C' }
+                  }}
                 >
                   Create New Event
                 </Button>
               </Box>
             </Box>
+
+            {/* Search and Filters */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+              <TextField
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="small"
+                sx={{ flexGrow: 1, maxWidth: 300 }}
+                InputProps={{
+                  startAdornment: <Search size={16} style={{ marginRight: 8, color: '#666' }} />
+                }}
+              />
+              <Button
+                variant="outlined"
+                startIcon={<Filter size={16} />}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filters
+              </Button>
+            </Box>
+
+            {/* Filter Options */}
+            {showFilters && (
+              <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    label="Status"
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <MenuItem value="">All Status</MenuItem>
+                    <MenuItem value="draft">Draft</MenuItem>
+                    <MenuItem value="published">Published</MenuItem>
+                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="completed">Completed</MenuItem>
+                    <MenuItem value="archived">Archived</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Type</InputLabel>
+                  <Select
+                    value={typeFilter}
+                    label="Type"
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                  >
+                    <MenuItem value="">All Types</MenuItem>
+                    {eventTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
+
+            {/* Bulk Actions */}
+            {selectedEvents.length > 0 && (
+              <Paper sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography variant="body2">
+                    {selectedEvents.length} event(s) selected
+                  </Typography>
+                  <Box display="flex" gap={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleBulkStatusUpdate('published')}
+                    >
+                      Publish
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleBulkStatusUpdate('cancelled')}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleBulkStatusUpdate('archived')}
+                    >
+                      Archive
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => setSelectedEvents([])}
+                    >
+                      Clear Selection
+                    </Button>
+                  </Box>
+                </Box>
+              </Paper>
+            )}
           </Paper>
 
           {/* Events List */}
@@ -472,7 +718,17 @@ const EventManagement = () => {
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setOpenCreateDialog(false)} startIcon={<X size={16} />}>Cancel</Button>
-              <Button onClick={handleCreateEvent} variant="contained">Create Event</Button>
+              <Button
+                onClick={handleCreateEvent}
+                variant="contained"
+                sx={{
+                  backgroundColor: '#8B5A3C',
+                  color: 'white',
+                  '&:hover': { backgroundColor: '#8B5A3C' }
+                }}
+              >
+                Create Event
+              </Button>
             </DialogActions>
           </Dialog>
 
@@ -710,6 +966,141 @@ const EventManagement = () => {
                 setEditingEvent(null);
               }} startIcon={<X size={16} />}>Cancel</Button>
               <Button onClick={() => editingEvent && handleUpdateEvent(editingEvent._id, editingEvent)} variant="contained" disabled={!editingEvent}>Update Event</Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Analytics Dialog */}
+          <Dialog open={openAnalyticsDialog} onClose={() => setOpenAnalyticsDialog(false)} maxWidth="md" fullWidth>
+            <DialogTitle>Event Analytics</DialogTitle>
+            <DialogContent>
+              {analyticsData && (
+                <Grid container spacing={3}>
+                  {/* Basic Stats */}
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Basic Statistics</Typography>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Total Views:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.basic.totalViews}</Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Total Registrations:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.basic.totalRegistrations}</Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Total Attendees:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.basic.totalAttendees}</Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Average Rating:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.basic.averageRating.toFixed(1)} ⭐</Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Registration Stats */}
+                  <Grid item xs={12} md={6}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Registration Statistics</Typography>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Capacity:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.registration.capacity}</Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Occupancy Rate:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.registration.occupancyRate.toFixed(1)}%</Typography>
+                          </Box>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography>Available Spots:</Typography>
+                            <Typography fontWeight="bold">{analyticsData.registration.availableSpots}</Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Attendee Breakdown */}
+                  <Grid item xs={12}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Attendee Breakdown</Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={6} md={2}>
+                            <Box textAlign="center">
+                              <Typography variant="h4" color="primary">{analyticsData.attendeeBreakdown.registered}</Typography>
+                              <Typography variant="body2">Registered</Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={6} md={2}>
+                            <Box textAlign="center">
+                              <Typography variant="h4" color="info.main">{analyticsData.attendeeBreakdown.confirmed}</Typography>
+                              <Typography variant="body2">Confirmed</Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={6} md={2}>
+                            <Box textAlign="center">
+                              <Typography variant="h4" color="success.main">{analyticsData.attendeeBreakdown.attended}</Typography>
+                              <Typography variant="body2">Attended</Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={6} md={2}>
+                            <Box textAlign="center">
+                              <Typography variant="h4" color="warning.main">{analyticsData.attendeeBreakdown.cancelled}</Typography>
+                              <Typography variant="body2">Cancelled</Typography>
+                            </Box>
+                          </Grid>
+                          <Grid item xs={6} md={2}>
+                            <Box textAlign="center">
+                              <Typography variant="h4" color="error.main">{analyticsData.attendeeBreakdown.noShow}</Typography>
+                              <Typography variant="body2">No Show</Typography>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Revenue */}
+                  <Grid item xs={12}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Revenue</Typography>
+                        <Typography variant="h4" color="success.main">
+                          {analyticsData.revenue.totalRevenue.toLocaleString()} {analyticsData.revenue.currency}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Rating Distribution */}
+                  <Grid item xs={12}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>Rating Distribution</Typography>
+                        <Grid container spacing={1}>
+                          {analyticsData.reviews.ratingDistribution.map((rating) => (
+                            <Grid item xs={2} key={rating.rating}>
+                              <Box textAlign="center">
+                                <Typography variant="h6">{rating.rating} ⭐</Typography>
+                                <Typography variant="body2">{rating.count}</Typography>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setOpenAnalyticsDialog(false)}>Close</Button>
             </DialogActions>
           </Dialog>
 
