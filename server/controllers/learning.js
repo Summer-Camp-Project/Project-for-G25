@@ -1,6 +1,8 @@
 const Course = require('../models/Course');
 const Lesson = require('../models/Lesson');
 const LearningProgress = require('../models/LearningProgress');
+const Achievement = require('../models/Achievement');
+const Certificate = require('../models/Certificate');
 
 // Get all courses
 const getCourses = async (req, res) => {
@@ -618,6 +620,286 @@ const submitQuiz = async (req, res) => {
   }
 };
 
+// Enroll in a course
+const enrollInCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+    
+    const course = await Course.findById(courseId).populate('lessons');
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+    
+    // Get or create learning progress
+    let progress = await LearningProgress.findOne({ userId });
+    if (!progress) {
+      progress = new LearningProgress({
+        userId,
+        courses: [],
+        overallStats: {}
+      });
+    }
+    
+    // Check if already enrolled
+    const existingEnrollment = progress.getCourseProgress(courseId);
+    if (existingEnrollment) {
+      return res.json({
+        success: true,
+        message: 'Already enrolled in this course',
+        courseProgress: existingEnrollment
+      });
+    }
+    
+    // Create course progress with all lessons
+    const courseProgress = {
+      courseId: course._id,
+      status: 'not_started',
+      enrolledAt: new Date(),
+      progressPercentage: 0,
+      lessons: course.lessons.map(lesson => ({
+        lessonId: lesson._id,
+        status: 'not_started',
+        timeSpent: 0,
+        attempts: 0
+      }))
+    };
+    
+    progress.courses.push(courseProgress);
+    await progress.save();
+    
+    res.json({
+      success: true,
+      message: 'Successfully enrolled in course',
+      courseProgress
+    });
+  } catch (error) {
+    console.error('Enroll in course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to enroll in course'
+    });
+  }
+};
+
+// Generate certificate for completed course
+const generateCertificate = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+    
+    const course = await Course.findById(courseId).populate('lessons');
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+    
+    const progress = await LearningProgress.findOne({ userId });
+    if (!progress) {
+      return res.status(404).json({
+        success: false,
+        message: 'Learning progress not found'
+      });
+    }
+    
+    const courseProgress = progress.getCourseProgress(courseId);
+    if (!courseProgress || courseProgress.status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Course must be completed to generate certificate'
+      });
+    }
+    
+    // Check if certificate already exists
+    const existingCertificate = await Certificate.findOne({ userId, courseId });
+    if (existingCertificate) {
+      return res.json({
+        success: true,
+        certificate: existingCertificate
+      });
+    }
+    
+    // Calculate final score and completion stats
+    const completedLessons = courseProgress.lessons.filter(l => l.status === 'completed');
+    const totalTimeSpent = courseProgress.lessons.reduce((sum, lesson) => sum + lesson.timeSpent, 0);
+    const averageScore = completedLessons.length > 0 ? 
+      Math.round(completedLessons.reduce((sum, lesson) => sum + (lesson.score || 0), 0) / completedLessons.length) : 0;
+    
+    // Create certificate
+    const certificate = new Certificate({
+      userId,
+      courseId,
+      title: course.title,
+      description: `This certifies that the learner has successfully completed the course "${course.title}" and demonstrated proficiency in Ethiopian heritage studies.`,
+      completionDate: courseProgress.completedAt,
+      finalScore: averageScore,
+      timeSpent: totalTimeSpent,
+      lessonsCompleted: completedLessons.length,
+      totalLessons: course.lessons.length,
+      instructor: course.instructor,
+      category: course.category,
+      difficulty: course.difficulty,
+      metadata: {
+        courseVersion: '1.0',
+        completionPercentage: courseProgress.progressPercentage,
+        averageQuizScore: averageScore,
+        skillsAcquired: course.tags,
+        recognitions: ['Course Completion', 'Heritage Knowledge']
+      }
+    });
+    
+    await certificate.save();
+    
+    res.json({
+      success: true,
+      message: 'Certificate generated successfully',
+      certificate
+    });
+  } catch (error) {
+    console.error('Generate certificate error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate certificate'
+    });
+  }
+};
+
+// Get user's certificates
+const getCertificates = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const certificates = await Certificate.find({ userId, isValid: true })
+      .populate('courseId', 'title category difficulty image')
+      .sort({ completionDate: -1 });
+    
+    res.json({
+      success: true,
+      certificates
+    });
+  } catch (error) {
+    console.error('Get certificates error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch certificates'
+    });
+  }
+};
+
+// Verify certificate
+const verifyCertificate = async (req, res) => {
+  try {
+    const { verificationCode } = req.params;
+    
+    const certificate = await Certificate.findOne({ 
+      verificationCode, 
+      isValid: true 
+    })
+    .populate('userId', 'name email')
+    .populate('courseId', 'title category difficulty');
+    
+    if (!certificate) {
+      return res.status(404).json({
+        success: false,
+        message: 'Certificate not found or invalid'
+      });
+    }
+    
+    res.json({
+      success: true,
+      certificate: {
+        certificateId: certificate.certificateId,
+        title: certificate.title,
+        completionDate: certificate.completionDate,
+        finalScore: certificate.finalScore,
+        learnerName: certificate.userId.name,
+        course: certificate.courseId,
+        instructor: certificate.instructor,
+        isValid: certificate.isValid
+      }
+    });
+  } catch (error) {
+    console.error('Verify certificate error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify certificate'
+    });
+  }
+};
+
+// Get dashboard statistics
+const getDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      // Return mock stats for unauthenticated users
+      return res.json({
+        success: true,
+        stats: {
+          totalCourses: 10,
+          enrolledCourses: 0,
+          completedCourses: 0,
+          totalLessons: 45,
+          completedLessons: 0,
+          certificates: 0,
+          currentStreak: 0,
+          totalTimeSpent: 0,
+          averageScore: 0,
+          achievements: 0
+        }
+      });
+    }
+    
+    const [totalCourses, progress, certificates] = await Promise.all([
+      Course.countDocuments({ isActive: true }),
+      LearningProgress.findOne({ userId }),
+      Certificate.countDocuments({ userId, isValid: true })
+    ]);
+    
+    const totalLessons = await Lesson.countDocuments({ isActive: true });
+    
+    let stats = {
+      totalCourses,
+      totalLessons,
+      certificates,
+      enrolledCourses: 0,
+      completedCourses: 0,
+      completedLessons: 0,
+      currentStreak: 0,
+      totalTimeSpent: 0,
+      averageScore: 0,
+      achievements: 0
+    };
+    
+    if (progress) {
+      stats.enrolledCourses = progress.courses.length;
+      stats.completedCourses = progress.courses.filter(c => c.status === 'completed').length;
+      stats.completedLessons = progress.overallStats.totalLessonsCompleted || 0;
+      stats.currentStreak = progress.overallStats.currentStreak || 0;
+      stats.totalTimeSpent = progress.overallStats.totalTimeSpent || 0;
+      stats.averageScore = progress.overallStats.averageScore || 0;
+      stats.achievements = progress.achievements?.length || 0;
+    }
+    
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Get dashboard stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch dashboard statistics'
+    });
+  }
+};
+
 module.exports = {
   getCourses,
   getCourseById,
@@ -628,5 +910,10 @@ module.exports = {
   getLearningProgress,
   getLearningAchievements,
   getRecommendations,
-  submitQuiz
+  submitQuiz,
+  enrollInCourse,
+  generateCertificate,
+  getCertificates,
+  verifyCertificate,
+  getDashboardStats
 };

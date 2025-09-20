@@ -32,6 +32,9 @@ export default defineConfig({
       }
     }
   },
+  css: {
+    devSourcemap: false
+  },
   esbuild: {
     loader: 'jsx',
     include: /src\/.*\.[jt]sx?$/,

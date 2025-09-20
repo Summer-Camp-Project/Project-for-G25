@@ -31,6 +31,9 @@ const virtualMuseumManagementRoutes = require('./routes/virtualMuseumManagement'
 const mapRoutes = require('./routes/map');
 // const chatRoutes = require('./routes/chat');
 const learningRoutes = require('./routes/learning');
+const courseManagementRoutes = require('./routes/courseManagement');
+const enrollmentManagementRoutes = require('./routes/enrollmentManagement');
+const educationalContentManagementRoutes = require('./routes/educationalContentManagement');
 // const usersRoutes = require('./routes/users');
 // const userRoutes = require('./routes/User');
 // const visitorRoutes = require('./routes/visitor');
@@ -156,6 +159,9 @@ app.use('/api/virtual-museum', virtualMuseumManagementRoutes);
 app.use('/api/map', mapRoutes);
 // app.use('/api/chat', chatRoutes);
 app.use('/api/learning', learningRoutes);
+app.use('/api/learning', courseManagementRoutes);
+app.use('/api/learning', enrollmentManagementRoutes);
+app.use('/api/learning', educationalContentManagementRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

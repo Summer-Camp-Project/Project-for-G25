@@ -16,7 +16,15 @@ const createDirectories = () => {
     'uploads/events/',
     'uploads/events/images/',
     'uploads/staff/',
-    'uploads/staff/avatars/'
+    'uploads/staff/avatars/',
+    'uploads/courses/',
+    'uploads/courses/images/',
+    'uploads/courses/thumbnails/',
+    'uploads/lessons/',
+    'uploads/lessons/images/',
+    'uploads/lessons/videos/',
+    'uploads/lessons/documents/',
+    'uploads/lessons/audio/'
   ];
 
   dirs.forEach(dir => {
@@ -79,6 +87,49 @@ const fileTypes = {
     extensions: ['.jpg', '.jpeg', '.png', '.webp'],
     maxSize: 2 * 1024 * 1024, // 2MB
     destination: 'uploads/staff/avatars/'
+  },
+  courseImages: {
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+    extensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    maxSize: 5 * 1024 * 1024, // 5MB
+    destination: 'uploads/courses/images/'
+  },
+  courseThumbnails: {
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+    extensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    maxSize: 2 * 1024 * 1024, // 2MB
+    destination: 'uploads/courses/thumbnails/'
+  },
+  lessonImages: {
+    mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+    extensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    maxSize: 5 * 1024 * 1024, // 5MB
+    destination: 'uploads/lessons/images/'
+  },
+  lessonVideos: {
+    mimeTypes: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
+    extensions: ['.mp4', '.webm', '.ogg', '.mov', '.avi'],
+    maxSize: 200 * 1024 * 1024, // 200MB
+    destination: 'uploads/lessons/videos/'
+  },
+  lessonAudio: {
+    mimeTypes: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3'],
+    extensions: ['.mp3', '.wav', '.ogg', '.m4a'],
+    maxSize: 50 * 1024 * 1024, // 50MB
+    destination: 'uploads/lessons/audio/'
+  },
+  lessonDocuments: {
+    mimeTypes: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain'
+    ],
+    extensions: ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.txt'],
+    maxSize: 25 * 1024 * 1024, // 25MB
+    destination: 'uploads/lessons/documents/'
   }
 };
 
@@ -111,6 +162,18 @@ const storage = multer.diskStorage({
       uploadPath = fileTypes.eventImages.destination;
     } else if (file.fieldname === 'avatar' || file.fieldname === 'staffAvatar') {
       uploadPath = fileTypes.staffAvatars.destination;
+    } else if (file.fieldname === 'courseImage' || file.fieldname === 'courseImages') {
+      uploadPath = fileTypes.courseImages.destination;
+    } else if (file.fieldname === 'courseThumbnail') {
+      uploadPath = fileTypes.courseThumbnails.destination;
+    } else if (file.fieldname === 'lessonImage' || file.fieldname === 'lessonImages') {
+      uploadPath = fileTypes.lessonImages.destination;
+    } else if (file.fieldname === 'lessonVideo' || file.fieldname === 'lessonVideos') {
+      uploadPath = fileTypes.lessonVideos.destination;
+    } else if (file.fieldname === 'lessonAudio') {
+      uploadPath = fileTypes.lessonAudio.destination;
+    } else if (file.fieldname === 'lessonDocument' || file.fieldname === 'lessonDocuments') {
+      uploadPath = fileTypes.lessonDocuments.destination;
     }
 
     // Create directory if it doesn't exist
