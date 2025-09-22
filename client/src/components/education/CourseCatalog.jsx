@@ -349,13 +349,12 @@ const CourseCatalog = () => {
                   </Box>
 
                   <Button
-                    component={Link}
-                    to={`/learning/courses/${course._id}`}
+                    onClick={() => alert(`Course: ${course.title}\n\nDescription: ${course.description}\n\nInstructor: ${course.instructor}\n\nDifficulty: ${course.difficulty}\n\nCourse functionality coming soon!`)}
                     variant="contained"
                     fullWidth
                     sx={{ mt: 2 }}
                   >
-                    View Course
+                    View Course Info
                   </Button>
                 </CardContent>
               </Card>

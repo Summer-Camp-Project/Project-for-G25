@@ -16,6 +16,7 @@ import {
   ChevronDown,
   X
 } from 'lucide-react';
+import { api } from '../utils/api';
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -58,55 +59,69 @@ const Courses = () => {
   // Fetch courses
   useEffect(() => {
     fetchCourses();
-  }, [selectedCategory, selectedDifficulty, sortBy]);
+  }, [selectedCategory, selectedDifficulty, sortBy, searchQuery]);
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (selectedCategory) params.append('category', selectedCategory);
-      if (selectedDifficulty) params.append('difficulty', selectedDifficulty);
+      console.log('🎓 Courses Page: Fetching courses with filters:', {
+        selectedCategory,
+        selectedDifficulty,
+        sortBy
+      });
       
-      const response = await fetch(`http://localhost:5000/api/learning/courses?${params.toString()}`);
-      const data = await response.json();
+      // Build filter object
+      const filters = {};
+      if (selectedCategory) filters.category = selectedCategory;
+      if (selectedDifficulty) filters.difficulty = selectedDifficulty;
+      if (searchQuery) filters.search = searchQuery;
       
-      if (data.success) {
-        let sortedCourses = [...data.courses];
+      // Use API service which includes mock fallback
+      const data = await api.getCourses(filters);
+      console.log('🎓 Courses Page: API response:', data);
+      
+      if (data.success || data.courses || data.data) {
+        // Handle different response structures
+        let coursesData = data.courses || data.data || [];
+        let sortedCourses = [...coursesData];
+        
+        console.log('🎓 Courses Page: Raw courses data:', sortedCourses);
         
         // Sort courses
         switch (sortBy) {
           case 'newest':
-            sortedCourses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            sortedCourses.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
             break;
           case 'oldest':
-            sortedCourses.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            sortedCourses.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
             break;
           case 'duration-short':
-            sortedCourses.sort((a, b) => a.estimatedDuration - b.estimatedDuration);
+            sortedCourses.sort((a, b) => (a.estimatedDuration || 0) - (b.estimatedDuration || 0));
             break;
           case 'duration-long':
-            sortedCourses.sort((a, b) => b.estimatedDuration - a.estimatedDuration);
+            sortedCourses.sort((a, b) => (b.estimatedDuration || 0) - (a.estimatedDuration || 0));
             break;
           case 'name':
-            sortedCourses.sort((a, b) => a.title.localeCompare(b.title));
+            sortedCourses.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
             break;
         }
         
+        console.log('🎓 Courses Page: Sorted courses:', sortedCourses);
         setCourses(sortedCourses);
+      } else {
+        console.warn('🎓 Courses Page: No courses data in response:', data);
+        setCourses([]);
       }
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error('🎓 Courses Page: Error fetching courses:', error);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter courses based on search query
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Courses are already filtered by the API, so we just use them directly
+  const filteredCourses = courses;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -202,12 +217,13 @@ const Courses = () => {
             </span>
           )}
         </div>
-        <Link to={`/course/${course._id}`}>
-          <button className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center group">
-            View Course
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </Link>
+        <button 
+          onClick={() => alert(`Course: ${course.title}\n\nDescription: ${course.description}\n\nInstructor: ${course.instructor}\n\nDifficulty: ${course.difficulty}\n\nCourse functionality coming soon!`)}
+          className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center group"
+        >
+          View Course Info
+          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+        </button>
       </div>
     </div>
   );

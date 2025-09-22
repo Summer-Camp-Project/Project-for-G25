@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Eye, Bot, Video, MapPin, BookOpen, Star, Users, Globe, Calendar, ArrowRight, Play, Sparkles, Shield, Award, Clock } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import heroBg from '../assets/hero-bg.jpg';
 import obeliskHero from '../assets/obelisk-hero.jpg';
 import artifacts from '../assets/artifacts.jpg';
@@ -11,9 +12,14 @@ import Aitour from '../assets/Ai-tour.jpg';
 import museum from '../assets/museum.jpg';
 import virtualTour from '../assets/virtual-tour.jpg';
 import VirtualMuseumButton from '../components/virtual-museum/VirtualMuseumButton';
+import learningService from '../services/learningService';
+import educationApi from '../services/educationApi';
+import api from '../services/api';
+import io from 'socket.io-client';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
     artifacts: 500,
@@ -21,6 +27,17 @@ const Home = () => {
     sites: 25,
     visitors: 10000
   });
+  const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [tourPackages, setTourPackages] = useState([]);
+  const [toursLoading, setToursLoading] = useState(true);
+  const [realTimeStats, setRealTimeStats] = useState({
+    activeCourses: 0,
+    activeTours: 0,
+    totalStudents: 0,
+    totalBookings: 0
+  });
+  const [socket, setSocket] = useState(null);
 
   // Animate stats on component mount
   useEffect(() => {
@@ -45,6 +62,67 @@ const Home = () => {
     
     animateStats();
   }, []);
+
+  // Real-time WebSocket connection
+  useEffect(() => {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const newSocket = io(socketUrl);
+    setSocket(newSocket);
+
+    // Listen for real-time updates
+    newSocket.on('stats_update', (data) => {
+      setRealTimeStats(data);
+    });
+
+    newSocket.on('new_course_created', (course) => {
+      setFeaturedCourses(prev => [course, ...prev].slice(0, 3));
+    });
+
+    newSocket.on('new_tour_created', (tour) => {
+      setTourPackages(prev => [tour, ...prev].slice(0, 3));
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  // Fetch featured courses and tour packages
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setCoursesLoading(true);
+        setToursLoading(true);
+
+        // Fetch courses
+        const coursesPromise = learningService.getCourses().then(courses => {
+          setFeaturedCourses(Array.isArray(courses) ? courses.slice(0, 3) : []);
+        }).catch(error => {
+          console.error('Failed to fetch featured courses:', error);
+          setFeaturedCourses([]);
+        });
+
+        // Fetch public tour packages (all active tours available for booking)
+        const toursPromise = api.getTours().then(response => {
+          // Get active tours from the response
+          const tours = response.tours || response.data || response || [];
+          const activeTours = tours.filter(tour => tour.status === 'active').slice(0, 3);
+          setTourPackages(Array.isArray(activeTours) ? activeTours : []);
+        }).catch(error => {
+          console.error('Failed to fetch public tours:', error);
+          setTourPackages([]);
+        });
+
+        await Promise.all([coursesPromise, toursPromise]);
+
+      } finally {
+        setCoursesLoading(false);
+        setToursLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated, user?.id]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -399,12 +477,21 @@ const Home = () => {
                 <p className="text-muted-foreground mb-4 leading-relaxed">
                   Comprehensive learning materials for students, educators, and researchers studying Ethiopian heritage.
                 </p>
-                <Link to="/learning">
-                  <button className="text-primary font-semibold hover:text-primary/80 transition-colors flex items-center group-hover:translate-x-2 transition-transform duration-300">
-                    Start Learning
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </button>
-                </Link>
+                <button 
+                  onClick={() => {
+                    // If user is an organizer, redirect to organizer dashboard
+                    if (isAuthenticated && user?.role === 'organizer') {
+                      navigate('/organizer-dashboard');
+                    } else {
+                      // Otherwise, go to courses page
+                      navigate('/courses');
+                    }
+                  }}
+                  className="text-primary font-semibold hover:text-primary/80 transition-colors flex items-center group-hover:translate-x-2 transition-transform duration-300"
+                >
+                  {isAuthenticated && user?.role === 'organizer' ? 'Manage Education' : 'Start Learning'}
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -612,6 +699,252 @@ const Home = () => {
                   <div className="text-sm text-muted-foreground">UNESCO Sites</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Integrated Education & Tour Management Platform */}
+      <section className="py-20 bg-gradient-to-br from-secondary/5 via-background to-accent/5 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-16 left-16 w-28 h-28 border-2 border-primary rounded-full animate-spin"></div>
+          <div className="absolute bottom-24 right-24 w-20 h-20 border-2 border-secondary rounded-full animate-pulse"></div>
+          <div className="absolute top-1/4 right-1/3 w-12 h-12 border-2 border-accent rounded-full animate-bounce"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 text-primary rounded-full px-4 py-2 mb-4">
+              <Globe className="w-4 h-4 mr-2" />
+              <span className="text-sm font-semibold">Unified Platform</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+              <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                Education & Tour
+              </span>{' '}
+              Management Portal
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto mb-8">
+              Experience the future of heritage education and tourism. Our integrated platform 
+              connects tour organizers with educational content creators, enabling seamless 
+              collaboration and real-time communication.
+            </p>
+          </div>
+
+          {/* Real-time Stats Dashboard */}
+          <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 backdrop-blur-sm rounded-3xl p-8 border border-border/50 mb-16">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-foreground mb-2">Live Platform Statistics</h3>
+              <p className="text-muted-foreground">Real-time data from our integrated education and tour systems</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/30">
+                <div className="w-12 h-12 bg-primary/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-primary" />
+                </div>
+                <div className="text-2xl font-bold text-primary mb-1">
+                  {realTimeStats.activeCourses || featuredCourses.length || 12}
+                </div>
+                <div className="text-sm text-muted-foreground">Active Courses</div>
+                <div className="text-xs text-muted-foreground mt-1">✅ Live Updates</div>
+              </div>
+              
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/30">
+                <div className="w-12 h-12 bg-secondary/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-secondary" />
+                </div>
+                <div className="text-2xl font-bold text-secondary mb-1">
+                  {realTimeStats.activeTours || tourPackages.length || 8}
+                </div>
+                <div className="text-sm text-muted-foreground">Tour Packages</div>
+                <div className="text-xs text-muted-foreground mt-1">🔄 Real-time</div>
+              </div>
+              
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/30">
+                <div className="w-12 h-12 bg-accent/20 rounded-xl mx-auto mb-3 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-accent" />
+                </div>
+                <div className="text-2xl font-bold text-accent mb-1">
+                  {realTimeStats.totalStudents || 1250}
+                </div>
+                <div className="text-sm text-muted-foreground">Students</div>
+                <div className="text-xs text-muted-foreground mt-1">📈 Growing</div>
+              </div>
+              
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 text-center border border-border/30">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary via-secondary to-accent rounded-xl mx-auto mb-3 flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-2xl font-bold text-primary mb-1">
+                  {realTimeStats.totalBookings || 340}
+                </div>
+                <div className="text-sm text-muted-foreground">Tour Bookings</div>
+                <div className="text-xs text-muted-foreground mt-1">🎯 This Month</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+            {/* Education Management */}
+            <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-3xl p-8 border border-border/50">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center mr-4">
+                  <BookOpen className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground">Education Management</h3>
+              </div>
+              
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Create, manage, and deliver engaging educational content about Ethiopian heritage. 
+                Track student progress, manage assignments, and facilitate discussions.
+              </p>
+              
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
+                  Interactive Course Creation
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-secondary rounded-full mr-3"></div>
+                  Student Progress Tracking
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
+                  Assignment & Discussion Tools
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
+                  Certificate Generation
+                </div>
+              </div>
+              
+              <button 
+                onClick={() => {
+                  if (isAuthenticated && user?.role === 'organizer') {
+                    navigate('/organizer-dashboard');
+                  } else {
+                    navigate('/courses');
+                  }
+                }}
+                className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center"
+              >
+                {isAuthenticated && user?.role === 'organizer' ? 'Access Education Portal' : 'Explore Courses'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
+            
+            {/* Tour Management */}
+            <div className="bg-gradient-to-br from-secondary/5 to-accent/5 rounded-3xl p-8 border border-border/50">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-secondary/20 rounded-xl flex items-center justify-center mr-4">
+                  <MapPin className="w-6 h-6 text-secondary" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground">Tour Management</h3>
+              </div>
+              
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Design and manage comprehensive tour packages that integrate with educational content. 
+                Handle bookings, customer communications, and real-time updates.
+              </p>
+              
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-secondary rounded-full mr-3"></div>
+                  Tour Package Creation
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
+                  Booking & Payment Management
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-primary rounded-full mr-3"></div>
+                  Customer Communication Tools
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-secondary rounded-full mr-3"></div>
+                  Analytics & Reporting
+                </div>
+              </div>
+              
+              <button 
+                onClick={() => {
+                  if (isAuthenticated && user?.role === 'organizer') {
+                    navigate('/organizer-dashboard');
+                  } else {
+                    navigate('/tours');
+                  }
+                }}
+                className="bg-secondary text-secondary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-secondary/90 transition-colors flex items-center"
+              >
+                {isAuthenticated && user?.role === 'organizer' ? 'Access Tour Portal' : 'Browse Tours'}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </button>
+            </div>
+          </div>
+
+          {/* Integration Benefits */}
+          <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-border/50">
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold text-foreground mb-4">Why Choose Our Integrated Platform?</h3>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Experience the power of unified education and tour management with real-time communication and seamless workflows.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                  <Bot className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="text-xl font-bold text-foreground mb-3">Real-time Communication</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  Instant updates between tour organizers and educators. Socket-based communication 
+                  ensures everyone stays connected.
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-secondary to-accent rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                  <Globe className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="text-xl font-bold text-foreground mb-3">Cross-Platform Integration</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  Seamlessly connect educational courses with tour packages. Create comprehensive 
+                  learning experiences that combine theory and practice.
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                  <Award className="w-8 h-8 text-white" />
+                </div>
+                <h4 className="text-xl font-bold text-foreground mb-3">Advanced Analytics</h4>
+                <p className="text-muted-foreground leading-relaxed">
+                  Comprehensive dashboards with real-time insights, performance metrics, and 
+                  predictive analytics for better decision making.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <button 
+                onClick={() => {
+                  if (isAuthenticated) {
+                    if (user?.role === 'organizer') {
+                      navigate('/organizer-dashboard');
+                    } else {
+                      navigate('/visitor-dashboard');
+                    }
+                  } else {
+                    navigate('/auth');
+                  }
+                }}
+                className="bg-gradient-to-r from-primary via-secondary to-accent text-white px-12 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center mx-auto"
+              >
+                {isAuthenticated ? 'Access Your Dashboard' : 'Get Started Today'}
+                <Sparkles className="w-5 h-5 ml-2" />
+              </button>
             </div>
           </div>
         </div>

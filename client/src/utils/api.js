@@ -115,8 +115,21 @@ class ApiClient {
       return result
 
     } catch (error) {
-      console.error('Login failed, falling back to mock API:', error.message)
-      // Fallback to mock API if backend fails
+      console.error('Login failed:', error.message)
+      
+      // Don't fall back to mock API for authentication errors (4xx)
+      // Only fall back for network/server errors (5xx)
+      if (error.message.includes('Invalid email or password') || 
+          error.message.includes('User not found') ||
+          error.message.includes('400') ||
+          error.message.includes('401') ||
+          error.message.includes('403')) {
+        // These are authentication errors, don't fall back
+        throw error
+      }
+      
+      // Fall back to mock API only for network/server errors
+      console.log('Network/server error, falling back to mock API:', error.message)
       try {
         return mockApi.login(credentials)
       } catch (mockError) {
@@ -394,6 +407,22 @@ class ApiClient {
     return this.request(`/tours/${tourId}/book`, {
       method: 'POST',
       body: bookingData,
+    })
+  }
+
+  // Public booking endpoints (for customers)
+  async createPublicBooking(bookingData) {
+    return this.request('/bookings', {
+      method: 'POST',
+      body: bookingData,
+    })
+  }
+
+  // Public message endpoints (for customer inquiries)
+  async createCustomerMessage(messageData) {
+    return this.request('/messages', {
+      method: 'POST',
+      body: messageData,
     })
   }
 
@@ -1258,6 +1287,207 @@ class ApiClient {
     return this.request(url, {
       method: 'DELETE'
     });
+  }
+
+  // Course/Education endpoints
+  async getCourses(filters = {}) {
+    console.log('🎓 API: Getting courses with filters:', filters);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        console.log('🎓 API: Using mock API for courses');
+        // Build endpoint string with query parameters for mock API
+        const params = new URLSearchParams(filters);
+        const endpoint = `/education/public/courses?${params.toString()}`;
+        return mockApi.getCourses(endpoint);
+      }
+      
+      console.log('🎓 API: Using real backend for courses');
+      const params = new URLSearchParams(filters);
+      return this.request(`/learning/courses?${params.toString()}`);
+    } catch (error) {
+      console.error('🎓 API: Error getting courses:', error);
+      
+      // Fallback to mock API on error
+      console.log('🎓 API: Falling back to mock API');
+      const params = new URLSearchParams(filters);
+      const endpoint = `/education/public/courses?${params.toString()}`;
+      return mockApi.getCourses(endpoint);
+    }
+  }
+
+  async getCourseById(courseId) {
+    console.log('🎓 API: Getting course by ID:', courseId);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        console.log('🎓 API: Using mock API for course details');
+        return mockApi.getCourseById(courseId);
+      }
+      
+      console.log('🎓 API: Using real backend for course details');
+      return this.request(`/learning/courses/${courseId}`);
+    } catch (error) {
+      console.error('🎓 API: Error getting course:', error);
+      
+      // Fallback to mock API
+      console.log('🎓 API: Falling back to mock API');
+      return mockApi.getCourseById(courseId);
+    }
+  }
+
+  async getCourseLessons(courseId) {
+    console.log('🎓 API: Getting course lessons for:', courseId);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        console.log('🎓 API: Using mock API for course lessons');
+        return mockApi.getCourseLessons(courseId);
+      }
+      
+      console.log('🎓 API: Using real backend for course lessons');
+      return this.request(`/learning/courses/${courseId}/lessons`);
+    } catch (error) {
+      console.error('🎓 API: Error getting course lessons:', error);
+      
+      // Fallback to mock API
+      console.log('🎓 API: Falling back to mock API');
+      return mockApi.getCourseLessons(courseId);
+    }
+  }
+
+  async enrollInCourse(courseId) {
+    console.log('🎓 API: Enrolling in course:', courseId);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.enrollInCourse(courseId);
+      }
+      
+      return this.request(`/learning/courses/${courseId}/enroll`, {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.error('🎓 API: Error enrolling in course:', error);
+      
+      // Fallback to mock API
+      return mockApi.enrollInCourse(courseId);
+    }
+  }
+
+  async getCourseProgress(courseId) {
+    console.log('🎓 API: Getting course progress:', courseId);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.getCourseProgress(courseId);
+      }
+      
+      return this.request(`/learning/courses/${courseId}/progress`);
+    } catch (error) {
+      console.error('🎓 API: Error getting course progress:', error);
+      
+      // Fallback to mock API
+      return mockApi.getCourseProgress(courseId);
+    }
+  }
+
+  async updateLessonProgress(courseId, lessonId, completed = true) {
+    console.log('🎓 API: Updating lesson progress:', { courseId, lessonId, completed });
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.updateLessonProgress(courseId, lessonId, completed);
+      }
+      
+      return this.request(`/learning/courses/${courseId}/lessons/${lessonId}/progress`, {
+        method: 'PUT',
+        body: { completed }
+      });
+    } catch (error) {
+      console.error('🎓 API: Error updating lesson progress:', error);
+      
+      // Fallback to mock API
+      return mockApi.updateLessonProgress(courseId, lessonId, completed);
+    }
+  }
+
+  // Course management for educators
+  async createCourse(courseData) {
+    console.log('🎓 API: Creating course:', courseData);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.createCourse(courseData);
+      }
+      
+      return this.request('/learning/courses', {
+        method: 'POST',
+        body: courseData
+      });
+    } catch (error) {
+      console.error('🎓 API: Error creating course:', error);
+      
+      // Fallback to mock API
+      return mockApi.createCourse(courseData);
+    }
+  }
+
+  async updateCourse(courseId, courseData) {
+    console.log('🎓 API: Updating course:', courseId);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.updateCourse(courseId, courseData);
+      }
+      
+      return this.request(`/learning/courses/${courseId}`, {
+        method: 'PUT',
+        body: courseData
+      });
+    } catch (error) {
+      console.error('🎓 API: Error updating course:', error);
+      
+      // Fallback to mock API
+      return mockApi.updateCourse(courseId, courseData);
+    }
+  }
+
+  async deleteCourse(courseId) {
+    console.log('🎓 API: Deleting course:', courseId);
+    
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.deleteCourse(courseId);
+      }
+      
+      return this.request(`/learning/courses/${courseId}`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error('🎓 API: Error deleting course:', error);
+      
+      // Fallback to mock API
+      return mockApi.deleteCourse(courseId);
+    }
   }
 
   // File upload

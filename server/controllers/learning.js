@@ -7,11 +7,25 @@ const Certificate = require('../models/Certificate');
 // Get all courses
 const getCourses = async (req, res) => {
   try {
-    const { category, difficulty, limit = 20 } = req.query;
+    const { category, difficulty, limit = 6, includeAdvanced = 'false', organizerOnly = 'true' } = req.query;
     
-    const filter = { isActive: true };
+    // Only show active, published courses by default
+    const filter = { isActive: true, status: 'published' };
+
+    // Only show organizer-managed courses on the public education page by default
+    if (organizerOnly === 'true') {
+      filter.organizerId = { $exists: true };
+    }
+
+    // Category filter
     if (category) filter.category = category;
-    if (difficulty) filter.difficulty = difficulty;
+
+    // Difficulty filter: exclude advanced by default unless explicitly included
+    if (difficulty) {
+      filter.difficulty = difficulty;
+    } else if (includeAdvanced !== 'true') {
+      filter.difficulty = { $ne: 'advanced' };
+    }
     
     const courses = await Course.find(filter)
       .populate('lessons')
@@ -334,27 +348,11 @@ const completeLesson = async (req, res) => {
 // Get user's learning progress
 const getLearningProgress = async (req, res) => {
   try {
-    // If no authentication, return mock progress
+    // Require authentication
     if (!req.user || !req.user.id) {
-      return res.json({
-        success: true,
-        progress: {
-          courses: [],
-          overallStats: {
-            totalLessonsCompleted: 5,
-            totalTimeSpent: 120,
-            currentStreak: 3,
-            longestStreak: 7,
-            averageScore: 85
-          },
-          achievements: [
-            {
-              achievementId: 'first_lesson_complete',
-              type: 'lesson_complete',
-              earnedAt: new Date('2024-01-15T10:00:00Z')
-            }
-          ]
-        }
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required to access learning progress'
       });
     }
 
@@ -397,36 +395,11 @@ const getLearningProgress = async (req, res) => {
 // Get learning achievements
 const getLearningAchievements = async (req, res) => {
   try {
-    // If no authentication, return mock achievements
+    // Require authentication
     if (!req.user || !req.user.id) {
-      return res.json({
-        success: true,
-        achievements: [
-          {
-            id: 1,
-            name: 'First Lesson',
-            description: 'Completed your first learning lesson',
-            icon: 'star',
-            earnedAt: '2024-01-15T10:00:00Z',
-            points: 10
-          },
-          {
-            id: 2,
-            name: 'History Explorer',
-            description: 'Completed 5 history lessons',
-            icon: 'book',
-            earnedAt: '2024-01-20T14:30:00Z',
-            points: 50
-          },
-          {
-            id: 3,
-            name: 'Cultural Ambassador',
-            description: 'Completed 3 cultural courses',
-            icon: 'globe',
-            earnedAt: '2024-02-01T11:00:00Z',
-            points: 100
-          }
-        ]
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required to access achievements'
       });
     }
 
@@ -457,40 +430,30 @@ const getLearningAchievements = async (req, res) => {
 // Get learning recommendations
 const getRecommendations = async (req, res) => {
   try {
-    // If no authentication, return mock recommendations
+    // For unauthenticated users, provide general beginner recommendations
     if (!req.user || !req.user.id) {
+      const beginnerCourses = await Course.find({ 
+        difficulty: 'beginner', 
+        isActive: true,
+        status: 'published'
+      })
+      .limit(4)
+      .select('_id title description image category difficulty');
+      
+      const recommendations = beginnerCourses.map(course => ({
+        id: course._id,
+        type: 'course',
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        difficulty: course.difficulty,
+        image: course.image,
+        reason: 'Perfect for getting started with Ethiopian heritage learning'
+      }));
+      
       return res.json({
         success: true,
-        recommendations: [
-          {
-            id: 1,
-            type: 'lesson',
-            title: 'Queen of Sheba Legend',
-            reason: 'Based on your interest in Ethiopian history',
-            image: '/assets/Ethiopian History Fundamentals.jpg'
-          },
-          {
-            id: 2,
-            type: 'course',
-            title: 'Ethiopian Orthodox Christianity',
-            reason: 'Continue your religious artifacts exploration',
-            image: '/assets/orthodox-church.jpg'
-          },
-          {
-            id: 3,
-            type: 'course',
-            title: 'Ethiopian Coffee Culture',
-            reason: 'Explore the birthplace of coffee traditions',
-            image: '/assets/coffee-ceremony.jpg'
-          },
-          {
-            id: 4,
-            type: 'resource',
-            title: 'Traditional Music Collection',
-            reason: 'Discover Ethiopian musical heritage',
-            image: '/assets/traditional-instruments.jpg'
-          }
-        ]
+        recommendations
       });
     }
 

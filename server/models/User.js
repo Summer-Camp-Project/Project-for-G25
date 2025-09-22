@@ -69,6 +69,9 @@ const userSchema = new mongoose.Schema({
       'create_events', 'approve_local_rentals', 'view_museum_analytics',
       'suggest_heritage_sites', 'manage_virtual_museum',
 
+      // Organizer Permissions
+      'manage_tours', 'view_analytics', 'create_educational_tours', 'manage_educational_tours', 'view_educational_analytics',
+      
       // User/Visitor Permissions
       'book_events', 'request_rentals', 'view_virtual_museum',
       'leave_reviews', 'manage_profile'
@@ -654,7 +657,8 @@ userSchema.pre('save', function (next) {
       case 'organizer':
         this.permissions = [
           'create_events', 'book_events', 'manage_tours', 'view_analytics',
-          'request_rentals', 'view_virtual_museum', 'leave_reviews', 'manage_profile'
+          'request_rentals', 'view_virtual_museum', 'leave_reviews', 'manage_profile',
+          'create_educational_tours', 'manage_educational_tours', 'view_educational_analytics'
         ];
         break;
       case 'user':

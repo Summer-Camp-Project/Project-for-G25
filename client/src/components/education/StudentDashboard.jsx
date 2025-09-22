@@ -368,16 +368,14 @@ const StudentDashboard = () => {
                             variant="outlined"
                             color="primary"
                             startIcon={<PlayIcon />}
-                            component={Link}
-                            to={`/course/${course._id}`}
+                            onClick={() => alert(`Continue learning: ${course.title}\n\nCourse functionality coming soon!`)}
                           >
                             Continue Learning
                           </Button>
                           <Button 
                             size="small" 
                             variant="text"
-                            component={Link}
-                            to={`/learning/courses/${course._id}`}
+                            onClick={() => alert(`Course Details: ${course.title}\n\nDescription: ${course.description || 'N/A'}\n\nInstructor: ${course.instructor || 'N/A'}`)}
                           >
                             View Details
                           </Button>

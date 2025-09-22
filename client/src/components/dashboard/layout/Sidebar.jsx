@@ -19,7 +19,7 @@ import { useAuth } from "../../../hooks/useAuth";
 const navigationItems = [
   { icon: Home, label: "Dashboard", page: "dashboard" },
   { icon: Package, label: "Tour Packages", page: "tour-packages" },
-  { icon: BookOpen, label: "Educational Tours", page: "educational-tours" },
+  { icon: BookOpen, label: "Education Management", page: "education-management" },
   { icon: Calendar, label: "Tour Bookings", page: "tour-bookings" },
   { icon: Clock, label: "Schedules", page: "schedules" },
   { icon: Users, label: "Customers", page: "customers" },

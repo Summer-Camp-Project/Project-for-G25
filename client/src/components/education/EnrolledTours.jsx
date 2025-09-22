@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Star, BookOpen, Award, Clock, User, ChevronRight, Play, CheckCircle, AlertCircle } from 'lucide-react';
+import educationalToursApi, { handleApiError } from '../../services/educationalToursApi';
 
 const EnrolledTours = () => {
   const [enrolledTours, setEnrolledTours] = useState([]);
@@ -14,19 +16,13 @@ const EnrolledTours = () => {
   const fetchEnrolledTours = async () => {
     try {
       setLoading(true);
-      // Replace with actual API call
-      const response = await fetch('/api/educational-tours/user/enrolled', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setEnrolledTours(data.data);
+      const response = await educationalToursApi.user.getEnrolledTours();
+      if (response.success) {
+        setEnrolledTours(response.data);
       }
     } catch (error) {
       console.error('Error fetching enrolled tours:', error);
-      // Mock data for demo
+      // Use mock data for demo when API fails
       setEnrolledTours([
         {
           _id: '1',
@@ -388,9 +384,9 @@ const EnrolledTours = () => {
             <p className="text-heritage-dark/70 mb-4">
               {activeTab === 'all' ? 'No enrolled tours yet.' : `No ${activeTab} tours found.`}
             </p>
-            <button className="text-heritage-moss hover:underline">
+            <Link to="/educational-tours" className="text-heritage-moss hover:underline">
               Browse Available Tours
-            </button>
+            </Link>
           </div>
         )}
       </div>

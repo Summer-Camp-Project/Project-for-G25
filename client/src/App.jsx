@@ -15,11 +15,9 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import MuseumDashboard from './pages/MuseumDashboard'
 import OrganizerDashboard from './pages/OrganizerDashboard'
 import VisitorDashboard from './pages/VisitorDashboard'
-import UserTourPage from './components/pages/UserTourPage'
+import UserTourPage from './pages/UserTourPage'
 import UserProfile from './pages/UserProfile'
-import Learning from './pages/Learning'
 import Courses from './pages/Courses'
-import CourseDetail from './pages/CourseDetail'
 import EducationalTours from './pages/EducationalTours'
 import AdminSupport from './pages/AdminSupport';
 import Support from './pages/Support';
@@ -158,7 +156,7 @@ function App() {
           <Route path="/learning" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              <Learning />
+              <Courses />
               <Footer />
             </>
           } />
@@ -172,7 +170,7 @@ function App() {
           <Route path="/education" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              <Learning />
+              <Courses />
               <Footer />
             </>
           } />
@@ -333,9 +331,6 @@ function App() {
           } />
           
           {/* New Educational Routes */}
-          <Route path="/course/:courseId" element={
-            <CourseDetail darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-          } />
           <Route path="/support" element={
             <Support darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
           } />

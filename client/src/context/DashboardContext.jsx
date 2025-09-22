@@ -237,6 +237,65 @@ export const DashboardProvider = ({ children }) => {
     }
   }, []);
 
+  // PUBLIC API METHODS FOR CUSTOMERS/USERS
+  
+  // Create booking from user (public)
+  const createBookingFromUser = useCallback(async (bookingData) => {
+    try {
+      // Create booking via public API
+      const response = await apiService.request('/bookings', {
+        method: 'POST',
+        body: JSON.stringify(bookingData)
+      });
+      
+      // Add to local bookings state if it's for current user's tour organizer
+      if (organizerId === bookingData.tourPackageId) {
+        setBookings((prev) => [response, ...prev]);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to create booking from user:', error);
+      throw error;
+    }
+  }, [organizerId]);
+
+  // Add customer message (public)
+  const addCustomerMessage = useCallback(async (messageData) => {
+    try {
+      // Send message via public API
+      const response = await apiService.request('/messages', {
+        method: 'POST',
+        body: JSON.stringify(messageData)
+      });
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to add customer message:', error);
+      throw error;
+    }
+  }, []);
+
+  // Load public tours (for user view)
+  const loadPublicTours = useCallback(async (params = {}) => {
+    try {
+      // Get all public/active tours
+      const response = await apiService.request('/tours', {
+        method: 'GET'
+      });
+      
+      // Filter for active tours only
+      const publicTours = (response.tours || response.data || response || [])
+        .filter(tour => tour.status === 'active');
+        
+      return publicTours;
+    } catch (error) {
+      console.error('Failed to load public tours:', error);
+      // Return empty array instead of throwing to prevent crashes
+      return [];
+    }
+  }, []);
+
   // Initial data load
   useEffect(() => {
     if (organizerId) {
@@ -295,6 +354,11 @@ export const DashboardProvider = ({ children }) => {
     markMessageAsRead,
     deleteTourPackage,
     replyToMessage,
+
+    // Public API functions for customers/users
+    createBookingFromUser,
+    addCustomerMessage,
+    loadPublicTours,
 
     // UI State
     showCreateTourModal,

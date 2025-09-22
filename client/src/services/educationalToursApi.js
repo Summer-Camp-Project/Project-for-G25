@@ -10,6 +10,14 @@ const api = axios.create({
   },
 });
 
+// Create organizer-specific axios instance
+const organizerApi = axios.create({
+  baseURL: `${API_BASE_URL}/api/organizer`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Add auth token to requests
 api.interceptors.request.use(
   (config) => {
