@@ -497,6 +497,52 @@ const userSchema = new mongoose.Schema({
     ref: 'Museum'
   }],
 
+  // Chatbot History
+  chatHistory: [{
+    question: {
+      type: String,
+      required: true,
+      maxLength: [1000, 'Question cannot exceed 1000 characters']
+    },
+    answer: {
+      type: String,
+      required: true,
+      maxLength: [5000, 'Answer cannot exceed 5000 characters']
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    metadata: {
+      confidence: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'medium'
+      },
+      suggestions: [{
+        type: String,
+        maxLength: [200, 'Suggestion cannot exceed 200 characters']
+      }],
+      references: [{
+        title: {
+          type: String,
+          maxLength: [200, 'Reference title cannot exceed 200 characters']
+        },
+        url: {
+          type: String,
+          maxLength: [500, 'Reference URL cannot exceed 500 characters']
+        },
+        description: {
+          type: String,
+          maxLength: [300, 'Reference description cannot exceed 300 characters']
+        }
+      }],
+      conversationId: String,
+      userAgent: String,
+      ipAddress: String
+    }
+  }],
+
   // Security
   passwordResetToken: String,
   passwordResetExpires: Date,

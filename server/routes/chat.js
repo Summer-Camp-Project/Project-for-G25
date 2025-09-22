@@ -634,5 +634,460 @@ router.get('/support', async (req, res) => {
   }
 });
 
+// === CHATBOT API ENDPOINTS ===
+
+// Handle chatbot questions with intelligent responses
+router.post('/ask', async (req, res) => {
+  try {
+    const {
+      question,
+      context = {},
+      chatHistory = [],
+      userInfo = {},
+      metadata = {}
+    } = req.body;
+
+    if (!question || !question.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Question is required'
+      });
+    }
+
+    // Get user if authenticated
+    let user = null;
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        user = await User.findById(decoded.userId).select('-password');
+      } catch (error) {
+        console.warn('Invalid token in chatbot request:', error.message);
+      }
+    }
+
+    // Enhanced response generation based on question analysis
+    const response = await generateChatbotResponse({
+      question: question.trim(),
+      context,
+      chatHistory: chatHistory.slice(-10), // Keep last 10 messages for context
+      user,
+      userInfo,
+      metadata
+    });
+
+    // Save chat interaction if user is authenticated
+    if (user) {
+      try {
+        await saveChatInteraction(user._id, question, response);
+      } catch (saveError) {
+        console.warn('Failed to save chat interaction:', saveError.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        answer: response.answer,
+        suggestions: response.suggestions || [],
+        references: response.references || [],
+        confidence: response.confidence || 'medium',
+        timestamp: new Date().toISOString(),
+        conversationId: response.conversationId
+      }
+    });
+
+  } catch (error) {
+    console.error('Error processing chatbot question:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process question',
+      error: error.message,
+      data: {
+        answer: 'I apologize, but I\'m experiencing technical difficulties right now. Please try again in a moment or contact support if the issue persists.',
+        suggestions: [
+          'Try rephrasing your question',
+          'Contact support for assistance',
+          'Check our FAQ section'
+        ],
+        references: [],
+        confidence: 'low'
+      }
+    });
+  }
+});
+
+// Get chatbot conversation folders/categories for enhanced suggestions
+router.get('/folders', async (req, res) => {
+  try {
+    const folders = {
+      'getting-started': {
+        name: 'Getting Started',
+        description: 'Basic information and setup guides',
+        topics: [
+          'Account creation',
+          'First steps',
+          'Basic navigation',
+          'Profile setup'
+        ]
+      },
+      'features': {
+        name: 'Features & Functions',
+        description: 'Learn about available features',
+        topics: [
+          'Museum management',
+          'Artifact cataloging',
+          'User roles',
+          'Communication tools'
+        ]
+      },
+      'technical': {
+        name: 'Technical Support',
+        description: 'Technical issues and troubleshooting',
+        topics: [
+          'Login issues',
+          'Performance problems',
+          'Browser compatibility',
+          'Data backup'
+        ]
+      },
+      'administration': {
+        name: 'Administration',
+        description: 'Admin and management features',
+        topics: [
+          'User management',
+          'System settings',
+          'Reports and analytics',
+          'Security settings'
+        ]
+      }
+    };
+
+    res.json({
+      success: true,
+      data: folders
+    });
+
+  } catch (error) {
+    console.error('Error fetching chatbot folders:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch folders',
+      error: error.message
+    });
+  }
+});
+
+// Get chat history for authenticated users
+router.get('/history', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get chat history from user's chatHistory field or a separate ChatbotHistory model
+    const chatHistory = user.chatHistory || [];
+    
+    // Return recent chat interactions (last 50)
+    const recentHistory = chatHistory
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 50);
+
+    res.json({
+      success: true,
+      data: recentHistory
+    });
+
+  } catch (error) {
+    console.error('Error fetching chat history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch chat history',
+      error: error.message
+    });
+  }
+});
+
+// Save chat message to history
+router.post('/save', async (req, res) => {
+  try {
+    const { question, answer, metadata = {} } = req.body;
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await saveChatInteraction(user._id, question, { answer, ...metadata });
+
+    res.json({
+      success: true,
+      message: 'Chat interaction saved successfully'
+    });
+
+  } catch (error) {
+    console.error('Error saving chat interaction:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save chat interaction',
+      error: error.message
+    });
+  }
+});
+
+// Clear chat history
+router.delete('/history', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Clear chat history
+    user.chatHistory = [];
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Chat history cleared successfully'
+    });
+
+  } catch (error) {
+    console.error('Error clearing chat history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear chat history',
+      error: error.message
+    });
+  }
+});
+
+// === CHATBOT HELPER FUNCTIONS ===
+
+async function generateChatbotResponse({ question, context, chatHistory, user, userInfo, metadata }) {
+  const questionLower = question.toLowerCase();
+  
+  // Define response patterns and keywords
+  const responses = {
+    // Greetings
+    greetings: {
+      keywords: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
+      responses: [
+        user ? `Hello ${user.name}! How can I assist you today?` : 'Hello! How can I help you today?',
+        'Hi there! What would you like to know?',
+        'Greetings! I\'m here to help you with any questions you might have.'
+      ]
+    },
+    
+    // Account and profile questions
+    account: {
+      keywords: ['account', 'profile', 'login', 'password', 'register', 'sign up', 'sign in'],
+      responses: [
+        'For account-related questions, you can manage your profile in the user settings. If you\'re having trouble logging in, try using the "Forgot Password" feature.',
+        'Account issues can usually be resolved through your profile settings. Would you like me to guide you to the right section?'
+      ],
+      suggestions: [
+        'How do I reset my password?',
+        'How do I update my profile?',
+        'What information do I need to register?',
+        'Why can\'t I log in?'
+      ]
+    },
+    
+    // Museum management
+    museum: {
+      keywords: ['museum', 'artifact', 'collection', 'exhibit', 'catalog', 'inventory'],
+      responses: [
+        'Our museum management system helps you catalog artifacts, manage collections, and organize exhibits. You can access these features through the main dashboard.',
+        'For museum operations, you can manage artifacts, create exhibits, and track your collections. What specific aspect would you like to know more about?'
+      ],
+      suggestions: [
+        'How do I add a new artifact?',
+        'How do I create an exhibit?',
+        'How do I manage my collection?',
+        'Can I export my catalog data?'
+      ]
+    },
+    
+    // Technical support
+    technical: {
+      keywords: ['error', 'bug', 'problem', 'issue', 'not working', 'slow', 'crash', 'loading'],
+      responses: [
+        'I\'m sorry you\'re experiencing technical difficulties. Can you describe what specific issue you\'re encountering? This will help me provide better assistance.',
+        'Technical issues can be frustrating. Let me help you troubleshoot the problem. What exactly is happening?'
+      ],
+      suggestions: [
+        'The page is loading slowly',
+        'I\'m getting an error message',
+        'Features are not responding',
+        'I need to report a bug'
+      ]
+    },
+    
+    // User roles and permissions
+    permissions: {
+      keywords: ['role', 'permission', 'access', 'admin', 'user', 'staff', 'curator'],
+      responses: [
+        'User roles determine what features and data you can access. The system supports various roles including visitors, staff, curators, and administrators.',
+        'Access permissions are managed through user roles. Would you like to know more about what each role can do?'
+      ],
+      suggestions: [
+        'What can a curator do?',
+        'How do I get admin access?',
+        'What are the different user roles?',
+        'Who can modify artifacts?'
+      ]
+    }
+  };
+  
+  // Find the best matching category
+  let bestMatch = null;
+  let matchScore = 0;
+  
+  for (const [category, data] of Object.entries(responses)) {
+    const score = data.keywords.filter(keyword => questionLower.includes(keyword)).length;
+    if (score > matchScore) {
+      matchScore = score;
+      bestMatch = { category, ...data };
+    }
+  }
+  
+  // Generate response
+  let answer, suggestions = [], references = [];
+  let confidence = 'medium';
+  
+  if (bestMatch && matchScore > 0) {
+    answer = bestMatch.responses[Math.floor(Math.random() * bestMatch.responses.length)];
+    suggestions = bestMatch.suggestions || [];
+    confidence = 'high';
+    references = [
+      {
+        title: `${bestMatch.category.charAt(0).toUpperCase() + bestMatch.category.slice(1)} Help`,
+        url: `/help/${bestMatch.category}`,
+        description: `Learn more about ${bestMatch.category}-related topics`
+      }
+    ];
+  } else {
+    // Fallback responses
+    const fallbackResponses = [
+      'I understand you have a question, but I need a bit more context to provide the best answer. Could you please provide more details?',
+      'That\'s an interesting question! While I may not have a specific answer right now, I can help you find the right resources or contact support for detailed assistance.',
+      'I\'m here to help! Could you rephrase your question or provide more specific details so I can assist you better?'
+    ];
+    
+    answer = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    suggestions = [
+      'Tell me about museum features',
+      'How do I manage my account?',
+      'What are user roles and permissions?',
+      'I need technical support'
+    ];
+    confidence = 'low';
+  }
+  
+  // Add personalization if user is authenticated
+  if (user) {
+    references.push({
+      title: 'Your Profile',
+      url: '/profile',
+      description: 'View and edit your account settings'
+    });
+    
+    if (user.role === 'museum_admin' || user.role === 'admin') {
+      suggestions.push('How do I manage users?', 'What admin features are available?');
+    }
+  }
+  
+  return {
+    answer,
+    suggestions: suggestions.slice(0, 6), // Limit to 6 suggestions
+    references: references.slice(0, 3), // Limit to 3 references
+    confidence,
+    conversationId: metadata.conversationId || generateConversationId()
+  };
+}
+
+async function saveChatInteraction(userId, question, response) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+    
+    // Initialize chatHistory if it doesn't exist
+    if (!user.chatHistory) {
+      user.chatHistory = [];
+    }
+    
+    // Add new interaction
+    user.chatHistory.push({
+      question,
+      answer: response.answer || response,
+      timestamp: new Date(),
+      metadata: {
+        confidence: response.confidence,
+        suggestions: response.suggestions,
+        references: response.references
+      }
+    });
+    
+    // Keep only last 100 interactions to prevent unbounded growth
+    if (user.chatHistory.length > 100) {
+      user.chatHistory = user.chatHistory.slice(-100);
+    }
+    
+    await user.save();
+  } catch (error) {
+    console.error('Error saving chat interaction:', error);
+    throw error;
+  }
+}
+
+function generateConversationId() {
+  return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 module.exports = router;
 

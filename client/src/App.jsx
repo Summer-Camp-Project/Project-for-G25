@@ -38,6 +38,7 @@ import MuseumCommunications from './components/museum/MuseumCommunications'
 import MuseumSettings from './components/museum/MuseumSettings'
 import RoleBasedRoute from './components/auth/RoleBasedRoute'
 import { useAuth } from './hooks/useAuth'
+import EnhancedChatbot from './components/chat/EnhancedChatbot'
 import './styles/global.css'
 import {DashboardProvider } from './context/DashboardContext'
 
@@ -353,6 +354,10 @@ function App() {
             </ProtectedRoute>
           } />
       </Routes>
+      
+      {/* Global Enhanced Chatbot - Available on all pages */}
+      <EnhancedChatbot />
+      
       </DashboardProvider>
     </div>
   )
