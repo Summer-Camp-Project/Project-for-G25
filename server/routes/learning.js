@@ -13,6 +13,8 @@ const {
   getRecommendations,
   submitQuiz,
   enrollInCourse,
+  getEnrolledCourses,
+  unenrollFromCourse,
   generateCertificate,
   getCertificates,
   verifyCertificate,
@@ -35,8 +37,10 @@ router.post('/lessons/:lessonId/start', auth, startLesson);
 router.post('/lessons/:lessonId/complete', auth, completeLesson); // This is the endpoint the client service calls
 router.post('/quizzes/:quizId/submit', auth, submitQuiz);
 
-// Course enrollment
+// Course enrollment routes
 router.post('/courses/:courseId/enroll', auth, enrollInCourse);
+router.get('/enrollments', auth, getEnrolledCourses);
+router.delete('/courses/:courseId/unenroll', auth, unenrollFromCourse);
 
 // Certificates
 router.post('/courses/:courseId/certificate', auth, generateCertificate);

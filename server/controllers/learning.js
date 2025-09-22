@@ -634,53 +634,291 @@ const enrollInCourse = async (req, res) => {
       });
     }
     
+    // Get user and check if already enrolled in User model
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Check if already enrolled in user's learning profile
+    const existingUserEnrollment = user.learningProfile?.enrolledCourses?.find(
+      enrollment => enrollment.courseId.toString() === courseId
+    );
+    
+    if (existingUserEnrollment) {
+      return res.json({
+        success: true,
+        message: 'Already enrolled in this course',
+        enrollment: existingUserEnrollment
+      });
+    }
+    
     // Get or create learning progress
     let progress = await LearningProgress.findOne({ userId });
     if (!progress) {
       progress = new LearningProgress({
         userId,
         courses: [],
-        overallStats: {}
+        overallStats: {
+          totalLessonsCompleted: 0,
+          totalTimeSpent: 0,
+          currentStreak: 0,
+          averageScore: 0
+        }
       });
     }
     
-    // Check if already enrolled
-    const existingEnrollment = progress.getCourseProgress(courseId);
-    if (existingEnrollment) {
+    // Check if already enrolled in progress model (double check)
+    const existingProgressEnrollment = progress.getCourseProgress ? 
+      progress.getCourseProgress(courseId) : 
+      progress.courses.find(c => c.courseId.toString() === courseId);
+      
+    if (existingProgressEnrollment) {
       return res.json({
         success: true,
         message: 'Already enrolled in this course',
-        courseProgress: existingEnrollment
+        courseProgress: existingProgressEnrollment
       });
     }
     
-    // Create course progress with all lessons
+    // Create enrollment timestamp
+    const enrollmentDate = new Date();
+    
+    // Add to User's learning profile
+    if (!user.learningProfile) {
+      user.learningProfile = {
+        enrolledCourses: [],
+        learningStats: {
+          totalCoursesEnrolled: 0,
+          completedCourses: 0,
+          totalLessonsCompleted: 0,
+          totalTimeSpent: 0,
+          averageScore: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          certificatesEarned: 0,
+          achievementsUnlocked: 0
+        },
+        preferences: {
+          learningGoals: [],
+          studyReminders: true,
+          difficultyPreference: 'mixed',
+          studyTimePreference: 'flexible',
+          weeklyStudyGoal: 120
+        }
+      };
+    }
+    
+    const userEnrollment = {
+      courseId: course._id,
+      enrolledAt: enrollmentDate,
+      status: 'enrolled',
+      progress: 0,
+      lastAccessedAt: enrollmentDate
+    };
+    
+    user.learningProfile.enrolledCourses.push(userEnrollment);
+    user.learningProfile.learningStats.totalCoursesEnrolled += 1;
+    
+    // Create course progress in LearningProgress model with all lessons
     const courseProgress = {
       courseId: course._id,
-      status: 'not_started',
-      enrolledAt: new Date(),
+      status: 'enrolled',
+      enrolledAt: enrollmentDate,
+      progress: 0,
       progressPercentage: 0,
       lessons: course.lessons.map(lesson => ({
         lessonId: lesson._id,
         status: 'not_started',
         timeSpent: 0,
-        attempts: 0
+        attempts: 0,
+        score: 0
       }))
     };
     
     progress.courses.push(courseProgress);
-    await progress.save();
+    
+    // Save both models
+    await Promise.all([
+      user.save(),
+      progress.save()
+    ]);
+    
+    // Log enrollment activity
+    await user.logActivity('course_enrollment', {
+      courseId: course._id,
+      courseTitle: course.title,
+      category: course.category
+    });
     
     res.json({
       success: true,
       message: 'Successfully enrolled in course',
-      courseProgress
+      enrollment: {
+        courseId: course._id,
+        courseTitle: course.title,
+        enrolledAt: enrollmentDate,
+        status: 'enrolled',
+        progress: 0,
+        totalLessons: course.lessons.length
+      }
     });
   } catch (error) {
     console.error('Enroll in course error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to enroll in course'
+    });
+  }
+};
+
+// Get enrolled courses for current user
+const getEnrolledCourses = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const User = require('../models/User');
+    const user = await User.findById(userId)
+      .populate('learningProfile.enrolledCourses.courseId', 'title description image category difficulty estimatedDuration lessons')
+      .lean();
+      
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    const enrolledCourses = user.learningProfile?.enrolledCourses || [];
+    
+    // Get additional progress details from LearningProgress model
+    const progress = await LearningProgress.findOne({ userId }).lean();
+    const progressMap = {};
+    
+    if (progress && progress.courses) {
+      progress.courses.forEach(courseProgress => {
+        progressMap[courseProgress.courseId.toString()] = courseProgress;
+      });
+    }
+    
+    // Merge user enrollment data with progress data
+    const enrichedEnrollments = enrolledCourses.map(enrollment => {
+      const courseProgress = progressMap[enrollment.courseId._id.toString()];
+      const course = enrollment.courseId;
+      
+      return {
+        _id: enrollment._id,
+        course: {
+          _id: course._id,
+          title: course.title,
+          description: course.description,
+          image: course.image,
+          category: course.category,
+          difficulty: course.difficulty,
+          estimatedDuration: course.estimatedDuration,
+          totalLessons: course.lessons?.length || 0
+        },
+        enrolledAt: enrollment.enrolledAt,
+        status: enrollment.status,
+        progress: enrollment.progress,
+        lastAccessedAt: enrollment.lastAccessedAt,
+        detailedProgress: courseProgress ? {
+          lessonsCompleted: courseProgress.lessons?.filter(l => l.status === 'completed').length || 0,
+          totalTimeSpent: courseProgress.lessons?.reduce((sum, l) => sum + (l.timeSpent || 0), 0) || 0,
+          averageScore: courseProgress.lessons?.length > 0 ? 
+            Math.round(courseProgress.lessons.reduce((sum, l) => sum + (l.score || 0), 0) / courseProgress.lessons.length) : 0
+        } : null
+      };
+    });
+    
+    res.json({
+      success: true,
+      enrollments: enrichedEnrollments,
+      stats: user.learningProfile?.learningStats || {
+        totalCoursesEnrolled: 0,
+        completedCourses: 0,
+        totalLessonsCompleted: 0,
+        totalTimeSpent: 0,
+        averageScore: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        certificatesEarned: 0,
+        achievementsUnlocked: 0
+      }
+    });
+  } catch (error) {
+    console.error('Get enrolled courses error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch enrolled courses'
+    });
+  }
+};
+
+// Unenroll from a course
+const unenrollFromCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+    
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Remove from User's learning profile
+    if (user.learningProfile?.enrolledCourses) {
+      const enrollmentIndex = user.learningProfile.enrolledCourses.findIndex(
+        enrollment => enrollment.courseId.toString() === courseId
+      );
+      
+      if (enrollmentIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: 'Course enrollment not found'
+        });
+      }
+      
+      user.learningProfile.enrolledCourses.splice(enrollmentIndex, 1);
+      user.learningProfile.learningStats.totalCoursesEnrolled = Math.max(0, user.learningProfile.learningStats.totalCoursesEnrolled - 1);
+    }
+    
+    // Remove from LearningProgress model
+    const progress = await LearningProgress.findOne({ userId });
+    if (progress) {
+      const progressIndex = progress.courses.findIndex(
+        course => course.courseId.toString() === courseId
+      );
+      
+      if (progressIndex > -1) {
+        progress.courses.splice(progressIndex, 1);
+        await progress.save();
+      }
+    }
+    
+    await user.save();
+    
+    // Log unenrollment activity
+    await user.logActivity('course_unenrollment', { courseId });
+    
+    res.json({
+      success: true,
+      message: 'Successfully unenrolled from course'
+    });
+  } catch (error) {
+    console.error('Unenroll from course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to unenroll from course'
     });
   }
 };
@@ -912,6 +1150,8 @@ module.exports = {
   getRecommendations,
   submitQuiz,
   enrollInCourse,
+  getEnrolledCourses,
+  unenrollFromCourse,
   generateCertificate,
   getCertificates,
   verifyCertificate,

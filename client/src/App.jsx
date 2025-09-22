@@ -20,6 +20,7 @@ import UserProfile from './pages/UserProfile'
 import Learning from './pages/Learning'
 import Courses from './pages/Courses'
 import CourseDetail from './pages/CourseDetail'
+import EducationalTours from './pages/EducationalTours'
 import AdminSupport from './pages/AdminSupport';
 import Support from './pages/Support';
 import StudyGuides from './pages/StudyGuides'
@@ -125,6 +126,7 @@ function App() {
             </>
           } />
           <Route path="/auth" element={<Auth darkMode={darkMode} toggleDarkMode={toggleDarkMode} />} />
+          <Route path="/login" element={<Navigate to="/auth" replace />} />
           <Route path="/contact" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -171,6 +173,13 @@ function App() {
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
               <Learning />
+              <Footer />
+            </>
+          } />
+          <Route path="/educational-tours" element={
+            <>
+              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <EducationalTours />
               <Footer />
             </>
           } />

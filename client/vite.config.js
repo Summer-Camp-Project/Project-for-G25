@@ -24,7 +24,12 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: true,
+    // Disable build sourcemaps to avoid missing map lookups in third-party deps
+    sourcemap: false,
+    // Ignore sourcemaps for problematic third-party packages to silence noisy warnings
+    sourcemapIgnoreList: (relativeSourcePath, sourcemapPath) => {
+      return /node_modules[\\/](lucide-react)/.test(relativeSourcePath) || /node_modules[\\/](lucide-react)/.test(sourcemapPath)
+    },
     rollupOptions: {
       output: {
         manualChunks: undefined,
@@ -39,7 +44,8 @@ export default defineConfig({
     loader: 'jsx',
     include: /src\/.*\.[jt]sx?$/,
     exclude: [],
-    sourcemap: true
+    // Disable esbuild sourcemaps during dev optimize to prevent Vite trying to fetch non-existent maps
+    sourcemap: false
   },
   optimizeDeps: {
     include: [
@@ -52,9 +58,12 @@ export default defineConfig({
       'i18next',
       'react-i18next',
       'i18next-browser-languagedetector',
-      'sonner'
+      'sonner',
+      // Prebundle lucide-react so its files are processed by esbuild (without sourcemaps)
+      'lucide-react'
     ],
-    exclude: ['lucide-react'],
+    // Do not exclude lucide-react so it gets pre-bundled (avoids raw sourcemap references)
+    exclude: [],
     force: true,
     esbuildOptions: {
       loader: {

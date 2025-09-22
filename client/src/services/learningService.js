@@ -206,6 +206,128 @@ class LearningService {
   }
 
   /**
+   * Enroll in a course
+   * @param {string|number} courseId - Course ID
+   * @returns {Promise<Object>} Enrollment result
+   */
+  async enrollInCourse(courseId) {
+    try {
+      const response = await api.request(`/learning/courses/${courseId}/enroll`, {
+        method: 'POST'
+      });
+      
+      // Update local cache if enrollment successful
+      if (response.success) {
+        // Clear courses cache to force refresh
+        this.cache.delete('enrolled_courses');
+        this.cache.delete('learning_progress');
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Enroll in course error:', error);
+      // Return optimistic response for offline handling
+      return {
+        success: false,
+        message: error.message || 'Failed to enroll in course. Please check your connection.'
+      };
+    }
+  }
+
+  /**
+   * Get enrolled courses for current user
+   * @returns {Promise<Object>} Enrolled courses and stats
+   */
+  async getEnrolledCourses() {
+    const cacheKey = 'enrolled_courses';
+    
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      if (Date.now() - cached.timestamp < this.cacheExpiry) {
+        return cached.data;
+      }
+    }
+
+    try {
+      const response = await api.request('/learning/enrollments');
+      const enrollmentData = response.data || response;
+      
+      this.cache.set(cacheKey, {
+        data: enrollmentData,
+        timestamp: Date.now()
+      });
+      
+      return enrollmentData;
+    } catch (error) {
+      console.error('Get enrolled courses error:', error);
+      // Return mock enrolled courses for demo purposes
+      return {
+        success: true,
+        enrollments: [],
+        stats: {
+          totalCoursesEnrolled: 0,
+          completedCourses: 0,
+          totalLessonsCompleted: 0,
+          totalTimeSpent: 0,
+          averageScore: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          certificatesEarned: 0,
+          achievementsUnlocked: 0
+        }
+      };
+    }
+  }
+
+  /**
+   * Unenroll from a course
+   * @param {string|number} courseId - Course ID
+   * @returns {Promise<Object>} Unenrollment result
+   */
+  async unenrollFromCourse(courseId) {
+    try {
+      const response = await api.request(`/learning/courses/${courseId}/unenroll`, {
+        method: 'DELETE'
+      });
+      
+      // Update local cache if unenrollment successful
+      if (response.success) {
+        // Clear courses cache to force refresh
+        this.cache.delete('enrolled_courses');
+        this.cache.delete('learning_progress');
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Unenroll from course error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to unenroll from course. Please check your connection.'
+      };
+    }
+  }
+
+  /**
+   * Check if user is enrolled in a course
+   * @param {string|number} courseId - Course ID
+   * @returns {Promise<boolean>} Enrollment status
+   */
+  async isEnrolledInCourse(courseId) {
+    try {
+      const enrollments = await this.getEnrolledCourses();
+      if (enrollments.success && enrollments.enrollments) {
+        return enrollments.enrollments.some(enrollment => 
+          enrollment.course._id.toString() === courseId.toString()
+        );
+      }
+      return false;
+    } catch (error) {
+      console.error('Check enrollment status error:', error);
+      return false;
+    }
+  }
+
+  /**
    * Get learning leaderboard
    * @param {string} period - Time period (week, month, all)
    * @returns {Promise<Array>} Leaderboard data

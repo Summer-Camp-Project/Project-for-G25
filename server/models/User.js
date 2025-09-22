@@ -393,6 +393,97 @@ const userSchema = new mongoose.Schema({
     }
   },
 
+  // Learning Profile
+  learningProfile: {
+    enrolledCourses: [{
+      courseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course'
+      },
+      enrolledAt: {
+        type: Date,
+        default: Date.now
+      },
+      status: {
+        type: String,
+        enum: ['enrolled', 'in_progress', 'completed', 'paused', 'dropped'],
+        default: 'enrolled'
+      },
+      progress: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100
+      },
+      startedAt: Date,
+      completedAt: Date,
+      lastAccessedAt: Date
+    }],
+    learningStats: {
+      totalCoursesEnrolled: {
+        type: Number,
+        default: 0
+      },
+      completedCourses: {
+        type: Number,
+        default: 0
+      },
+      totalLessonsCompleted: {
+        type: Number,
+        default: 0
+      },
+      totalTimeSpent: {
+        type: Number,
+        default: 0 // in minutes
+      },
+      averageScore: {
+        type: Number,
+        default: 0
+      },
+      currentStreak: {
+        type: Number,
+        default: 0
+      },
+      longestStreak: {
+        type: Number,
+        default: 0
+      },
+      lastActivityDate: Date,
+      certificatesEarned: {
+        type: Number,
+        default: 0
+      },
+      achievementsUnlocked: {
+        type: Number,
+        default: 0
+      }
+    },
+    preferences: {
+      learningGoals: [{
+        type: String,
+        enum: ['Cultural Understanding', 'Historical Knowledge', 'Language Learning', 'Art Appreciation', 'Religious Studies']
+      }],
+      studyReminders: {
+        type: Boolean,
+        default: true
+      },
+      difficultyPreference: {
+        type: String,
+        enum: ['beginner', 'intermediate', 'advanced', 'mixed'],
+        default: 'mixed'
+      },
+      studyTimePreference: {
+        type: String,
+        enum: ['morning', 'afternoon', 'evening', 'flexible'],
+        default: 'flexible'
+      },
+      weeklyStudyGoal: {
+        type: Number,
+        default: 120 // minutes per week
+      }
+    }
+  },
+
   // Bookmarks and Favorites
   bookmarkedArtifacts: [{
     type: mongoose.Schema.Types.ObjectId,

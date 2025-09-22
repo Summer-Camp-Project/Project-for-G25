@@ -16,7 +16,10 @@ import {
 } from 'lucide-react';
 import learningService from '../services/learningService';
 import EducationalGames from '../components/learning/EducationalGames';
+import EnhancedCourseCard from '../components/learning/EnhancedCourseCard';
+import EnhancedProgressIndicator from '../components/learning/EnhancedProgressIndicator';
 import { useAuth } from '../hooks/useAuth';
+import EnrolledTours from '../components/education/EnrolledTours';
 
 // Import educational images from local assets
 import fourthHolyCityImg from '../assets/The Fourth Holy City of Islam.jpg';
@@ -449,10 +452,18 @@ const Learning = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary to-secondary text-primary-foreground py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-edu-primary to-edu-accent text-white py-20 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 text-6xl">🏛️</div>
+          <div className="absolute top-20 right-20 text-4xl">📚</div>
+          <div className="absolute bottom-20 left-20 text-5xl">🎓</div>
+          <div className="absolute bottom-10 right-10 text-3xl">⭐</div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
-            <div className="inline-flex items-center bg-primary-foreground/10 backdrop-blur-sm rounded-full px-6 py-3 mb-6">
+            <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 mb-6 border border-white/30">
               <GraduationCap className="w-5 h-5 mr-2" />
               <span className="text-sm font-semibold">Ethiopian Heritage Education</span>
             </div>
@@ -466,14 +477,14 @@ const Learning = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
                 onClick={() => setActiveTab('courses')}
-                className="bg-primary-foreground text-primary px-8 py-3 rounded-xl font-semibold hover:bg-primary-foreground/90 transition-colors flex items-center justify-center"
+                className="bg-white text-edu-primary px-8 py-3 rounded-xl font-semibold hover:bg-white/90 transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105"
               >
                 <BookOpen className="w-5 h-5 mr-2" />
                 Start Learning
               </button>
               <Link to="/courses">
                 <button 
-                  className="border-2 border-primary-foreground/30 text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:bg-primary-foreground/10 transition-colors flex items-center justify-center"
+                  className="border-2 border-white/40 text-white backdrop-blur-sm px-8 py-3 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center hover:scale-105"
                 >
                   <ArrowRight className="w-5 h-5 mr-2" />
                   Browse All Courses
@@ -481,7 +492,7 @@ const Learning = () => {
               </Link>
               <button 
                 onClick={() => setActiveTab('progress')}
-                className="border-2 border-primary-foreground/30 text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:bg-primary-foreground/10 transition-colors flex items-center justify-center"
+                className="border-2 border-white/40 text-white backdrop-blur-sm px-8 py-3 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center hover:scale-105"
               >
                 <Trophy className="w-5 h-5 mr-2" />
                 View Progress
@@ -491,48 +502,11 @@ const Learning = () => {
         </div>
       </section>
 
-      {/* Progress Overview */}
-      {progress && (
-        <section className="py-12 bg-muted/30">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-card rounded-2xl p-6 border border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Completed Lessons</p>
-                    <p className="text-3xl font-bold text-card-foreground">{progress.completedLessons || 0}</p>
-                  </div>
-                  <BookOpen className="w-8 h-8 text-primary" />
-                </div>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                    <p className="text-3xl font-bold text-card-foreground">{progress.currentStreak || 0}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-secondary" />
-                </div>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Points</p>
-                    <p className="text-3xl font-bold text-card-foreground">{progress.points || 0}</p>
-                  </div>
-                  <Star className="w-8 h-8 text-accent" />
-                </div>
-              </div>
-              <div className="bg-card rounded-2xl p-6 border border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Current Level</p>
-                    <p className="text-3xl font-bold text-card-foreground">{progress.level || 1}</p>
-                  </div>
-                  <Award className="w-8 h-8 text-primary" />
-                </div>
-              </div>
-            </div>
+      {/* Progress Overview - Now using Enhanced Component */}
+      {(progress || activeTab === 'progress') && (
+        <section className="py-12 bg-gradient-to-br from-edu-course-bg to-muted/50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <EnhancedProgressIndicator progress={progress} />
           </div>
         </section>
       )}
@@ -543,8 +517,9 @@ const Learning = () => {
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-4 mb-12 justify-center">
             {[
-{ id: 'courses', label: 'All Courses', icon: BookOpen },
+              { id: 'courses', label: 'All Courses', icon: BookOpen },
               { id: 'progress', label: 'My Progress', icon: Target },
+              { id: 'tours', label: 'Educational Tours', icon: Users },
               { id: 'achievements', label: 'Achievements', icon: Trophy },
               { id: 'recommendations', label: 'Recommended', icon: Sparkles },
               { id: 'games', label: 'Educational Games', icon: GraduationCap }
@@ -605,70 +580,12 @@ const Learning = () => {
                 {courses
                   .filter(course => selectedCategory === 'all' || course.category === selectedCategory)
                   .map((course) => (
-                  <div key={course.id} className="group bg-card rounded-3xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
-                      <img 
-                        src={course.image || 'https://picsum.photos/400/200?random=' + course.id}
-                        alt={course.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                      <div className="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-primary/30 to-secondary/30">
-                        <div className="text-center text-white p-4">
-                          <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-60" />
-                          <div className="text-sm font-medium opacity-80">{course.category}</div>
-                        </div>
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="absolute top-4 left-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(course.difficulty)}`}>
-                          {course.difficulty}
-                        </span>
-                      </div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <div className="flex items-center text-white text-sm">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span className="mr-4">{course.duration}</span>
-                          <BookOpen className="w-4 h-4 mr-1" />
-                          <span>{course.lessons} lessons</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
-                          {course.category}
-                        </span>
-                        <div className="flex items-center text-muted-foreground text-sm">
-                          <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
-                          {course.rating}
-                        </div>
-                      </div>
-                      <h3 className="text-xl font-bold text-card-foreground mb-3 group-hover:text-primary transition-colors">
-                        {course.title}
-                      </h3>
-                      <p className="text-muted-foreground mb-4 line-clamp-2">
-                        {course.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-muted-foreground text-sm">
-                          <Users className="w-4 h-4 mr-1" />
-                          {course.enrolled} enrolled
-                        </div>
-                        <button 
-                          onClick={() => handleStartCourse(course)}
-                          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center"
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Start Course
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    <EnhancedCourseCard 
+                      key={course.id} 
+                      course={course} 
+                      onStartCourse={handleStartCourse}
+                    />
+                  ))}
               </div>
             </div>
           )}
@@ -812,6 +729,13 @@ const Learning = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {/* Educational Tours Tab */}
+          {activeTab === 'tours' && (
+            <div>
+              <EnrolledTours />
             </div>
           )}
           

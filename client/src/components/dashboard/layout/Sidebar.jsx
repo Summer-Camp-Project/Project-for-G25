@@ -9,7 +9,8 @@ import {
   Mountain,
   Users,
   BarChart3,
-  LogOut
+  LogOut,
+  BookOpen
 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { useDashboard } from "../../../context/DashboardContext";
@@ -18,6 +19,7 @@ import { useAuth } from "../../../hooks/useAuth";
 const navigationItems = [
   { icon: Home, label: "Dashboard", page: "dashboard" },
   { icon: Package, label: "Tour Packages", page: "tour-packages" },
+  { icon: BookOpen, label: "Educational Tours", page: "educational-tours" },
   { icon: Calendar, label: "Tour Bookings", page: "tour-bookings" },
   { icon: Clock, label: "Schedules", page: "schedules" },
   { icon: Users, label: "Customers", page: "customers" },

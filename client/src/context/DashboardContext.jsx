@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import apiService from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
 const DashboardContext = createContext(undefined);
 
@@ -12,6 +13,8 @@ export const useDashboard = () => {
 };
 
 export const DashboardProvider = ({ children }) => {
+  const { user } = useAuth();
+  
   // State
   const [tourPackages, setTourPackages] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -33,27 +36,44 @@ export const DashboardProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Get current user ID (you might need to adjust this based on your auth implementation)
-  const organizerId = currentUser?.id || localStorage.getItem('userId') || '68a39e26bd680dcb7ee5e296'; // Test organizer ID
+  // Get current user ID from authenticated user
+  const organizerId = user?._id || user?.id;
 
   // Load initial dashboard data
   const loadDashboardData = useCallback(async () => {
-    if (!organizerId) return;
+    if (!organizerId) {
+      console.warn('No organizerId available for dashboard data');
+      setError('User not authenticated');
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await apiService.getDashboardData(organizerId);
-      setDashboardData(data);
-      setCurrentUser(data.user);
+      // Since we don't have a specific organizer dashboard endpoint yet,
+      // we'll use mock data and set the current user from auth context
+      setCurrentUser(user);
+      setDashboardData({
+        stats: {
+          totalTours: 0,
+          activeTours: 0,
+          confirmedBookings: 0,
+          pendingBookings: 0,
+          completedBookings: 0,
+          totalRevenue: 0,
+          unreadMessages: 0
+        },
+        upcomingTours: [],
+        recentActivities: []
+      });
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setError(error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [organizerId]);
+  }, [organizerId, user]);
 
   // Load tour packages
   const loadTourPackages = useCallback(async (params = {}) => {

@@ -264,6 +264,33 @@ const login = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
+    // Get learning profile data
+    let learningProfileData = null;
+    try {
+      const LearningProgress = require('../models/LearningProgress');
+      const Certificate = require('../models/Certificate');
+      
+      const [progress, certificates] = await Promise.all([
+        LearningProgress.findOne({ userId: user._id }).lean(),
+        Certificate.countDocuments({ userId: user._id, isValid: true })
+      ]);
+      
+      learningProfileData = {
+        enrolledCourses: user.learningProfile?.enrolledCourses?.length || 0,
+        completedCourses: user.learningProfile?.learningStats?.completedCourses || 0,
+        totalLessonsCompleted: progress?.overallStats?.totalLessonsCompleted || 0,
+        totalTimeSpent: progress?.overallStats?.totalTimeSpent || 0,
+        currentStreak: progress?.overallStats?.currentStreak || 0,
+        averageScore: progress?.overallStats?.averageScore || 0,
+        certificates,
+        achievements: progress?.achievements?.length || 0,
+        lastActivityDate: progress?.updatedAt || null
+      };
+    } catch (error) {
+      console.log('Error fetching learning profile during login:', error.message);
+      // Continue without learning data
+    }
+
     // Remove sensitive data from response
     const userResponse = user.toObject();
     delete userResponse.password;
@@ -279,7 +306,8 @@ const login = async (req, res) => {
       message: 'Login successful',
       token,
       refreshToken,
-      user: userResponse
+      user: userResponse,
+      learningProfile: learningProfileData
     });
 
   } catch (error) {

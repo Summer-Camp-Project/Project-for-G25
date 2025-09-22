@@ -7,6 +7,7 @@ import { CustomerMessagesPage } from "../pages/CustomerMessagesPage";
 import { ProfileSettingsPage } from "../pages/ProfileSettingsPage";
 import { CustomersPage } from "../pages/CustomersPage";
 import { AnalyticsPage } from "../pages/AnalyticsPage";
+import EducationalTourManager from "../education/EducationalTourManager";
 export function MainContent() {
   const { currentPage } = useDashboard();
 
@@ -16,6 +17,8 @@ export function MainContent() {
         return <DashboardMain />;
       case "tour-packages":
         return <TourPackagesPage />;
+      case "educational-tours":
+        return <EducationalTourManager />;
       case "tour-bookings":
         return <TourBookingsPage />;
       case "schedules":

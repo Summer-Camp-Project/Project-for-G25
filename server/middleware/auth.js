@@ -2,10 +2,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { promisify } = require('util');
+const config = require('../config/env');
 
 // Generate JWT Token
 const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id }, config.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   });
 };
@@ -19,7 +20,7 @@ const createSendToken = (user, statusCode, res, message = 'Success') => {
       Date.now() + (process.env.JWT_COOKIE_EXPIRES_IN || 7) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.NODE_ENV === 'production',
     sameSite: 'lax'
   };
 
@@ -73,7 +74,7 @@ const auth = async (req, res, next) => {
     }
 
     // 2) Verify token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const decoded = await promisify(jwt.verify)(token, config.JWT_SECRET);
 
     // 3) Check if user still exists - handle both payload structures
     const userId = decoded.user ? decoded.user.id : decoded.id;
@@ -144,7 +145,7 @@ const optionalAuth = async (req, res, next) => {
       return next();
     }
 
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const decoded = await promisify(jwt.verify)(token, config.JWT_SECRET);
     const userId = decoded.user ? decoded.user.id : decoded.id;
     const currentUser = await User.findById(userId).select('+museumId');
 
