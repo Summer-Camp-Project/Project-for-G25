@@ -441,12 +441,168 @@ class ApiClient {
     return this.request('/admin/stats')
   }
 
-  // New: explicit admin helpers used by Super Admin UI
-  async getAdminStats() {
+  // New: Super Admin API endpoints for enhanced dashboard
+  async getSuperAdminDashboard() {
     if (this.useMockAPI) {
       return mockApi.getSystemStats()
     }
-    return this.request('/admin/stats')
+    return this.request('/super-admin/dashboard')
+  }
+
+  async getSuperAdminAnalytics(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getSystemStats()
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/analytics?${queryParams}`)
+  }
+
+  async getSuperAdminAuditLogs(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, logs: [], pagination: { total: 0, page: 1, limit: 50, pages: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/audit-logs?${queryParams}`)
+  }
+
+  async getSuperAdminAuditLogsSummary(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, summary: { totalActions: 0, successRate: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/audit-logs/summary?${queryParams}`)
+  }
+
+  // Legacy method for backward compatibility
+  async getAdminStats() {
+    return this.getSuperAdminDashboard()
+  }
+
+  // Performance Analytics API endpoints
+  async getPerformanceOverview(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getSystemStats()
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/overview?${queryParams}`)
+  }
+
+  async getSystemHealth(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, data: { systemMetrics: {}, apiMetrics: {}, dbMetrics: {} } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/system-health?${queryParams}`)
+  }
+
+  async getUserActivityMetrics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, data: { activityTrends: [], userDemographics: [], peakHours: [] } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/user-activity?${queryParams}`)
+  }
+
+  async getMuseumPerformanceMetrics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, data: { topMuseums: [], performanceTrends: [], museumStats: [] } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/museum-performance?${queryParams}`)
+  }
+
+  async getArtifactPerformanceMetrics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, data: { performanceTrends: [], topArtifacts: [], categoryPerformance: [] } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/artifact-performance?${queryParams}`)
+  }
+
+  async getRentalPerformanceMetrics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, data: { rentalTrends: [], rentalStats: [], topRentedItems: [] } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/rental-performance?${queryParams}`)
+  }
+
+  async getApiPerformanceMetrics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, data: { apiTrends: [], endpointPerformance: [], errorAnalysis: [] } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/performance-analytics/api-performance?${queryParams}`)
+  }
+
+  // Enhanced User Management API endpoints
+  async bulkUserActions(action, userIds, data = {}) {
+    if (this.useMockAPI) {
+      return { success: true, message: 'Bulk action completed', modifiedCount: userIds.length }
+    }
+    return this.request('/super-admin/users/bulk-actions', {
+      method: 'POST',
+      body: { action, userIds, data }
+    })
+  }
+
+  async getUserStatistics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, statistics: { totalUsers: 0, activeUsers: 0, newUsers: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/users/statistics?${queryParams}`)
+  }
+
+  async searchUsers(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, users: [], pagination: { total: 0, page: 1, limit: 20, pages: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/users/search?${queryParams}`)
+  }
+
+  // Enhanced Museum Oversight API endpoints
+  async getMuseumStatistics(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, statistics: { totalMuseums: 0, activeMuseums: 0, pendingMuseums: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/museums/statistics?${queryParams}`)
+  }
+
+  async bulkMuseumActions(action, museumIds, data = {}) {
+    if (this.useMockAPI) {
+      return { success: true, message: 'Bulk action completed', modifiedCount: museumIds.length }
+    }
+    return this.request('/super-admin/museums/bulk-actions', {
+      method: 'POST',
+      body: { action, museumIds, data }
+    })
+  }
+
+  async searchMuseums(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, museums: [], pagination: { total: 0, page: 1, limit: 20, pages: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/museums/search?${queryParams}`)
+  }
+
+  async getMuseumPerformance(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, performance: { museumStats: [], artifactStats: { total: 0, active: 0 } } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/museums/performance?${queryParams}`)
+  }
+
+  async getMuseumAuditLogs(params = {}) {
+    if (this.useMockAPI) {
+      return { success: true, logs: [], pagination: { total: 0, page: 1, limit: 20, pages: 0 } }
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/museums/audit-logs?${queryParams}`)
   }
 
   async listUsers({ page = 1, limit = 20, role } = {}) {
@@ -469,7 +625,7 @@ class ApiClient {
     if (this.useMockAPI) {
       return mockApi.createUser(data)
     }
-    return this.request('/admin/users', {
+    return this.request('/super-admin/users', {
       method: 'POST',
       body: data,
     })
@@ -479,7 +635,7 @@ class ApiClient {
     if (this.useMockAPI) {
       return mockApi.updateUser(userId, data)
     }
-    return this.request(`/admin/users/${userId}`, {
+    return this.request(`/super-admin/users/${userId}`, {
       method: 'PUT',
       body: data,
     })
@@ -489,7 +645,7 @@ class ApiClient {
     if (this.useMockAPI) {
       return mockApi.deleteUser(userId)
     }
-    return this.request(`/admin/users/${userId}`, {
+    return this.request(`/super-admin/users/${userId}`, {
       method: 'DELETE',
     })
   }
@@ -812,6 +968,101 @@ class ApiClient {
     if (search) q.set('search', search)
     if (region) q.set('region', region)
     return this.request(`/user/heritage-sites?${q.toString()}`)
+  }
+
+  // Super Admin Heritage Sites API methods
+  async getSuperAdminHeritageSites(params = {}) {
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key]);
+      }
+    });
+    return this.request(`/super-admin/heritage-sites?${queryParams.toString()}`);
+  }
+
+  async getHeritageSiteStatistics(params = {}) {
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key]);
+      }
+    });
+    return this.request(`/super-admin/heritage-sites/statistics?${queryParams.toString()}`);
+  }
+
+  async searchHeritageSites(params = {}) {
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key]);
+      }
+    });
+    return this.request(`/super-admin/heritage-sites/search?${queryParams.toString()}`);
+  }
+
+  async bulkHeritageSiteActions(action, siteIds, data = {}) {
+    return this.request('/super-admin/heritage-sites/bulk-actions', {
+      method: 'POST',
+      body: JSON.stringify({ action, siteIds, data })
+    });
+  }
+
+  async getHeritageSitePerformance(params = {}) {
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key]);
+      }
+    });
+    return this.request(`/super-admin/heritage-sites/performance?${queryParams.toString()}`);
+  }
+
+  async getHeritageSiteAuditLogs(params = {}) {
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key]);
+      }
+    });
+    return this.request(`/super-admin/heritage-sites/audit-logs?${queryParams.toString()}`);
+  }
+
+  // Heritage Site CRUD Operations
+  async createHeritageSite(data) {
+    if (this.useMockAPI) {
+      return mockApi.createHeritageSite(data);
+    }
+    return this.request('/super-admin/heritage-sites', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updateHeritageSite(siteId, data) {
+    if (this.useMockAPI) {
+      return mockApi.updateHeritageSite(siteId, data);
+    }
+    return this.request(`/super-admin/heritage-sites/${siteId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteHeritageSite(siteId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteHeritageSite(siteId);
+    }
+    return this.request(`/super-admin/heritage-sites/${siteId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getHeritageSite(siteId) {
+    if (this.useMockAPI) {
+      return mockApi.getHeritageSite(siteId);
+    }
+    return this.request(`/super-admin/heritage-sites/${siteId}`);
   }
 
   async getUserArtifacts({ page = 1, limit = 20, search, category, museum } = {}) {

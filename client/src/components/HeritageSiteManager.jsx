@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MapPin, 
-  Plus, 
-  Search, 
-  Edit, 
-  Eye, 
+import {
+  MapPin,
+  Plus,
+  Search,
+  Edit,
+  Eye,
   Star,
   Globe,
   Calendar,
@@ -73,45 +73,19 @@ const HeritageSiteManager = () => {
   const fetchSites = async () => {
     try {
       setLoading(true);
-      const response = await api.getHeritageSites();
+      const response = await api.getSuperAdminHeritageSites({
+        page: 1,
+        limit: 100,
+        status: 'active'
+      });
       setSites(response.data || []);
     } catch (error) {
       console.error('Failed to fetch heritage sites:', error);
-      // Set mock data for demonstration
-      setSites([
-        {
-          _id: '1',
-          name: 'Rock-Hewn Churches of Lalibela',
-          location: 'Lalibela, Amhara',
-          type: 'UNESCO World Heritage',
-          description: 'A cluster of eleven medieval monolithic churches carved directly into volcanic rock.',
-          coordinates: { lat: '12.0337', lng: '39.0473' },
-          isUNESCO: true,
-          establishedYear: '12th-13th century',
-          significance: 'Outstanding universal value as a masterpiece of human creative genius',
-          visitingHours: '6:00 AM - 6:00 PM',
-          entryFee: '500 ETB',
-          images: [],
-          status: 'active',
-          createdAt: new Date().toISOString()
-        },
-        {
-          _id: '2',
-          name: 'Axum Obelisks',
-          location: 'Axum, Tigray',
-          type: 'UNESCO World Heritage',
-          description: 'Ancient stelae marking the tombs of Axumite royalty.',
-          coordinates: { lat: '14.1313', lng: '38.7217' },
-          isUNESCO: true,
-          establishedYear: '1st-8th century AD',
-          significance: 'Testimony to the ancient Kingdom of Axum',
-          visitingHours: '8:00 AM - 5:00 PM',
-          entryFee: '300 ETB',
-          images: [],
-          status: 'active',
-          createdAt: new Date().toISOString()
-        }
-      ]);
+      setSites([]);
+      // Show user-friendly error message
+      if (error.message && error.message.includes('Failed to fetch')) {
+        alert('Server is not running. Please start the server to view heritage sites.');
+      }
     } finally {
       setLoading(false);
     }
@@ -133,7 +107,7 @@ const HeritageSiteManager = () => {
   const handleUpdateSite = async () => {
     try {
       const response = await api.updateHeritageSite(selectedSite._id, formData);
-      setSites(prev => prev.map(site => 
+      setSites(prev => prev.map(site =>
         site._id === selectedSite._id ? response.data : site
       ));
       setShowAddModal(false);
@@ -189,7 +163,7 @@ const HeritageSiteManager = () => {
 
   const filteredSites = sites.filter(site => {
     const matchesSearch = site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         site.location.toLowerCase().includes(searchTerm.toLowerCase());
+      site.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || site.type === filterType;
     return matchesSearch && matchesFilter;
   });
@@ -225,9 +199,9 @@ const HeritageSiteManager = () => {
           </button>
         </div>
       </div>
-      
+
       <p className="text-gray-600 text-sm mb-4 line-clamp-3">{site.description}</p>
-      
+
       <div className="flex justify-between items-center text-xs text-gray-500">
         <span className="px-2 py-1 bg-gray-100 rounded">{site.type}</span>
         <span>{site.establishedYear}</span>
@@ -347,7 +321,11 @@ const HeritageSiteManager = () => {
       {filteredSites.length === 0 && (
         <div className="text-center py-12">
           <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No heritage sites found matching your criteria.</p>
+          <p className="text-gray-600">
+            {loading ? 'Loading heritage sites...' :
+              sites.length === 0 ? 'No heritage sites found. Please start the server to load data.' :
+                'No heritage sites found matching your criteria.'}
+          </p>
         </div>
       )}
 
@@ -370,7 +348,7 @@ const HeritageSiteManager = () => {
                 <X className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -379,7 +357,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
                 <div>
@@ -388,7 +366,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   />
                 </div>
               </div>
@@ -399,7 +377,7 @@ const HeritageSiteManager = () => {
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   >
                     {siteTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
@@ -412,7 +390,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.establishedYear}
-                    onChange={(e) => setFormData({...formData, establishedYear: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, establishedYear: e.target.value })}
                   />
                 </div>
               </div>
@@ -423,7 +401,7 @@ const HeritageSiteManager = () => {
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
 
@@ -433,7 +411,7 @@ const HeritageSiteManager = () => {
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   value={formData.significance}
-                  onChange={(e) => setFormData({...formData, significance: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, significance: e.target.value })}
                 />
               </div>
 
@@ -444,7 +422,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.visitingHours}
-                    onChange={(e) => setFormData({...formData, visitingHours: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, visitingHours: e.target.value })}
                   />
                 </div>
                 <div>
@@ -453,7 +431,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.entryFee}
-                    onChange={(e) => setFormData({...formData, entryFee: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, entryFee: e.target.value })}
                   />
                 </div>
               </div>
@@ -465,7 +443,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.coordinates.lat}
-                    onChange={(e) => setFormData({...formData, coordinates: {...formData.coordinates, lat: e.target.value}})}
+                    onChange={(e) => setFormData({ ...formData, coordinates: { ...formData.coordinates, lat: e.target.value } })}
                   />
                 </div>
                 <div>
@@ -474,7 +452,7 @@ const HeritageSiteManager = () => {
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.coordinates.lng}
-                    onChange={(e) => setFormData({...formData, coordinates: {...formData.coordinates, lng: e.target.value}})}
+                    onChange={(e) => setFormData({ ...formData, coordinates: { ...formData.coordinates, lng: e.target.value } })}
                   />
                 </div>
               </div>
@@ -485,14 +463,14 @@ const HeritageSiteManager = () => {
                     type="checkbox"
                     className="mr-2"
                     checked={formData.isUNESCO}
-                    onChange={(e) => setFormData({...formData, isUNESCO: e.target.checked})}
+                    onChange={(e) => setFormData({ ...formData, isUNESCO: e.target.checked })}
                   />
                   <span className="text-sm text-gray-700">UNESCO World Heritage Site</span>
                 </label>
                 <select
                   className="px-3 py-2 border border-gray-300 rounded-lg"
                   value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -535,7 +513,7 @@ const HeritageSiteManager = () => {
                 <X className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -544,7 +522,7 @@ const HeritageSiteManager = () => {
                     <div><span className="font-medium">Location:</span> {selectedSite.location}</div>
                     <div><span className="font-medium">Type:</span> {selectedSite.type}</div>
                     <div><span className="font-medium">Established:</span> {selectedSite.establishedYear}</div>
-                    <div><span className="font-medium">Status:</span> 
+                    <div><span className="font-medium">Status:</span>
                       <span className={`ml-2 px-2 py-1 rounded text-xs ${selectedSite.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {selectedSite.status}
                       </span>

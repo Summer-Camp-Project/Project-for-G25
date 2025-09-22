@@ -1692,6 +1692,66 @@ class MockApiClient {
       ]
     };
   }
+
+  // Heritage Site CRUD Operations
+  async createHeritageSite(data) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newSite = {
+          id: Date.now(),
+          ...data,
+          createdAt: new Date().toISOString(),
+          status: 'active',
+          verified: true
+        };
+        resolve({
+          success: true,
+          message: 'Heritage site created successfully',
+          data: newSite
+        });
+      }, 1000);
+    });
+  }
+
+  async updateHeritageSite(siteId, data) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          message: 'Heritage site updated successfully',
+          data: { id: siteId, ...data }
+        });
+      }, 1000);
+    });
+  }
+
+  async deleteHeritageSite(siteId) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          message: 'Heritage site deleted successfully'
+        });
+      }, 1000);
+    });
+  }
+
+  async getHeritageSite(siteId) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          data: {
+            id: siteId,
+            name: 'Sample Heritage Site',
+            description: 'A sample heritage site',
+            status: 'active',
+            verified: true
+          }
+        });
+      }, 1000);
+    });
+  }
 }
 
 export const mockApi = new MockApiClient();

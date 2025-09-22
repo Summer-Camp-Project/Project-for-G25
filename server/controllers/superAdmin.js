@@ -6,6 +6,7 @@ const Site = require('../models/Site');
 const Rental = require('../models/Rental');
 const Analytics = require('../models/Analytics');
 const SystemSettings = require('../models/SystemSettings');
+const AuditLog = require('../models/AuditLog');
 const mongoose = require('mongoose');
 
 // ======================
@@ -18,92 +19,215 @@ async function getDashboard(req, res) {
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    
-    // System overview widgets
+    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Enhanced system overview widgets with detailed statistics
     const [
+      // User statistics - Enhanced
       totalUsers,
       activeUsers,
       newUsersThisMonth,
+      newUsersLastMonth,
+      newUsersThisWeek,
+      newUsersToday,
+      usersByRole,
+      verifiedUsers,
+      unverifiedUsers,
+
+      // Museum statistics - Enhanced
       totalMuseums,
       activeMuseums,
       pendingMuseumApprovals,
+      rejectedMuseums,
+      museumsByRegion,
+      museumsByStatus,
+      museumAdmins,
+
+      // Heritage Sites statistics - Enhanced
       totalHeritageSites,
       activeHeritageSites,
       unescoSites,
+      sitesByRegion,
+      sitesByType,
+      sitesByDesignation,
+      verifiedSites,
+      pendingSites,
+
+      // Content statistics - Enhanced
       totalArtifacts,
       publishedArtifacts,
       pendingContentApprovals,
+      artifactsByMuseum,
+      artifactsByCategory,
+      artifactsThisMonth,
+
+      // Rental statistics - Enhanced
       totalRentals,
       activeRentals,
       pendingRentalApprovals,
+      completedRentals,
+      rentalRevenue,
+
+      // System health and monitoring
       systemHealth,
-      recentActivities
+      recentActivities,
+      performanceMetrics,
+      securityMetrics
     ] = await Promise.all([
-      // User statistics
+      // Enhanced User statistics
       User.countDocuments({}),
-      User.countDocuments({ 
-        isActive: true, 
-        lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } 
+      User.countDocuments({
+        isActive: true,
+        lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
       }),
       User.countDocuments({ createdAt: { $gte: thisMonth } }),
-      
-      // Museum statistics
+      User.countDocuments({
+        createdAt: {
+          $gte: lastMonth,
+          $lt: thisMonth
+        }
+      }),
+      User.countDocuments({ createdAt: { $gte: lastWeek } }),
+      User.countDocuments({ createdAt: { $gte: last24Hours } }),
+      User.aggregate([
+        { $group: { _id: '$role', count: { $sum: 1 } } }
+      ]),
+      User.countDocuments({ isEmailVerified: true }),
+      User.countDocuments({ isEmailVerified: false }),
+
+      // Enhanced Museum statistics
       Museum.countDocuments({ isActive: true }),
       Museum.countDocuments({ isActive: true, status: 'approved' }),
       Museum.countDocuments({ status: 'pending' }),
-      
-      // Heritage Sites statistics
+      Museum.countDocuments({ status: 'rejected' }),
+      Museum.aggregate([
+        { $group: { _id: '$location.region', count: { $sum: 1 } } }
+      ]),
+      Museum.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ]),
+      User.countDocuments({ role: 'museumAdmin' }),
+
+      // Enhanced Heritage Sites statistics
       HeritageSite.countDocuments({}),
       HeritageSite.countDocuments({ status: 'active', verified: true }),
       HeritageSite.countDocuments({ designation: 'UNESCO World Heritage' }),
-      
-      // Content statistics
+      HeritageSite.aggregate([
+        { $group: { _id: '$location.region', count: { $sum: 1 } } }
+      ]),
+      HeritageSite.aggregate([
+        { $group: { _id: '$type', count: { $sum: 1 } } }
+      ]),
+      HeritageSite.aggregate([
+        { $group: { _id: '$designation', count: { $sum: 1 } } }
+      ]),
+      HeritageSite.countDocuments({ verified: true }),
+      HeritageSite.countDocuments({ status: 'pending' }),
+
+      // Enhanced Content statistics
       Artifact.countDocuments({}),
       Artifact.countDocuments({ status: 'published' }),
       Artifact.countDocuments({ status: 'pending-review' }),
-      
-      // Rental statistics
+      Artifact.aggregate([
+        { $group: { _id: '$museum', count: { $sum: 1 } } }
+      ]),
+      Artifact.aggregate([
+        { $group: { _id: '$category', count: { $sum: 1 } } }
+      ]),
+      Artifact.countDocuments({ createdAt: { $gte: thisMonth } }),
+
+      // Enhanced Rental statistics
       Rental.countDocuments({}),
       Rental.countDocuments({ status: 'active' }),
       Rental.countDocuments({ 'approvals.superAdmin.status': 'pending' }),
-      
-      // System health check
+      Rental.countDocuments({ status: 'completed' }),
+      Rental.aggregate([
+        { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
+      ]),
+
+      // System health and monitoring
       getSystemHealthStatus(),
-      
-      // Recent activities
-      getRecentSystemActivities()
+      getRecentSystemActivities(),
+      getPerformanceMetrics(),
+      getSecurityMetrics()
     ]);
 
-    // Platform statistics
+    // Enhanced Platform statistics with detailed breakdowns
     const platformStats = {
       users: {
         total: totalUsers,
         active: activeUsers,
         newThisMonth: newUsersThisMonth,
-        growthRate: totalUsers > newUsersThisMonth ? ((newUsersThisMonth / (totalUsers - newUsersThisMonth)) * 100).toFixed(1) : 0
+        newLastMonth: newUsersLastMonth,
+        newThisWeek: newUsersThisWeek,
+        newToday: newUsersToday,
+        verified: verifiedUsers,
+        unverified: unverifiedUsers,
+        growthRate: newUsersLastMonth > 0 ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth * 100).toFixed(1) : 0,
+        weeklyGrowth: newUsersThisWeek,
+        dailyGrowth: newUsersToday,
+        byRole: usersByRole.reduce((acc, item) => {
+          acc[item._id] = item.count;
+          return acc;
+        }, {})
       },
       museums: {
         total: totalMuseums,
         active: activeMuseums,
         pendingApprovals: pendingMuseumApprovals,
-        approvalRate: totalMuseums > 0 ? ((activeMuseums / totalMuseums) * 100).toFixed(1) : 0
+        rejected: rejectedMuseums,
+        museumAdmins: museumAdmins,
+        approvalRate: totalMuseums > 0 ? ((activeMuseums / totalMuseums) * 100).toFixed(1) : 0,
+        byRegion: museumsByRegion.reduce((acc, item) => {
+          acc[item._id || 'Unknown'] = item.count;
+          return acc;
+        }, {}),
+        byStatus: museumsByStatus.reduce((acc, item) => {
+          acc[item._id] = item.count;
+          return acc;
+        }, {})
       },
       heritageSites: {
         total: totalHeritageSites,
         active: activeHeritageSites,
         unesco: unescoSites,
-        activationRate: totalHeritageSites > 0 ? ((activeHeritageSites / totalHeritageSites) * 100).toFixed(1) : 0
+        verified: verifiedSites,
+        pending: pendingSites,
+        activationRate: totalHeritageSites > 0 ? ((activeHeritageSites / totalHeritageSites) * 100).toFixed(1) : 0,
+        verificationRate: totalHeritageSites > 0 ? ((verifiedSites / totalHeritageSites) * 100).toFixed(1) : 0,
+        byRegion: sitesByRegion.reduce((acc, item) => {
+          acc[item._id || 'Unknown'] = item.count;
+          return acc;
+        }, {}),
+        byType: sitesByType.reduce((acc, item) => {
+          acc[item._id] = item.count;
+          return acc;
+        }, {}),
+        byDesignation: sitesByDesignation.reduce((acc, item) => {
+          acc[item._id] = item.count;
+          return acc;
+        }, {})
       },
       content: {
         totalArtifacts,
         publishedArtifacts,
         pendingApprovals: pendingContentApprovals,
-        publishRate: totalArtifacts > 0 ? ((publishedArtifacts / totalArtifacts) * 100).toFixed(1) : 0
+        newThisMonth: artifactsThisMonth,
+        publishRate: totalArtifacts > 0 ? ((publishedArtifacts / totalArtifacts) * 100).toFixed(1) : 0,
+        byMuseum: artifactsByMuseum.slice(0, 10), // Top 10 museums
+        byCategory: artifactsByCategory.reduce((acc, item) => {
+          acc[item._id] = item.count;
+          return acc;
+        }, {})
       },
       rentals: {
         total: totalRentals,
         active: activeRentals,
-        pendingApprovals: pendingRentalApprovals
+        pendingApprovals: pendingRentalApprovals,
+        completed: completedRentals,
+        revenue: rentalRevenue[0]?.totalRevenue || 0,
+        completionRate: totalRentals > 0 ? ((completedRentals / totalRentals) * 100).toFixed(1) : 0
       }
     };
 
@@ -116,10 +240,10 @@ async function getDashboard(req, res) {
 
     // Advanced dashboard features
     const [
-      performanceMetrics,
+      advancedPerformanceMetrics,
       systemAlerts,
       realtimeStats,
-      securityMetrics,
+      advancedSecurityMetrics,
       usagePatterns
     ] = await Promise.all([
       getPerformanceMetrics(),
@@ -136,11 +260,35 @@ async function getDashboard(req, res) {
         systemHealth,
         quickActions,
         recentActivities,
-        performanceMetrics,
-        systemAlerts,
-        realtimeStats,
-        securityMetrics,
-        usagePatterns
+        performanceMetrics: advancedPerformanceMetrics,
+        securityMetrics: advancedSecurityMetrics,
+        // Enhanced dashboard data
+        trends: {
+          userGrowth: {
+            daily: newUsersToday,
+            weekly: newUsersThisWeek,
+            monthly: newUsersThisMonth,
+            growthRate: newUsersLastMonth > 0 ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth * 100).toFixed(1) : 0
+          },
+          museumGrowth: {
+            total: totalMuseums,
+            active: activeMuseums,
+            pending: pendingMuseumApprovals,
+            approvalRate: totalMuseums > 0 ? ((activeMuseums / totalMuseums) * 100).toFixed(1) : 0
+          },
+          heritageSiteGrowth: {
+            total: totalHeritageSites,
+            active: activeHeritageSites,
+            unesco: unescoSites,
+            verificationRate: totalHeritageSites > 0 ? ((verifiedSites / totalHeritageSites) * 100).toFixed(1) : 0
+          }
+        },
+        alerts: {
+          pendingApprovals: pendingMuseumApprovals + pendingContentApprovals + pendingRentalApprovals,
+          systemIssues: systemHealth.issues || 0,
+          securityAlerts: securityMetrics?.threatLevel === 'high' ? 1 : 0,
+          performanceAlerts: advancedPerformanceMetrics?.responseTime?.status === 'critical' ? 1 : 0
+        }
       }
     });
 
@@ -157,7 +305,7 @@ async function getDashboard(req, res) {
 // GET /api/super-admin/analytics
 async function getAnalytics(req, res) {
   try {
-    const { 
+    const {
       startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       endDate = new Date(),
       museum,
@@ -232,18 +380,18 @@ async function getAnalytics(req, res) {
 // GET /api/super-admin/users
 async function getAllUsers(req, res) {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      role, 
-      status, 
+    const {
+      page = 1,
+      limit = 20,
+      role,
+      status,
       search,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
 
     const query = {};
-    
+
     if (role && role !== 'all') query.role = role;
     if (status === 'active') query.isActive = true;
     if (status === 'inactive') query.isActive = false;
@@ -262,9 +410,7 @@ async function getAllUsers(req, res) {
         .select('-password -emailVerificationToken -passwordResetToken -passwordResetExpires -loginAttempts -lockUntil')
         .sort(sort)
         .skip((page - 1) * limit)
-        .limit(Number(limit))
-        .populate('museumInfo', 'name verified')
-        .populate('organizerInfo', 'company verified'),
+        .limit(Number(limit)),
       User.countDocuments(query)
     ]);
 
@@ -424,7 +570,7 @@ async function deleteUser(req, res) {
 async function importUsers(req, res) {
   try {
     const { users, options = {} } = req.body;
-    
+
     if (!Array.isArray(users) || users.length === 0) {
       return res.status(400).json({
         success: false,
@@ -441,7 +587,7 @@ async function importUsers(req, res) {
 
     for (let i = 0; i < users.length; i++) {
       const userData = users[i];
-      
+
       try {
         // Validate required fields
         if (!userData.name || !userData.email) {
@@ -478,9 +624,9 @@ async function importUsers(req, res) {
           const newUser = new User(userPayload);
           await newUser.save();
         }
-        
+
         results.imported++;
-        
+
       } catch (error) {
         results.failed++;
         results.errors.push({
@@ -496,7 +642,7 @@ async function importUsers(req, res) {
       message: `Import completed. ${results.imported} users imported, ${results.failed} failed, ${results.skipped} skipped.`,
       results
     });
-    
+
   } catch (error) {
     console.error('Import users error:', error);
     res.status(500).json({
@@ -511,7 +657,7 @@ async function importUsers(req, res) {
 async function exportUsers(req, res) {
   try {
     const { format = 'json', filters = {} } = req.query;
-    
+
     // Build query based on filters
     const query = {};
     if (filters.role && filters.role !== 'all') query.role = filters.role;
@@ -557,7 +703,7 @@ async function exportUsers(req, res) {
       res.setHeader('Content-Disposition', `attachment; filename="users_export_${new Date().toISOString().split('T')[0]}.json"`);
       res.json({ users: exportData, exportedAt: new Date(), total: exportData.length });
     }
-    
+
   } catch (error) {
     console.error('Export users error:', error);
     res.status(500).json({
@@ -611,7 +757,7 @@ async function getUserActivity(req, res) {
         pages: Math.ceil(total / limit)
       }
     });
-    
+
   } catch (error) {
     console.error('Get user activity error:', error);
     res.status(500).json({
@@ -626,7 +772,7 @@ async function getUserActivity(req, res) {
 async function sendBulkMessage(req, res) {
   try {
     const { userIds, message, subject, type = 'email', urgency = 'normal' } = req.body;
-    
+
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({
         success: false,
@@ -642,7 +788,7 @@ async function sendBulkMessage(req, res) {
     }
 
     const users = await User.find({ _id: { $in: userIds } }).select('name email');
-    
+
     const results = {
       sent: 0,
       failed: 0,
@@ -654,7 +800,7 @@ async function sendBulkMessage(req, res) {
       try {
         // Here you would integrate with your email/SMS/notification system
         // For now, we'll simulate the sending
-        
+
         // Create notification record
         await Analytics.create({
           type: 'notification_sent',
@@ -668,9 +814,9 @@ async function sendBulkMessage(req, res) {
           },
           date: new Date()
         });
-        
+
         results.sent++;
-        
+
       } catch (error) {
         results.failed++;
         results.errors.push({
@@ -686,7 +832,7 @@ async function sendBulkMessage(req, res) {
       message: `Bulk message completed. ${results.sent} sent, ${results.failed} failed.`,
       results
     });
-    
+
   } catch (error) {
     console.error('Send bulk message error:', error);
     res.status(500).json({
@@ -702,7 +848,7 @@ async function verifyUser(req, res) {
   try {
     const { id } = req.params;
     const { verificationStatus, notes } = req.body;
-    
+
     if (!['verified', 'rejected', 'pending'].includes(verificationStatus)) {
       return res.status(400).json({
         success: false,
@@ -712,7 +858,7 @@ async function verifyUser(req, res) {
 
     const user = await User.findByIdAndUpdate(
       id,
-      { 
+      {
         isEmailVerified: verificationStatus === 'verified',
         'profile.verificationStatus': verificationStatus,
         'profile.verificationNotes': notes,
@@ -746,7 +892,7 @@ async function verifyUser(req, res) {
       message: `User ${verificationStatus} successfully`,
       user
     });
-    
+
   } catch (error) {
     console.error('Verify user error:', error);
     res.status(500).json({
@@ -764,10 +910,10 @@ async function verifyUser(req, res) {
 // GET /api/super-admin/museums
 async function getAllMuseums(req, res) {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      status, 
+    const {
+      page = 1,
+      limit = 20,
+      status,
       verified,
       search,
       sortBy = 'createdAt',
@@ -775,7 +921,7 @@ async function getAllMuseums(req, res) {
     } = req.query;
 
     const query = { isActive: true };
-    
+
     if (status && status !== 'all') query.status = status;
     if (verified !== undefined) query.verified = verified === 'true';
     if (search) {
@@ -833,7 +979,7 @@ async function updateMuseumStatus(req, res) {
 
     const museum = await Museum.findByIdAndUpdate(
       id,
-      { 
+      {
         status,
         verified: status === 'approved'
       },
@@ -871,10 +1017,10 @@ async function updateMuseumStatus(req, res) {
 // GET /api/super-admin/rentals
 async function getAllRentals(req, res) {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      status, 
+    const {
+      page = 1,
+      limit = 20,
+      status,
       search,
       sortBy = 'createdAt',
       sortOrder = 'desc'
@@ -887,7 +1033,7 @@ async function getAllRentals(req, res) {
       const users = await User.find({
         name: { $regex: search, $options: 'i' }
       }).select('_id');
-      
+
       const artifacts = await Artifact.find({
         name: { $regex: search, $options: 'i' }
       }).select('_id');
@@ -958,9 +1104,9 @@ async function approveRental(req, res) {
       },
       { new: true }
     )
-    .populate('artifact', 'name')
-    .populate('museum', 'name')
-    .populate('renter', 'name email');
+      .populate('artifact', 'name')
+      .populate('museum', 'name')
+      .populate('renter', 'name email');
 
     if (!rental) {
       return res.status(404).json({
@@ -1116,13 +1262,13 @@ async function getSystemHealthStatus() {
 async function getRecentSystemActivities() {
   try {
     const activities = [];
-    
+
     // Recent user registrations
     const recentUsers = await User.find({})
       .sort({ createdAt: -1 })
       .limit(5)
       .select('name email role createdAt');
-    
+
     recentUsers.forEach(user => {
       activities.push({
         type: 'user_registration',
@@ -1138,7 +1284,7 @@ async function getRecentSystemActivities() {
       .limit(3)
       .select('name admin createdAt')
       .populate('admin', 'name email');
-    
+
     recentMuseums.forEach(museum => {
       activities.push({
         type: 'museum_application',
@@ -1167,7 +1313,7 @@ async function getPerformanceMetrics() {
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     // Database performance metrics
     const [responseTimeResults, throughputResults] = await Promise.all([
       // Simulate response time calculation (in real app, you'd measure actual response times)
@@ -1244,16 +1390,16 @@ async function getSystemAlerts() {
   try {
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     const alerts = [];
-    
+
     // Check for high error rates
     const errorCount = await Analytics.countDocuments({
       date: { $gte: last24Hours },
       type: 'error',
       severity: { $in: ['high', 'critical'] }
     });
-    
+
     if (errorCount > 10) {
       alerts.push({
         id: 'high-error-rate',
@@ -1265,14 +1411,14 @@ async function getSystemAlerts() {
         actions: ['view-logs', 'investigate']
       });
     }
-    
+
     // Check for pending approvals
     const pendingCount = await Promise.all([
       Museum.countDocuments({ status: 'pending' }),
       Artifact.countDocuments({ status: 'pending-review' }),
       Rental.countDocuments({ 'approvals.superAdmin.status': 'pending' })
     ]);
-    
+
     const totalPending = pendingCount.reduce((sum, count) => sum + count, 0);
     if (totalPending > 20) {
       alerts.push({
@@ -1285,7 +1431,7 @@ async function getSystemAlerts() {
         actions: ['view-approvals', 'bulk-process']
       });
     }
-    
+
     // Check system resources
     const memoryUsage = (process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100;
     if (memoryUsage > 85) {
@@ -1299,12 +1445,12 @@ async function getSystemAlerts() {
         actions: ['restart-service', 'scale-up']
       });
     }
-    
+
     return alerts.sort((a, b) => {
       const severityOrder = { critical: 3, high: 2, medium: 1, low: 0 };
       return severityOrder[b.severity] - severityOrder[a.severity];
     }).slice(0, 5);
-    
+
   } catch (error) {
     console.error('Error fetching system alerts:', error);
     return [];
@@ -1319,25 +1465,25 @@ async function getRealtimeStats() {
     const now = new Date();
     const lastHour = new Date(now.getTime() - 60 * 60 * 1000);
     const last5Minutes = new Date(now.getTime() - 5 * 60 * 1000);
-    
+
     const [activeUsers, onlineUsers, recentActions] = await Promise.all([
       // Active users in last hour
       User.countDocuments({
         lastLogin: { $gte: lastHour }
       }),
-      
+
       // Simulated online users (in real app, track with websockets/sessions)
       User.countDocuments({
         lastLogin: { $gte: last5Minutes }
       }),
-      
+
       // Recent system actions
       Analytics.countDocuments({
         date: { $gte: lastHour },
         type: 'user_action'
       })
     ]);
-    
+
     return {
       activeUsers,
       onlineUsers,
@@ -1347,7 +1493,7 @@ async function getRealtimeStats() {
       averageResponseTime: Math.round(Math.random() * 100 + 150),
       lastUpdated: now
     };
-    
+
   } catch (error) {
     console.error('Error fetching realtime stats:', error);
     return {
@@ -1370,7 +1516,7 @@ async function getSecurityMetrics() {
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     const [failedLogins, suspiciousActivity, blockedIPs] = await Promise.all([
       // Failed login attempts
       Analytics.countDocuments({
@@ -1378,14 +1524,14 @@ async function getSecurityMetrics() {
         type: 'security',
         action: 'failed_login'
       }),
-      
+
       // Suspicious activities
       Analytics.countDocuments({
         date: { $gte: lastWeek },
         type: 'security',
         severity: { $in: ['medium', 'high', 'critical'] }
       }),
-      
+
       // Blocked IPs (simulated)
       Analytics.countDocuments({
         date: { $gte: lastWeek },
@@ -1393,18 +1539,18 @@ async function getSecurityMetrics() {
         action: 'ip_blocked'
       })
     ]);
-    
+
     return {
       failedLogins,
       suspiciousActivity,
       blockedIPs,
       securityScore: Math.max(0, 100 - failedLogins - suspiciousActivity * 2),
-      threatLevel: failedLogins > 50 || suspiciousActivity > 10 ? 'high' : 
-                   failedLogins > 20 || suspiciousActivity > 5 ? 'medium' : 'low',
+      threatLevel: failedLogins > 50 || suspiciousActivity > 10 ? 'high' :
+        failedLogins > 20 || suspiciousActivity > 5 ? 'medium' : 'low',
       lastSecurityScan: new Date(now.getTime() - Math.random() * 60 * 60 * 1000),
       recommendations: generateSecurityRecommendations(failedLogins, suspiciousActivity)
     };
-    
+
   } catch (error) {
     console.error('Error fetching security metrics:', error);
     return {
@@ -1426,7 +1572,7 @@ async function getUsagePatterns() {
   try {
     const now = new Date();
     const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     const [hourlyPattern, deviceTypes, topPages] = await Promise.all([
       // Hourly usage pattern
       Analytics.aggregate([
@@ -1445,7 +1591,7 @@ async function getUsagePatterns() {
         },
         { $sort: { '_id': 1 } }
       ]),
-      
+
       // Device types (simulated)
       Analytics.aggregate([
         {
@@ -1461,7 +1607,7 @@ async function getUsagePatterns() {
           }
         }
       ]),
-      
+
       // Top pages
       Analytics.aggregate([
         {
@@ -1481,9 +1627,9 @@ async function getUsagePatterns() {
         { $limit: 10 }
       ])
     ]);
-    
+
     return {
-      peakHours: hourlyPattern.length > 0 ? 
+      peakHours: hourlyPattern.length > 0 ?
         hourlyPattern.sort((a, b) => b.avgUsers - a.avgUsers).slice(0, 3) : [],
       deviceTypes: deviceTypes.length > 0 ? deviceTypes : [
         { _id: 'desktop', count: 450 },
@@ -1501,7 +1647,7 @@ async function getUsagePatterns() {
         returnVisitorRate: Math.round(Math.random() * 30 + 60) // 60-90%
       }
     };
-    
+
   } catch (error) {
     console.error('Error fetching usage patterns:', error);
     return {
@@ -1522,7 +1668,7 @@ async function getUsagePatterns() {
  */
 function generateSecurityRecommendations(failedLogins, suspiciousActivity) {
   const recommendations = [];
-  
+
   if (failedLogins > 50) {
     recommendations.push({
       type: 'high',
@@ -1530,7 +1676,7 @@ function generateSecurityRecommendations(failedLogins, suspiciousActivity) {
       action: 'update-rate-limits'
     });
   }
-  
+
   if (suspiciousActivity > 10) {
     recommendations.push({
       type: 'medium',
@@ -1538,7 +1684,7 @@ function generateSecurityRecommendations(failedLogins, suspiciousActivity) {
       action: 'review-security-rules'
     });
   }
-  
+
   if (failedLogins > 20) {
     recommendations.push({
       type: 'medium',
@@ -1546,7 +1692,7 @@ function generateSecurityRecommendations(failedLogins, suspiciousActivity) {
       action: 'enable-2fa'
     });
   }
-  
+
   return recommendations;
 }
 
@@ -1569,10 +1715,10 @@ function convertToCSV(data) {
   if (!data || data.length === 0) {
     return '';
   }
-  
+
   const headers = Object.keys(data[0]);
   const csvHeaders = headers.join(',');
-  
+
   const csvRows = data.map(row => {
     return headers.map(header => {
       const value = row[header];
@@ -1589,7 +1735,7 @@ function convertToCSV(data) {
       return value;
     }).join(',');
   });
-  
+
   return [csvHeaders, ...csvRows].join('\n');
 }
 
@@ -1600,15 +1746,15 @@ function convertToCSV(data) {
 // GET /api/super-admin/content/pending
 async function getPendingContent(req, res) {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      type = 'all', 
+    const {
+      page = 1,
+      limit = 20,
+      type = 'all',
       status = 'pending'
     } = req.query;
 
     const results = {};
-    
+
     if (type === 'all' || type === 'museums') {
       const [museums, museumTotal] = await Promise.all([
         Museum.find({ status: 'pending' })
@@ -1620,7 +1766,7 @@ async function getPendingContent(req, res) {
       ]);
       results.museums = { data: museums, total: museumTotal };
     }
-    
+
     if (type === 'all' || type === 'artifacts') {
       const [artifacts, artifactTotal] = await Promise.all([
         Artifact.find({ status: 'pending-review' })
@@ -1633,7 +1779,7 @@ async function getPendingContent(req, res) {
       ]);
       results.artifacts = { data: artifacts, total: artifactTotal };
     }
-    
+
     if (type === 'all' || type === 'rentals') {
       const [rentals, rentalTotal] = await Promise.all([
         Rental.find({ 'approvals.superAdmin.status': 'pending' })
@@ -1690,8 +1836,8 @@ async function approveArtifact(req, res) {
       },
       { new: true }
     )
-    .populate('museum', 'name')
-    .populate('submittedBy', 'name email');
+      .populate('museum', 'name')
+      .populate('submittedBy', 'name email');
 
     if (!artifact) {
       return res.status(404).json({
@@ -1722,10 +1868,10 @@ async function approveArtifact(req, res) {
 // GET /api/super-admin/heritage-sites
 async function getHeritageSites(req, res) {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      status, 
+    const {
+      page = 1,
+      limit = 20,
+      status,
       designation,
       region,
       search,
@@ -1734,7 +1880,7 @@ async function getHeritageSites(req, res) {
     } = req.query;
 
     const query = {};
-    
+
     if (status && status !== 'all') query.status = status;
     if (designation && designation !== 'all') query.designation = designation;
     if (region && region !== 'all') query['location.region'] = region;
@@ -1821,7 +1967,7 @@ async function updateHeritageSite(req, res) {
       { $set: updateData },
       { new: true, runValidators: true }
     ).populate('createdBy', 'name email')
-     .populate('updatedBy', 'name email');
+      .populate('updatedBy', 'name email');
 
     if (!site) {
       return res.status(404).json({
@@ -2109,7 +2255,7 @@ async function migrateMockDataToDatabase(req, res) {
       try {
         // Check if site already exists
         const existingSite = await HeritageSite.findOne({ name: siteData.name });
-        
+
         if (existingSite) {
           results.skipped++;
           continue;
@@ -2118,7 +2264,7 @@ async function migrateMockDataToDatabase(req, res) {
         const site = new HeritageSite(siteData);
         await site.save();
         results.created++;
-        
+
       } catch (error) {
         results.errors.push({
           site: siteData.name,
@@ -2132,7 +2278,7 @@ async function migrateMockDataToDatabase(req, res) {
       message: `Mock data migration completed. ${results.created} sites created, ${results.updated} updated, ${results.skipped} skipped.`,
       results
     });
-    
+
   } catch (error) {
     console.error('Migrate mock data error:', error);
     res.status(500).json({
@@ -2143,11 +2289,1318 @@ async function migrateMockDataToDatabase(req, res) {
   }
 }
 
+// ======================
+// AUDIT LOGS
+// ======================
+
+// GET /api/super-admin/audit-logs
+async function getAuditLogs(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 50,
+      action,
+      userId,
+      startDate,
+      endDate,
+      riskLevel,
+      sortBy = 'timestamp',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+
+    if (action && action !== 'all') query.action = action;
+    if (userId) query.performedBy = userId;
+    if (riskLevel && riskLevel !== 'all') query['security.riskLevel'] = riskLevel;
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) query.timestamp.$gte = new Date(startDate);
+      if (endDate) query.timestamp.$lte = new Date(endDate);
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('performedBy', 'name email role')
+        .populate('targetEntity.id'),
+      AuditLog.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      logs,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get audit logs error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch audit logs',
+      error: error.message
+    });
+  }
+}
+
+// GET /api/super-admin/audit-logs/summary
+async function getAuditLogsSummary(req, res) {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const dateRange = {
+      start: startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      end: endDate ? new Date(endDate) : new Date()
+    };
+
+    const summary = await AuditLog.getAuditSummary(dateRange.start, dateRange.end);
+
+    // Get additional statistics
+    const [actionBreakdown, riskLevelBreakdown, topUsers] = await Promise.all([
+      AuditLog.aggregate([
+        { $match: { timestamp: { $gte: dateRange.start, $lte: dateRange.end } } },
+        { $group: { _id: '$action', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      AuditLog.aggregate([
+        { $match: { timestamp: { $gte: dateRange.start, $lte: dateRange.end } } },
+        { $group: { _id: '$security.riskLevel', count: { $sum: 1 } } }
+      ]),
+      AuditLog.aggregate([
+        { $match: { timestamp: { $gte: dateRange.start, $lte: dateRange.end } } },
+        { $group: { _id: '$performedBy', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+        { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      summary: summary[0] || {
+        totalActions: 0,
+        successfulActions: 0,
+        failedActions: 0,
+        successRate: 0,
+        uniqueUserCount: 0,
+        avgResponseTime: 0
+      },
+      breakdown: {
+        actions: actionBreakdown,
+        riskLevels: riskLevelBreakdown,
+        topUsers: topUsers.map(item => ({
+          user: item.user[0],
+          actionCount: item.count
+        }))
+      },
+      dateRange
+    });
+  } catch (error) {
+    console.error('Get audit logs summary error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch audit logs summary',
+      error: error.message
+    });
+  }
+}
+
+// ======================
+// ENHANCED USER MANAGEMENT
+// ======================
+
+// POST /api/super-admin/users/bulk-actions
+async function bulkUserActions(req, res) {
+  try {
+    const { action, userIds, data = {} } = req.body;
+
+    if (!action || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Action and user IDs are required'
+      });
+    }
+
+    let updateData = {};
+    let message = '';
+
+    switch (action) {
+      case 'activate':
+        updateData = { isActive: true };
+        message = 'Users activated successfully';
+        break;
+      case 'deactivate':
+        updateData = { isActive: false };
+        message = 'Users deactivated successfully';
+        break;
+      case 'verify':
+        updateData = { isEmailVerified: true };
+        message = 'Users verified successfully';
+        break;
+      case 'unverify':
+        updateData = { isEmailVerified: false };
+        message = 'Users unverified successfully';
+        break;
+      case 'changeRole':
+        if (!data.role) {
+          return res.status(400).json({
+            success: false,
+            message: 'Role is required for role change action'
+          });
+        }
+        updateData = { role: data.role };
+        message = `Users role changed to ${data.role} successfully`;
+        break;
+      case 'delete':
+        const deleteResult = await User.deleteMany({ _id: { $in: userIds } });
+        return res.json({
+          success: true,
+          message: `${deleteResult.deletedCount} users deleted successfully`,
+          deletedCount: deleteResult.deletedCount
+        });
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid action'
+        });
+    }
+
+    const result = await User.updateMany(
+      { _id: { $in: userIds } },
+      { $set: updateData }
+    );
+
+    res.json({
+      success: true,
+      message,
+      modifiedCount: result.modifiedCount,
+      matchedCount: result.matchedCount
+    });
+  } catch (error) {
+    console.error('Bulk user actions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to perform bulk actions',
+      error: error.message
+    });
+  }
+}
+
+// GET /api/super-admin/users/statistics
+async function getUserStatistics(req, res) {
+  try {
+    const { timeRange = '30d' } = req.query;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - (parseInt(timeRange.replace('d', '')) * 24 * 60 * 60 * 1000));
+
+    const [
+      totalUsers,
+      activeUsers,
+      newUsers,
+      usersByRole,
+      usersByStatus,
+      userActivity,
+      topUsers
+    ] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ isActive: true }),
+      User.countDocuments({ createdAt: { $gte: startDate } }),
+      User.aggregate([
+        { $group: { _id: '$role', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      User.aggregate([
+        { $group: { _id: { isActive: '$isActive', isEmailVerified: '$isEmailVerified' }, count: { $sum: 1 } } }
+      ]),
+      User.aggregate([
+        { $match: { lastLogin: { $gte: startDate } } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$lastLogin' } }, count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      User.find({})
+        .select('name email role lastLogin createdAt')
+        .sort({ lastLogin: -1 })
+        .limit(10)
+    ]);
+
+    res.json({
+      success: true,
+      statistics: {
+        totalUsers,
+        activeUsers,
+        newUsers,
+        usersByRole,
+        usersByStatus,
+        userActivity,
+        topUsers,
+        timeRange
+      }
+    });
+  } catch (error) {
+    console.error('Get user statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user statistics',
+      error: error.message
+    });
+  }
+}
+
+// GET /api/super-admin/users/search
+async function searchUsers(req, res) {
+  try {
+    const {
+      q,
+      page = 1,
+      limit = 20,
+      role,
+      status,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+
+    // Search query
+    if (q) {
+      query.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+        { 'profile.phone': { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    // Role filter
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+
+    // Status filter
+    if (status === 'active') {
+      query.isActive = true;
+    } else if (status === 'inactive') {
+      query.isActive = false;
+    } else if (status === 'verified') {
+      query.isEmailVerified = true;
+    } else if (status === 'unverified') {
+      query.isEmailVerified = false;
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .select('-password -emailVerificationToken -passwordResetToken -passwordResetExpires -loginAttempts -lockUntil')
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      User.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      users,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      },
+      searchQuery: q
+    });
+  } catch (error) {
+    console.error('Search users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search users',
+      error: error.message
+    });
+  }
+}
+
+// ======================
+// ENHANCED MUSEUM OVERSIGHT
+// ======================
+
+// GET /api/super-admin/museums/statistics
+async function getMuseumStatistics(req, res) {
+  try {
+    const { timeRange = '30d' } = req.query;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - (parseInt(timeRange.replace('d', '')) * 24 * 60 * 60 * 1000));
+
+    const [
+      totalMuseums,
+      activeMuseums,
+      pendingMuseums,
+      approvedMuseums,
+      rejectedMuseums,
+      museumsByStatus,
+      museumsByRegion,
+      newMuseums,
+      museumActivity,
+      topMuseums
+    ] = await Promise.all([
+      Museum.countDocuments({}),
+      Museum.countDocuments({ isActive: true }),
+      Museum.countDocuments({ status: 'pending' }),
+      Museum.countDocuments({ status: 'approved' }),
+      Museum.countDocuments({ status: 'rejected' }),
+      Museum.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      Museum.aggregate([
+        { $group: { _id: '$location.region', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      Museum.countDocuments({ createdAt: { $gte: startDate } }),
+      Museum.aggregate([
+        { $match: { updatedAt: { $gte: startDate } } },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$updatedAt' } }, count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      Museum.find({})
+        .select('name status verified createdAt updatedAt')
+        .sort({ updatedAt: -1 })
+        .limit(10)
+    ]);
+
+    res.json({
+      success: true,
+      statistics: {
+        totalMuseums,
+        activeMuseums,
+        pendingMuseums,
+        approvedMuseums,
+        rejectedMuseums,
+        museumsByStatus,
+        museumsByRegion,
+        newMuseums,
+        museumActivity,
+        topMuseums,
+        timeRange
+      }
+    });
+  } catch (error) {
+    console.error('Get museum statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch museum statistics',
+      error: error.message
+    });
+  }
+}
+
+// POST /api/super-admin/museums/bulk-actions
+async function bulkMuseumActions(req, res) {
+  try {
+    const { action, museumIds, data = {} } = req.body;
+
+    if (!action || !Array.isArray(museumIds) || museumIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Action and museum IDs are required'
+      });
+    }
+
+    let updateData = {};
+    let message = '';
+
+    switch (action) {
+      case 'approve':
+        updateData = { status: 'approved', verified: true };
+        message = 'Museums approved successfully';
+        break;
+      case 'reject':
+        updateData = { status: 'rejected', verified: false };
+        message = 'Museums rejected successfully';
+        break;
+      case 'suspend':
+        updateData = { status: 'suspended', isActive: false };
+        message = 'Museums suspended successfully';
+        break;
+      case 'activate':
+        updateData = { isActive: true };
+        message = 'Museums activated successfully';
+        break;
+      case 'deactivate':
+        updateData = { isActive: false };
+        message = 'Museums deactivated successfully';
+        break;
+      case 'verify':
+        updateData = { verified: true };
+        message = 'Museums verified successfully';
+        break;
+      case 'unverify':
+        updateData = { verified: false };
+        message = 'Museums unverified successfully';
+        break;
+      case 'delete':
+        const deleteResult = await Museum.deleteMany({ _id: { $in: museumIds } });
+        return res.json({
+          success: true,
+          message: `${deleteResult.deletedCount} museums deleted successfully`,
+          deletedCount: deleteResult.deletedCount
+        });
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid action'
+        });
+    }
+
+    const result = await Museum.updateMany(
+      { _id: { $in: museumIds } },
+      { $set: updateData }
+    );
+
+    res.json({
+      success: true,
+      message,
+      modifiedCount: result.modifiedCount,
+      matchedCount: result.matchedCount
+    });
+  } catch (error) {
+    console.error('Bulk museum actions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to perform bulk actions',
+      error: error.message
+    });
+  }
+}
+
+// GET /api/super-admin/museums/search
+async function searchMuseums(req, res) {
+  try {
+    const {
+      q,
+      page = 1,
+      limit = 20,
+      status,
+      verified,
+      region,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+
+    // Search query
+    if (q) {
+      query.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { 'location.address': { $regex: q, $options: 'i' } },
+        { 'contact.email': { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    // Verification filter
+    if (verified !== undefined) {
+      query.verified = verified === 'true';
+    }
+
+    // Region filter
+    if (region && region !== 'all') {
+      query['location.region'] = region;
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [museums, total] = await Promise.all([
+      Museum.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('admin', 'name email')
+        .populate('staff.user', 'name email'),
+      Museum.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      museums,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      },
+      searchQuery: q
+    });
+  } catch (error) {
+    console.error('Search museums error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search museums',
+      error: error.message
+    });
+  }
+}
+
+// GET /api/super-admin/museums/performance
+async function getMuseumPerformance(req, res) {
+  try {
+    const { timeRange = '30d', museumId } = req.query;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - (parseInt(timeRange.replace('d', '')) * 24 * 60 * 60 * 1000));
+
+    const query = museumId ? { _id: museumId } : {};
+
+    const [
+      museumStats,
+      artifactStats,
+      rentalStats,
+      visitorStats,
+      revenueStats
+    ] = await Promise.all([
+      Museum.find(query).select('name status verified createdAt'),
+      Artifact.aggregate([
+        { $match: { museum: museumId ? new mongoose.Types.ObjectId(museumId) : { $exists: true } } },
+        { $group: { _id: null, total: { $sum: 1 }, active: { $sum: { $cond: ['$isActive', 1, 0] } } } }
+      ]),
+      Rental.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate },
+            ...(museumId ? { museum: new mongoose.Types.ObjectId(museumId) } : {})
+          }
+        },
+        { $group: { _id: null, total: { $sum: 1 }, completed: { $sum: { $cond: ['$status', 1, 0] } } } }
+      ]),
+      // Mock visitor stats - replace with actual visitor tracking
+      Promise.resolve({ totalVisitors: 0, uniqueVisitors: 0 }),
+      Rental.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate },
+            status: 'completed',
+            ...(museumId ? { museum: new mongoose.Types.ObjectId(museumId) } : {})
+          }
+        },
+        { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      performance: {
+        museumStats,
+        artifactStats: artifactStats[0] || { total: 0, active: 0 },
+        rentalStats: rentalStats[0] || { total: 0, completed: 0 },
+        visitorStats,
+        revenueStats: revenueStats[0] || { totalRevenue: 0 },
+        timeRange
+      }
+    });
+  } catch (error) {
+    console.error('Get museum performance error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch museum performance',
+      error: error.message
+    });
+  }
+}
+
+// GET /api/super-admin/museums/audit-logs
+async function getMuseumAuditLogs(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      museumId,
+      action,
+      startDate,
+      endDate,
+      sortBy = 'timestamp',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+
+    if (museumId) query['targetEntity.id'] = museumId;
+    if (action) query.action = action;
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) query.timestamp.$gte = new Date(startDate);
+      if (endDate) query.timestamp.$lte = new Date(endDate);
+    }
+
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('performedBy', 'name email role')
+        .populate('targetEntity.id'),
+      AuditLog.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      logs,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get museum audit logs error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch museum audit logs',
+      error: error.message
+    });
+  }
+}
+
+// Heritage Sites Management Functions
+
+// Get all heritage sites for Super Admin
+async function getAllHeritageSites(req, res) {
+  try {
+    const { page = 1, limit = 10, status, verified, region, type, designation, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    // Build query
+    const query = {};
+    if (status) query.status = status;
+    if (verified !== undefined) query.verified = verified === 'true';
+    if (region) query['location.region'] = region;
+    if (type) query.type = type;
+    if (designation) query.designation = designation;
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [sites, total] = await Promise.all([
+      HeritageSite.find(query)
+        .select('name description location type category designation status verified featured significance tourism.annualVisitors conservation.status createdAt updatedAt')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      HeritageSite.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      data: sites,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Get heritage sites error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch heritage sites'
+    });
+  }
+}
+
+// Get heritage site statistics
+async function getHeritageSiteStatistics(req, res) {
+  try {
+    const { timeRange = '30d' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    let startDate;
+    switch (timeRange) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case '1y':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get basic statistics
+    const [
+      totalSites,
+      activeSites,
+      unescoSites,
+      verifiedSites,
+      featuredSites,
+      newSites,
+      sitesByRegion,
+      sitesByType,
+      sitesByDesignation,
+      conservationStatus
+    ] = await Promise.all([
+      HeritageSite.countDocuments(),
+      HeritageSite.countDocuments({ status: 'active' }),
+      HeritageSite.countDocuments({ designation: 'UNESCO World Heritage' }),
+      HeritageSite.countDocuments({ verified: true }),
+      HeritageSite.countDocuments({ featured: true }),
+      HeritageSite.countDocuments({ createdAt: { $gte: startDate } }),
+      HeritageSite.aggregate([
+        { $group: { _id: '$location.region', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      HeritageSite.aggregate([
+        { $group: { _id: '$type', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      HeritageSite.aggregate([
+        { $group: { _id: '$designation', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]),
+      HeritageSite.aggregate([
+        { $group: { _id: '$conservation.status', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ])
+    ]);
+
+    // Get activity trends (monthly for the last 12 months)
+    const activityTrends = await HeritageSite.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: new Date(now.getTime() - 12 * 30 * 24 * 60 * 60 * 1000) }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    // Get top heritage sites by visitor count
+    const topSites = await HeritageSite.find({ 'tourism.annualVisitors': { $gt: 0 } })
+      .select('name location.region tourism.annualVisitors designation')
+      .sort({ 'tourism.annualVisitors': -1 })
+      .limit(10);
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalSites,
+          activeSites,
+          unescoSites,
+          verifiedSites,
+          featuredSites,
+          newSites
+        },
+        distribution: {
+          byRegion: sitesByRegion,
+          byType: sitesByType,
+          byDesignation: sitesByDesignation,
+          byConservationStatus: conservationStatus
+        },
+        trends: {
+          activityTrends,
+          topSites
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get heritage site statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch heritage site statistics'
+    });
+  }
+}
+
+// Search heritage sites
+async function searchHeritageSites(req, res) {
+  try {
+    const {
+      query: searchQuery,
+      status,
+      verified,
+      region,
+      type,
+      designation,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    // Build query
+    const query = {};
+    if (status) query.status = status;
+    if (verified !== undefined) query.verified = verified === 'true';
+    if (region) query['location.region'] = region;
+    if (type) query.type = type;
+    if (designation) query.designation = designation;
+
+    // Add text search if query provided
+    if (searchQuery && searchQuery.trim()) {
+      query.$or = [
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { description: { $regex: searchQuery, $options: 'i' } },
+        { significance: { $regex: searchQuery, $options: 'i' } },
+        { tags: { $in: [new RegExp(searchQuery, 'i')] } }
+      ];
+    }
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [sites, total] = await Promise.all([
+      HeritageSite.find(query)
+        .select('name description location type category designation status verified featured significance tourism.annualVisitors conservation.status createdAt')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      HeritageSite.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      data: sites,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Search heritage sites error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search heritage sites'
+    });
+  }
+}
+
+// Bulk heritage site actions
+async function bulkHeritageSiteActions(req, res) {
+  try {
+    const { action, siteIds, data = {} } = req.body;
+
+    if (!action || !siteIds || !Array.isArray(siteIds) || siteIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid action or site IDs'
+      });
+    }
+
+    let result;
+    const validActions = ['approve', 'reject', 'verify', 'unverify', 'feature', 'unfeature', 'activate', 'deactivate', 'delete'];
+
+    if (!validActions.includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid action'
+      });
+    }
+
+    switch (action) {
+      case 'approve':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { status: 'active', verified: true, updatedAt: new Date() } }
+        );
+        break;
+
+      case 'reject':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { status: 'closed', verified: false, updatedAt: new Date() } }
+        );
+        break;
+
+      case 'verify':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { verified: true, updatedAt: new Date() } }
+        );
+        break;
+
+      case 'unverify':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { verified: false, updatedAt: new Date() } }
+        );
+        break;
+
+      case 'feature':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { featured: true, updatedAt: new Date() } }
+        );
+        break;
+
+      case 'unfeature':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { featured: false, updatedAt: new Date() } }
+        );
+        break;
+
+      case 'activate':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { status: 'active', updatedAt: new Date() } }
+        );
+        break;
+
+      case 'deactivate':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { status: 'closed', updatedAt: new Date() } }
+        );
+        break;
+
+      case 'delete':
+        result = await HeritageSite.updateMany(
+          { _id: { $in: siteIds } },
+          { $set: { deletedAt: new Date(), status: 'closed', updatedAt: new Date() } }
+        );
+        break;
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully ${action}ed ${result.modifiedCount} heritage sites`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Bulk heritage site actions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to perform bulk actions'
+    });
+  }
+}
+
+// Get heritage site performance metrics
+async function getHeritageSitePerformance(req, res) {
+  try {
+    const { timeRange = '30d' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    let startDate;
+    switch (timeRange) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case '1y':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get performance metrics
+    const [
+      totalVisitors,
+      averageVisitors,
+      topPerformingSites,
+      regionalPerformance,
+      conservationMetrics
+    ] = await Promise.all([
+      HeritageSite.aggregate([
+        { $group: { _id: null, total: { $sum: '$tourism.annualVisitors' } } }
+      ]),
+      HeritageSite.aggregate([
+        { $group: { _id: null, average: { $avg: '$tourism.annualVisitors' } } }
+      ]),
+      HeritageSite.find({ 'tourism.annualVisitors': { $gt: 0 } })
+        .select('name location.region tourism.annualVisitors designation')
+        .sort({ 'tourism.annualVisitors': -1 })
+        .limit(10),
+      HeritageSite.aggregate([
+        {
+          $group: {
+            _id: '$location.region',
+            totalVisitors: { $sum: '$tourism.annualVisitors' },
+            siteCount: { $sum: 1 },
+            averageVisitors: { $avg: '$tourism.annualVisitors' }
+          }
+        },
+        { $sort: { totalVisitors: -1 } }
+      ]),
+      HeritageSite.aggregate([
+        {
+          $group: {
+            _id: '$conservation.status',
+            count: { $sum: 1 },
+            averageVisitors: { $avg: '$tourism.annualVisitors' }
+          }
+        },
+        { $sort: { count: -1 } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalVisitors: totalVisitors[0]?.total || 0,
+          averageVisitors: Math.round(averageVisitors[0]?.average || 0),
+          totalSites: await HeritageSite.countDocuments()
+        },
+        topPerformingSites,
+        regionalPerformance,
+        conservationMetrics
+      }
+    });
+  } catch (error) {
+    console.error('Get heritage site performance error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch heritage site performance'
+    });
+  }
+}
+
+// Get heritage site audit logs
+async function getHeritageSiteAuditLogs(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      action,
+      siteId,
+      userId,
+      startDate,
+      endDate,
+      sortBy = 'timestamp',
+      sortOrder = 'desc'
+    } = req.query;
+
+    // Build query
+    const query = { targetEntity: 'heritage_site' };
+    if (action) query.action = action;
+    if (siteId) query['details.siteId'] = siteId;
+    if (userId) query.performedBy = userId;
+    if (startDate) query.timestamp = { ...query.timestamp, $gte: new Date(startDate) };
+    if (endDate) query.timestamp = { ...query.timestamp, $lte: new Date(endDate) };
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(query)
+        .populate('performedBy', 'name email role')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit)),
+      AuditLog.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      data: logs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Get heritage site audit logs error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch heritage site audit logs'
+    });
+  }
+}
+
+// Heritage Site CRUD Operations
+
+// Create a new heritage site
+async function createHeritageSite(req, res) {
+  console.log('🏛️ CREATE HERITAGE SITE - Function called');
+  console.log('📝 Request body:', req.body);
+  console.log('👤 Request user:', req.user);
+
+  try {
+    const heritageSiteData = { ...req.body };
+
+    // Don't require createdBy field for now - make it optional
+    if (req.user && req.user.id) {
+      heritageSiteData.createdBy = req.user.id;
+      console.log('✅ Using authenticated user ID:', req.user.id);
+    } else {
+      console.log('⚠️ No authenticated user, skipping createdBy field');
+      // Remove createdBy field if it exists
+      delete heritageSiteData.createdBy;
+    }
+
+    console.log('📋 Final heritage site data:', heritageSiteData);
+
+    const heritageSite = new HeritageSite(heritageSiteData);
+    await heritageSite.save();
+
+    console.log('✅ Heritage site created successfully:', heritageSite._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Heritage site created successfully',
+      data: heritageSite
+    });
+  } catch (error) {
+    console.error('❌ Create heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create heritage site',
+      error: error.message
+    });
+  }
+}
+
+// Get a specific heritage site
+async function getHeritageSite(req, res) {
+  try {
+    const { id } = req.params;
+
+    const heritageSite = await HeritageSite.findById(id);
+
+    if (!heritageSite) {
+      return res.status(404).json({
+        success: false,
+        message: 'Heritage site not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: heritageSite
+    });
+  } catch (error) {
+    console.error('Get heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get heritage site',
+      error: error.message
+    });
+  }
+}
+
+// Update a heritage site
+async function updateHeritageSite(req, res) {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const heritageSite = await HeritageSite.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!heritageSite) {
+      return res.status(404).json({
+        success: false,
+        message: 'Heritage site not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Heritage site updated successfully',
+      data: heritageSite
+    });
+  } catch (error) {
+    console.error('Update heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update heritage site',
+      error: error.message
+    });
+  }
+}
+
+// Delete a heritage site
+async function deleteHeritageSite(req, res) {
+  try {
+    const { id } = req.params;
+
+    const heritageSite = await HeritageSite.findByIdAndDelete(id);
+
+    if (!heritageSite) {
+      return res.status(404).json({
+        success: false,
+        message: 'Heritage site not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Heritage site deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete heritage site error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete heritage site',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   // Dashboard & Analytics
   getDashboard,
   getAnalytics,
-  
+
   // User Management
   getAllUsers,
   createUser,
@@ -2158,28 +3611,58 @@ module.exports = {
   getUserActivity,
   sendBulkMessage,
   verifyUser,
-  
+
   // Museum Oversight
   getAllMuseums,
   updateMuseumStatus,
-  
+
   // Heritage Sites Management
   getHeritageSites,
   createHeritageSite,
   updateHeritageSite,
   deleteHeritageSite,
   migrateMockDataToDatabase,
-  
+
   // Rental System
   getAllRentals,
   approveRental,
-  
+
   // System Settings
   getSystemSettings,
   updateSystemSetting,
   createSystemSetting,
-  
+
   // Content Management
   getPendingContent,
-  approveArtifact
+  approveArtifact,
+
+  // Audit Logs
+  getAuditLogs,
+  getAuditLogsSummary,
+
+  // Enhanced User Management
+  bulkUserActions,
+  getUserStatistics,
+  searchUsers,
+
+  // Enhanced Museum Oversight
+  getMuseumStatistics,
+  bulkMuseumActions,
+  searchMuseums,
+  getMuseumPerformance,
+  getMuseumAuditLogs,
+
+  // Enhanced Heritage Sites Management
+  getAllHeritageSites,
+  getHeritageSiteStatistics,
+  searchHeritageSites,
+  bulkHeritageSiteActions,
+  getHeritageSitePerformance,
+  getHeritageSiteAuditLogs,
+
+  // Heritage Site CRUD Operations
+  createHeritageSite,
+  getHeritageSite,
+  updateHeritageSite,
+  deleteHeritageSite
 };
