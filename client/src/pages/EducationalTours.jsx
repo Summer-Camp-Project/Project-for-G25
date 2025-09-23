@@ -105,7 +105,7 @@ const EducationalTours = () => {
 
   const handleEnroll = async (tourId) => {
     if (!user) {
-      navigate('/login');
+      navigate('/auth');
       return;
     }
 
@@ -113,7 +113,7 @@ const EducationalTours = () => {
       setEnrolling(tourId);
       await educationalToursApi.user.enrollInTour(tourId);
       // Could show success message
-      navigate('/learning/enrolled-tours');
+      navigate('/visitor-dashboard');
     } catch (error) {
       console.error('Enrollment error:', error);
       alert(handleApiError(error));
