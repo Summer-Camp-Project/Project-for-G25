@@ -13,7 +13,6 @@ import museum from '../assets/museum.jpg';
 import virtualTour from '../assets/virtual-tour.jpg';
 import VirtualMuseumButton from '../components/virtual-museum/VirtualMuseumButton';
 import learningService from '../services/learningService';
-import educationApi from '../services/educationApi';
 import api from '../services/api';
 import io from 'socket.io-client';
 
@@ -483,8 +482,8 @@ const Home = () => {
                     if (isAuthenticated && user?.role === 'organizer') {
                       navigate('/organizer-dashboard');
                     } else {
-                      // Otherwise, go to courses page
-                      navigate('/courses');
+                      // Otherwise, go to Educational Tours page
+                      navigate('/educational-tours');
                     }
                   }}
                   className="text-primary font-semibold hover:text-primary/80 transition-colors flex items-center group-hover:translate-x-2 transition-transform duration-300"

@@ -18,7 +18,6 @@
 // Role hierarchy levels (higher number = higher privilege)
 const ROLE_LEVELS = {
   'user': 10,
-  'organizer': 30,
   'museumAdmin': 60,
   'superAdmin': 100
 };
@@ -30,12 +29,6 @@ const ROLE_PERMISSIONS = {
     'book_tours',
     'rate_artifacts',
     'basic_chat'
-  ],
-  'organizer': [
-    'create_tours',
-    'manage_tours',
-    'view_tour_analytics',
-    'handle_bookings'
   ],
   'museumAdmin': [
     'manage_museum_profile',

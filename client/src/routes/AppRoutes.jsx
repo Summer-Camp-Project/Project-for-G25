@@ -14,10 +14,11 @@ import Map from '../pages/Map'
 import Tours from '../pages/Tours'
 import VirtualMuseum from '../pages/VirtualMuseum'
 import ArtifactDetail from '../pages/ArtifactDetail'
+import EducationalTours from '../pages/EducationalTours'
 
 // Dashboards
 import AdminDashboard from '../pages/admin/AdminDashboard'
-import SuperAdminDashboard from '../pages/super-admin/SuperAdminDashboard'
+import SuperAdminDashboard from '../pages/SuperAdminDashboard'
 import MuseumDashboard from '../pages/museum/MuseumDashboard'
 import OrganizerDashboard from '../pages/OrganizerDashboard'
 import VisitorDashboard from '../pages/visitor/VisitorDashboard'
@@ -149,6 +150,13 @@ export default function App() {
           <>
             <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <Tours />
+            <Footer />
+          </>
+        } />
+        <Route path="/educational-tours" element={
+          <>
+            <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            <EducationalTours />
             <Footer />
           </>
         } />

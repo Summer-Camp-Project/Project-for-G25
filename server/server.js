@@ -34,7 +34,6 @@ const learningRoutes = require('./routes/learning');
 const courseManagementRoutes = require('./routes/courseManagement');
 const enrollmentManagementRoutes = require('./routes/enrollmentManagement');
 const educationalContentManagementRoutes = require('./routes/educationalContentManagement');
-const educationalTourRoutes = require('./routes/educationalTourRoutes');
 const educationRoutes = require('./routes/education'); // Added comprehensive education routes
 // const usersRoutes = require('./routes/users');
 // const userRoutes = require('./routes/User');
@@ -164,7 +163,6 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/learning', courseManagementRoutes);
 app.use('/api/learning', enrollmentManagementRoutes);
 app.use('/api/learning', educationalContentManagementRoutes);
-app.use('/api/educational-tours', educationalTourRoutes);
 app.use('/api/assignments', require('./routes/assignments'));
 app.use('/api/education', educationRoutes); // Added comprehensive education management API
 
