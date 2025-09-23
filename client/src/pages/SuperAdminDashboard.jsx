@@ -32,7 +32,12 @@ import {
   Archive,
   Monitor,
   Award,
-  Star
+  Star,
+  BookOpen,
+  GraduationCap,
+  FileText,
+  Users2,
+  Presentation
 } from 'lucide-react';
 import logo from '../assets/Logo.jpg';
 import HeritageSiteManager from '../components/HeritageSiteManager';
@@ -46,6 +51,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
   const [expandedSections, setExpandedSections] = useState({
     'Platform Overview': true,
     'User & Content Management': true,
+    'Educational Management': true,
     'Business Operations': true,
     'System Administration': true
   });
@@ -249,6 +255,16 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
         { id: 'user-management', label: 'User Management', icon: Users, description: 'Create, edit, delete, approve/reject users across all roles' },
         { id: 'museum-oversight', label: 'Museum Oversight', icon: Building2, description: 'Approve or reject museum registrations and updates' },
         { id: 'heritage-sites', label: 'Heritage Sites', icon: MapPin, description: 'Add and manage Ethiopian cultural/heritage sites' }
+      ]
+    },
+    {
+      category: 'Educational Management',
+      items: [
+        { id: 'education-overview', label: 'Education Overview', icon: GraduationCap, description: 'Educational content statistics and management' },
+        { id: 'course-management', label: 'Course Management', icon: BookOpen, description: 'Manage educational courses across the platform' },
+        { id: 'assignment-management', label: 'Assignment Management', icon: FileText, description: 'Oversee assignments and grading system' },
+        { id: 'student-management', label: 'Student Management', icon: Users2, description: 'Manage student enrollments and progress' },
+        { id: 'educational-tours', label: 'Educational Tours', icon: Presentation, description: 'Manage educational tour programs' }
       ]
     },
     {
@@ -1308,7 +1324,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                       <option value="visitor">visitor</option>
                       <option value="museum">museum</option>
                       <option value="museum_admin">museum_admin</option>
-                      <option value="organizer">organizer</option>
                       <option value="admin">admin</option>
                       <option value="super_admin">super_admin</option>
                     </select>
@@ -1385,7 +1400,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                               <option value="visitor">visitor</option>
                               <option value="museum">museum</option>
                               <option value="museum_admin">museum_admin</option>
-                              <option value="organizer">organizer</option>
                               <option value="admin">admin</option>
                               <option value="super_admin">super_admin</option>
                             </select>
@@ -1461,7 +1475,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                                 <option value="visitor">visitor</option>
                                 <option value="museum">museum</option>
                                 <option value="museum_admin">museum_admin</option>
-                                <option value="organizer">organizer</option>
                                 <option value="admin">admin</option>
                                 <option value="super_admin">super_admin</option>
                               </select>
@@ -1546,7 +1559,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                         <option value="visitor">visitor</option>
                         <option value="museum">museum</option>
                         <option value="museum_admin">museum_admin</option>
-                        <option value="organizer">organizer</option>
                         <option value="admin">admin</option>
                         <option value="super_admin">super_admin</option>
                       </select>
@@ -2133,6 +2145,121 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           </div>
         );
 
+      case 'education-overview':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Education Overview</h3>
+                <p className="text-sm text-gray-600">Educational content statistics and management</p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <GraduationCap className="h-8 w-8 text-blue-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-blue-600">Total Courses</p>
+                        <p className="text-2xl font-bold text-blue-900">24</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <Users2 className="h-8 w-8 text-green-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-green-600">Active Students</p>
+                        <p className="text-2xl font-bold text-green-900">156</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <FileText className="h-8 w-8 text-yellow-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-yellow-600">Assignments</p>
+                        <p className="text-2xl font-bold text-yellow-900">89</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <Presentation className="h-8 w-8 text-purple-600" />
+                      <div className="ml-3">
+                        <p className="text-sm font-medium text-purple-600">Educational Tours</p>
+                        <p className="text-2xl font-bold text-purple-900">12</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'course-management':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Course Management</h3>
+              <p className="text-sm text-gray-600">Manage educational courses across the platform</p>
+            </div>
+            <div className="p-6">
+              <div className="text-center py-12">
+                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Course management interface will be implemented here</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'assignment-management':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Assignment Management</h3>
+              <p className="text-sm text-gray-600">Oversee assignments and grading system</p>
+            </div>
+            <div className="p-6">
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Assignment management interface will be implemented here</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'student-management':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Student Management</h3>
+              <p className="text-sm text-gray-600">Manage student enrollments and progress</p>
+            </div>
+            <div className="p-6">
+              <div className="text-center py-12">
+                <Users2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Student management interface will be implemented here</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'educational-tours':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Educational Tours</h3>
+              <p className="text-sm text-gray-600">Manage educational tour programs</p>
+            </div>
+            <div className="p-6">
+              <div className="text-center py-12">
+                <Presentation className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Educational tours management interface will be implemented here</p>
+              </div>
+            </div>
+          </div>
+        );
 
       case 'approval-feedback':
         return (
