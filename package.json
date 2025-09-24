@@ -69,7 +69,6 @@
     "db:setup": "npm run db:start && cd server && npm run seed",
     "db:reset": "cd server && npm run clean-db && npm run seed",
     "db:seed": "cd server && npm run seed",
-    "db:seed:team": "cd server && npm run seed:team",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
