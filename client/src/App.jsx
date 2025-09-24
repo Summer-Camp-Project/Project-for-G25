@@ -154,13 +154,7 @@ function App() {
               <Footer />
             </>
           } />
-          <Route path="/learning" element={
-            <>
-              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              <Courses />
-              <Footer />
-            </>
-          } />
+          {/* Educational Routes - Consolidated */}
           <Route path="/courses" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -175,6 +169,8 @@ function App() {
               <Footer />
             </>
           } />
+          {/* Redirect old learning route to courses */}
+          <Route path="/learning" element={<Navigate to="/courses" replace />} />
           <Route path="/educational-tours" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />

@@ -53,6 +53,130 @@ router.get('/dashboard', superAdminController.getDashboard);
 router.get('/analytics', superAdminController.getAnalytics);
 
 // ======================
+// EDUCATION MANAGEMENT (REAL DATA)
+// ======================
+
+/**
+ * @route   GET /api/super-admin/education/overview
+ * @desc    Education system overview (tours & courses) with real DB stats
+ */
+router.get('/education/overview', superAdminController.getEducationOverview);
+
+/**
+ * @route   GET /api/super-admin/education/tours
+ * @desc    List educational tours with filtering & pagination
+ */
+router.get('/education/tours', superAdminController.getAllEducationalTours);
+
+/**
+ * @route   PUT /api/super-admin/education/tours/:id/status
+ * @desc    Update educational tour status (published|draft|archived)
+ */
+router.put('/education/tours/:id/status', superAdminController.updateEducationalTourStatus);
+
+/**
+ * @route   DELETE /api/super-admin/education/tours/:id
+ * @desc    Delete or archive educational tour based on enrollments
+ */
+router.delete('/education/tours/:id', superAdminController.deleteEducationalTour);
+
+/**
+ * @route   GET /api/super-admin/education/courses
+ * @desc    List courses with filtering & pagination
+ */
+router.get('/education/courses', superAdminController.getAllCourses);
+
+/**
+ * @route   PUT /api/super-admin/education/courses/:id/status
+ * @desc    Update course status (published|draft|archived)
+ */
+router.put('/education/courses/:id/status', superAdminController.updateCourseStatus);
+
+/**
+ * @route   DELETE /api/super-admin/education/courses/:id
+ * @desc    Delete or archive course based on enrollments
+ */
+router.delete('/education/courses/:id', superAdminController.deleteCourse);
+
+/**
+ * @route   GET /api/super-admin/education/assignments
+ * @desc    List assignments with filtering & pagination
+ */
+router.get('/education/assignments', superAdminController.getAllAssignments);
+
+/**
+ * @route   PUT /api/super-admin/education/assignments/:id
+ * @desc    Update an assignment
+ */
+router.put('/education/assignments/:id', superAdminController.updateAssignment);
+
+/**
+ * @route   DELETE /api/super-admin/education/assignments/:id
+ * @desc    Delete an assignment
+ */
+router.delete('/education/assignments/:id', superAdminController.deleteAssignment);
+
+/**
+ * @route   GET /api/super-admin/education/discussions
+ * @desc    List discussions with filtering & pagination
+ */
+router.get('/education/discussions', superAdminController.getAllDiscussions);
+
+/**
+ * @route   PUT /api/super-admin/education/discussions/:id/moderate
+ * @desc    Moderate a discussion (pin/lock)
+ */
+router.put('/education/discussions/:id/moderate', superAdminController.moderateDiscussion);
+
+/**
+ * @route   DELETE /api/super-admin/education/discussions/:id
+ * @desc    Delete a discussion
+ */
+router.delete('/education/discussions/:id', superAdminController.deleteDiscussion);
+
+/**
+ * @route   GET /api/super-admin/education/enrollments
+ * @desc    List enrollments with filtering & pagination
+ */
+router.get('/education/enrollments', superAdminController.getAllEnrollments);
+
+/**
+ * @route   PUT /api/super-admin/education/enrollments/:id
+ * @desc    Update an enrollment
+ */
+router.put('/education/enrollments/:id', superAdminController.updateEnrollment);
+
+/**
+ * @route   DELETE /api/super-admin/education/enrollments/:id
+ * @desc    Delete an enrollment
+ */
+router.delete('/education/enrollments/:id', superAdminController.deleteEnrollment);
+
+/**
+ * @route   GET /api/super-admin/education/progress
+ * @desc    List learning progress with filtering & pagination
+ */
+router.get('/education/progress', superAdminController.getAllProgress);
+
+/**
+ * @route   PUT /api/super-admin/education/progress/:id
+ * @desc    Update learning progress
+ */
+router.put('/education/progress/:id', superAdminController.updateProgress);
+
+/**
+ * @route   DELETE /api/super-admin/education/progress/:id
+ * @desc    Delete learning progress record
+ */
+router.delete('/education/progress/:id', superAdminController.deleteProgress);
+
+/**
+ * @route   POST /api/super-admin/education/courses
+ * @desc    Create a new course (Super Admin only)
+ */
+router.post('/education/courses', superAdminController.createCourseSuperAdmin);
+
+// ======================
 // USER MANAGEMENT
 // ======================
 

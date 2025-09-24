@@ -110,6 +110,10 @@ const courseSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  isSuperAdminCourse: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

@@ -15,6 +15,7 @@ import Tours from '../pages/Tours'
 import VirtualMuseum from '../pages/VirtualMuseum'
 import ArtifactDetail from '../pages/ArtifactDetail'
 import EducationalTours from '../pages/EducationalTours'
+import Education from '../pages/Education'
 
 // Dashboards
 import AdminDashboard from '../pages/admin/AdminDashboard'
@@ -157,6 +158,13 @@ export default function App() {
           <>
             <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <EducationalTours />
+            <Footer />
+          </>
+        } />
+        <Route path="/education" element={
+          <>
+            <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            <Education />
             <Footer />
           </>
         } />

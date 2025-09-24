@@ -635,7 +635,7 @@ const enrollInCourse = async (req, res) => {
       });
     }
     
-    // Check if already enrolled in progress model (double check)
+    // Check if already enrolled in progress model
     const existingProgressEnrollment = progress.getCourseProgress ? 
       progress.getCourseProgress(courseId) : 
       progress.courses.find(c => c.courseId.toString() === courseId);

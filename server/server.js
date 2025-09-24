@@ -21,6 +21,7 @@ const artifactRoutes = require('./routes/artifacts'); // Added artifact manageme
 const staffRoutes = require('./routes/staff'); // Added staff management routes
 const eventRoutes = require('./routes/event'); // Added event management routes
 const organizerRoutes = require('./routes/organizer');
+const educationalTourRoutes = require('./routes/educationalTourRoutes');
 // const visitorRoutes = require('./routes/visitor');
 // const toursRoutes = require('./routes/tours');
 const tourPackageRoutes = require('./routes/TourPackage');
@@ -163,7 +164,9 @@ app.use('/api/learning', learningRoutes);
 app.use('/api/learning', courseManagementRoutes);
 app.use('/api/learning', enrollmentManagementRoutes);
 app.use('/api/learning', educationalContentManagementRoutes);
+app.use('/api/educational-tours', educationalTourRoutes);
 app.use('/api/assignments', require('./routes/assignments'));
+app.use('/api/discussions', require('./routes/discussions'));
 app.use('/api/education', educationRoutes); // Added comprehensive education management API
 
 // Health check endpoint

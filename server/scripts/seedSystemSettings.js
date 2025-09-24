@@ -350,7 +350,7 @@ const createSuperAdmin = async () => {
   
   try {
     // Check if super admin already exists
-    const existingSuperAdmin = await User.findOne({ role: 'super_admin' });
+    const existingSuperAdmin = await User.findOne({ role: 'superAdmin' });
     
     if (existingSuperAdmin) {
       console.log('⚠️ Super admin user already exists');
@@ -359,20 +359,25 @@ const createSuperAdmin = async () => {
 
     // Create super admin user
     const superAdminData = {
+      firstName: 'System',
+      lastName: 'Administrator',
       name: 'System Administrator',
       email: 'admin@ethioheritage360.com',
       password: 'SuperAdmin123!',
-      role: 'super_admin',
+      role: 'superAdmin',
       isActive: true,
-      isEmailVerified: true,
-      profile: {
-        bio: 'System Administrator with full platform access',
-        preferences: {
-          language: 'en',
-          notifications: {
-            email: true,
-            push: true
-          }
+      isVerified: true,
+      bio: 'System Administrator with full platform access',
+      permissions: [
+        'manage_all_users', 'manage_all_museums', 'approve_museum_registrations',
+        'manage_heritage_sites', 'view_platform_analytics', 'manage_system_settings',
+        'approve_high_value_rentals', 'manage_api_keys', 'view_audit_logs'
+      ],
+      preferences: {
+        language: 'en',
+        notifications: {
+          email: true,
+          push: true
         }
       }
     };

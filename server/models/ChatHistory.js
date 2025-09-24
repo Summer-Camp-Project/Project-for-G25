@@ -467,8 +467,14 @@ chatRoomSchema.pre('save', function(next) {
   next();
 });
 
-// Create models
-const Message = mongoose.model('Message', messageSchema);
+// Create models - Use existing Message model from Message.js if available
+let Message;
+try {
+  Message = mongoose.model('Message');
+} catch {
+  Message = mongoose.model('Message', messageSchema);
+}
+
 const ChatRoom = mongoose.model('ChatRoom', chatRoomSchema);
 
 module.exports = {

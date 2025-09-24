@@ -2,16 +2,82 @@ const User = require('../models/User');
 const Museum = require('../models/Museum');
 const HeritageSite = require('../models/HeritageSite');
 const Artifact = require('../models/Artifact');
-const Site = require('../models/Site');
 const Rental = require('../models/Rental');
 const Analytics = require('../models/Analytics');
 const SystemSettings = require('../models/SystemSettings');
 const AuditLog = require('../models/AuditLog');
+const Course = require('../models/Course');
+const EducationalTour = require('../models/EducationalTour');
+const Assignment = require('../models/Assignment');
+const Discussion = require('../models/Discussion');
+const LearningProgress = require('../models/LearningProgress');
 const mongoose = require('mongoose');
 
 // ======================
 // DASHBOARD & ANALYTICS
 // ======================
+
+// GET /api/super-admin/analytics
+async function getAnalytics(req, res) {
+  try {
+    const { startDate, endDate, museum, type } = req.query;
+    
+    const now = new Date();
+    const defaultStartDate = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const defaultEndDate = endDate ? new Date(endDate) : now;
+    
+    const dateFilter = {
+      createdAt: {
+        $gte: defaultStartDate,
+        $lte: defaultEndDate
+      }
+    };
+    
+    const [userStats, museumStats, artifactStats, rentalStats] = await Promise.all([
+      User.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: '$role',
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+      Museum.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+      Artifact.countDocuments(dateFilter),
+      Rental.countDocuments(dateFilter)
+    ]);
+    
+    res.json({
+      success: true,
+      data: {
+        users: userStats,
+        museums: museumStats,
+        artifacts: artifactStats,
+        rentals: rentalStats,
+        dateRange: {
+          start: defaultStartDate,
+          end: defaultEndDate
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get analytics error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch analytics data', 
+      error: error.message 
+    });
+  }
+}
 
 // GET /api/super-admin/dashboard
 async function getDashboard(req, res) {
@@ -19,12 +85,53 @@ async function getDashboard(req, res) {
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    
+    const [
+      totalUsers,
+      activeUsers,
+      totalMuseums,
+      activeMuseums
+    ] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ isActive: true }),
+      Museum.countDocuments({}),
+      Museum.countDocuments({ isActive: true })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        users: {
+          total: totalUsers,
+          active: activeUsers
+        },
+        museums: {
+          total: totalMuseums,
+          active: activeMuseums
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get dashboard error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch dashboard data', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/dashboard/comprehensive - Enhanced dashboard with full metrics
+async function getComprehensiveDashboard(req, res) {
+  try {
+    const now = new Date();
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    // Enhanced system overview widgets with detailed statistics
+    
     const [
-      // User statistics - Enhanced
+      // Basic counts
       totalUsers,
       activeUsers,
       newUsersThisMonth,
@@ -35,7 +142,7 @@ async function getDashboard(req, res) {
       verifiedUsers,
       unverifiedUsers,
 
-      // Museum statistics - Enhanced
+      // Enhanced Museum statistics
       totalMuseums,
       activeMuseums,
       pendingMuseumApprovals,
@@ -44,7 +151,7 @@ async function getDashboard(req, res) {
       museumsByStatus,
       museumAdmins,
 
-      // Heritage Sites statistics - Enhanced
+      // Enhanced Heritage Sites statistics
       totalHeritageSites,
       activeHeritageSites,
       unescoSites,
@@ -54,7 +161,7 @@ async function getDashboard(req, res) {
       verifiedSites,
       pendingSites,
 
-      // Content statistics - Enhanced
+      // Enhanced Content statistics
       totalArtifacts,
       publishedArtifacts,
       pendingContentApprovals,
@@ -62,7 +169,7 @@ async function getDashboard(req, res) {
       artifactsByCategory,
       artifactsThisMonth,
 
-      // Rental statistics - Enhanced
+      // Enhanced Rental statistics
       totalRentals,
       activeRentals,
       pendingRentalApprovals,
@@ -75,11 +182,1671 @@ async function getDashboard(req, res) {
       performanceMetrics,
       securityMetrics
     ] = await Promise.all([
-      // Enhanced User statistics
+      // Basic user statistics
       User.countDocuments({}),
-      User.countDocuments({
-        isActive: true,
-        lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      User.countDocuments({ isActive: true })
+    ]);
+
+    const platformStats = {
+      users: {
+        total: totalUsers,
+        active: activeUsers
+      }
+    };
+
+    res.json({
+      success: true,
+      dashboard: {
+        systemOverview: platformStats
+      }
+    });
+
+  } catch (error) {
+    console.error('Comprehensive Dashboard error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load comprehensive dashboard data',
+      error: error.message
+    });
+  }
+}
+
+// ======================
+// EDUCATION MANAGEMENT
+// ======================
+
+// GET /api/super-admin/education/overview
+async function getEducationOverview(req, res) {
+  try {
+    const [courseStats, tourStats, assignmentStats, enrollmentStats, progressStats] = await Promise.all([
+      Course.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+      EducationalTour.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+      Assignment.countDocuments(),
+      User.countDocuments({ role: 'student' }),
+      LearningProgress.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalProgress: { $avg: '$overallStats.averageScore' },
+            totalTimeSpent: { $sum: '$overallStats.totalTimeSpent' }
+          }
+        }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        courses: courseStats,
+        tours: tourStats,
+        assignments: assignmentStats,
+        enrollments: enrollmentStats,
+        progress: progressStats[0] || { totalProgress: 0, totalTimeSpent: 0 }
+      }
+    });
+  } catch (error) {
+    console.error('Get education overview error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch education overview', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/tours
+async function getAllEducationalTours(req, res) {
+  try {
+    const { page = 1, limit = 20, status, search } = req.query;
+    
+    const query = {};
+    if (status && status !== 'all') query.status = status;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const [tours, total] = await Promise.all([
+      EducationalTour.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('organizer', 'name email')
+        .populate('museum', 'name'),
+      EducationalTour.countDocuments(query)
+    ]);
+    
+    res.json({
+      success: true,
+      tours,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all educational tours error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch educational tours', 
+      error: error.message 
+    });
+  }
+}
+
+// PUT /api/super-admin/education/tours/:id/status
+async function updateEducationalTourStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!['published', 'draft', 'archived'].includes(status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid status. Must be published, draft, or archived' 
+      });
+    }
+    
+    const tour = await EducationalTour.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate('organizer', 'name email');
+    
+    if (!tour) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Educational tour not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Tour status updated to ${status}`,
+      tour
+    });
+  } catch (error) {
+    console.error('Update educational tour status error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update tour status', 
+      error: error.message 
+    });
+  }
+}
+
+// DELETE /api/super-admin/education/tours/:id
+async function deleteEducationalTour(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Check if tour has enrollments
+    const enrollmentCount = await User.countDocuments({
+      'educationalTours.tourId': id
+    });
+    
+    if (enrollmentCount > 0) {
+      // Archive instead of delete if has enrollments
+      const tour = await EducationalTour.findByIdAndUpdate(
+        id,
+        { status: 'archived' },
+        { new: true }
+      );
+      
+      return res.json({
+        success: true,
+        message: 'Tour archived due to existing enrollments',
+        tour
+      });
+    }
+    
+    await EducationalTour.findByIdAndDelete(id);
+    
+    res.json({
+      success: true,
+      message: 'Educational tour deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete educational tour error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete educational tour', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/courses
+async function getAllCourses(req, res) {
+  try {
+    const { page = 1, limit = 20, status, search } = req.query;
+    
+    const query = {};
+    if (status && status !== 'all') query.status = status;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const [courses, total] = await Promise.all([
+      Course.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('instructor', 'name email')
+        .populate('category', 'name'),
+      Course.countDocuments(query)
+    ]);
+    
+    res.json({
+      success: true,
+      courses,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all courses error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch courses', 
+      error: error.message 
+    });
+  }
+}
+
+// PUT /api/super-admin/education/courses/:id/status
+async function updateCourseStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!['published', 'draft', 'archived'].includes(status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid status. Must be published, draft, or archived' 
+      });
+    }
+    
+    const course = await Course.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate('instructor', 'name email');
+    
+    if (!course) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Course not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Course status updated to ${status}`,
+      course
+    });
+  } catch (error) {
+    console.error('Update course status error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update course status', 
+      error: error.message 
+    });
+  }
+}
+
+// DELETE /api/super-admin/education/courses/:id
+async function deleteCourse(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Check if course has enrollments
+    const enrollmentCount = await LearningProgress.countDocuments({
+      'courses.courseId': id
+    });
+    
+    if (enrollmentCount > 0) {
+      // Archive instead of delete if has enrollments
+      const course = await Course.findByIdAndUpdate(
+        id,
+        { status: 'archived' },
+        { new: true }
+      );
+      
+      return res.json({
+        success: true,
+        message: 'Course archived due to existing enrollments',
+        course
+      });
+    }
+    
+    await Course.findByIdAndDelete(id);
+    
+    res.json({
+      success: true,
+      message: 'Course deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete course error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete course', 
+      error: error.message 
+    });
+  }
+}
+
+// POST /api/super-admin/education/courses
+async function createCourseSuperAdmin(req, res) {
+  try {
+    const courseData = {
+      ...req.body,
+      createdBy: req.user._id
+    };
+    
+    const course = new Course(courseData);
+    await course.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Course created successfully',
+      course
+    });
+  } catch (error) {
+    console.error('Create course (super admin) error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to create course', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/assignments
+async function getAllAssignments(req, res) {
+  try {
+    const { page = 1, limit = 20, courseId, search } = req.query;
+    
+    const query = {};
+    if (courseId) query.courseId = courseId;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const [assignments, total] = await Promise.all([
+      Assignment.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('courseId', 'title')
+        .populate('lessonId', 'title'),
+      Assignment.countDocuments(query)
+    ]);
+    
+    res.json({
+      success: true,
+      assignments,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all assignments error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch assignments', 
+      error: error.message 
+    });
+  }
+}
+
+// POST /api/super-admin/education/assignments
+async function createAssignmentAdmin(req, res) {
+  try {
+    const { title, description, courseId, type, maxPoints, dueDate, submissionFormat } = req.body;
+    if (!title || !courseId || !dueDate) {
+      return res.status(400).json({ success: false, message: 'title, courseId and dueDate are required' });
+    }
+    const assignment = new Assignment({
+      title,
+      description: description || '',
+      courseId,
+      type: type || 'assignment',
+      maxPoints: maxPoints ?? 100,
+      dueDate: new Date(dueDate),
+      submissionFormat: submissionFormat || 'file',
+    });
+    await assignment.save();
+    await assignment.populate('courseId', 'title');
+    res.status(201).json({ success: true, message: 'Assignment created', assignment });
+  } catch (error) {
+    console.error('Create assignment (admin) error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create assignment', error: error.message });
+  }
+}
+
+// GET /api/super-admin/education/assignments/:id
+async function getAssignmentById(req, res) {
+  try {
+    const { id } = req.params;
+    const assignment = await Assignment.findById(id).populate('courseId', 'title');
+    if (!assignment) return res.status(404).json({ success: false, message: 'Assignment not found' });
+    res.json({ success: true, assignment });
+  } catch (error) {
+    console.error('Get assignment by id error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch assignment', error: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/assignments/:id
+async function updateAssignment(req, res) {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const assignment = await Assignment.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('courseId', 'title');
+    
+    if (!assignment) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Assignment not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Assignment updated successfully',
+      assignment
+    });
+  } catch (error) {
+    console.error('Update assignment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update assignment', 
+      error: error.message 
+    });
+  }
+}
+
+// DELETE /api/super-admin/education/assignments/:id
+async function deleteAssignment(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Check if assignment has submissions
+    const assignment = await Assignment.findById(id);
+    if (!assignment) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Assignment not found' 
+      });
+    }
+    
+    if (assignment.submissions && assignment.submissions.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot delete assignment with existing submissions' 
+      });
+    }
+    
+    await Assignment.findByIdAndDelete(id);
+    
+    res.json({
+      success: true,
+      message: 'Assignment deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete assignment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete assignment', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/discussions
+async function getAllDiscussions(req, res) {
+  try {
+    const { page = 1, limit = 20, courseId, category, search } = req.query;
+    
+    const query = {};
+    if (courseId) query.courseId = courseId;
+    if (category && category !== 'all') query.category = category;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const [discussions, total] = await Promise.all([
+      Discussion.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('courseId', 'title')
+        .populate('createdBy', 'name email'),
+      Discussion.countDocuments(query)
+    ]);
+    
+    res.json({
+      success: true,
+      discussions,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all discussions error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch discussions', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/discussions/:id
+async function getDiscussionById(req, res) {
+  try {
+    const { id } = req.params;
+    const discussion = await Discussion.findById(id)
+      .populate('courseId', 'title')
+      .populate('createdBy', 'name email')
+      .populate('posts.author', 'name email');
+      
+    if (!discussion) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Discussion not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      discussion
+    });
+  } catch (error) {
+    console.error('Get discussion by id error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch discussion', 
+      error: error.message 
+    });
+  }
+}
+
+// PUT /api/super-admin/education/discussions/:id/moderate
+async function moderateDiscussion(req, res) {
+  try {
+    const { id } = req.params;
+    const { action, reason } = req.body; // pin, lock, unlock, etc.
+    
+    const updateData = {};
+    
+    switch (action) {
+      case 'pin':
+        updateData['posts.$[].isPinned'] = true;
+        break;
+      case 'lock':
+        updateData['settings.isLocked'] = true;
+        break;
+      case 'unlock':
+        updateData['settings.isLocked'] = false;
+        break;
+      default:
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid moderation action' 
+        });
+    }
+    
+    const discussion = await Discussion.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!discussion) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Discussion not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Discussion ${action}ed successfully`,
+      discussion
+    });
+  } catch (error) {
+    console.error('Moderate discussion error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to moderate discussion', 
+      error: error.message 
+    });
+  }
+}
+
+// DELETE /api/super-admin/education/discussions/:id
+async function deleteDiscussion(req, res) {
+  try {
+    const { id } = req.params;
+    
+    const discussion = await Discussion.findById(id);
+    if (!discussion) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Discussion not found' 
+      });
+    }
+    
+    // Check if discussion has posts
+    if (discussion.posts && discussion.posts.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot delete discussion with existing posts. Consider locking it instead.' 
+      });
+    }
+    
+    await Discussion.findByIdAndDelete(id);
+    
+    res.json({
+      success: true,
+      message: 'Discussion deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete discussion error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete discussion', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/enrollments
+async function getAllEnrollments(req, res) {
+  try {
+    const { page = 1, limit = 20, courseId, userId, status } = req.query;
+    
+    const query = {};
+    if (courseId) query['courses.courseId'] = courseId;
+    if (userId) query.userId = userId;
+    
+    const [enrollments, total] = await Promise.all([
+      LearningProgress.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('userId', 'name email')
+        .populate('courses.courseId', 'title'),
+      LearningProgress.countDocuments(query)
+    ]);
+    
+    res.json({
+      success: true,
+      enrollments,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all enrollments error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch enrollments', 
+      error: error.message 
+    });
+  }
+}
+
+// PUT /api/super-admin/education/enrollments/:id
+async function updateEnrollment(req, res) {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const enrollment = await LearningProgress.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('userId', 'name email');
+    
+    if (!enrollment) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Enrollment not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Enrollment updated successfully',
+      enrollment
+    });
+  } catch (error) {
+    console.error('Update enrollment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update enrollment', 
+      error: error.message 
+    });
+  }
+}
+
+// DELETE /api/super-admin/education/enrollments/:id
+async function deleteEnrollment(req, res) {
+  try {
+    const { id } = req.params;
+    
+    const enrollment = await LearningProgress.findByIdAndDelete(id);
+    
+    if (!enrollment) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Enrollment not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Enrollment deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete enrollment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete enrollment', 
+      error: error.message 
+    });
+  }
+}
+
+// GET /api/super-admin/education/progress
+async function getAllProgress(req, res) {
+  try {
+    const { page = 1, limit = 20, userId, courseId } = req.query;
+    
+    const query = {};
+    if (userId) query.userId = userId;
+    if (courseId) query['courses.courseId'] = courseId;
+    
+    const [progressRecords, total] = await Promise.all([
+      LearningProgress.find(query)
+        .sort({ 'overallStats.lastActivityDate': -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('userId', 'name email')
+        .populate('courses.courseId', 'title'),
+      LearningProgress.countDocuments(query)
+    ]);
+    
+    res.json({
+      success: true,
+      progress: progressRecords,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get all progress error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch progress records', 
+      error: error.message 
+    });
+  }
+}
+
+// PUT /api/super-admin/education/progress/:id
+async function updateProgress(req, res) {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const progress = await LearningProgress.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('userId', 'name email');
+    
+    if (!progress) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Progress record not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Progress updated successfully',
+      progress
+    });
+  } catch (error) {
+    console.error('Update progress error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update progress', 
+      error: error.message 
+    });
+  }
+}
+
+// DELETE /api/super-admin/education/progress/:id
+async function deleteProgress(req, res) {
+  try {
+    const { id } = req.params;
+    
+    const progress = await LearningProgress.findByIdAndDelete(id);
+    
+    if (!progress) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Progress record not found' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Progress record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete progress error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete progress record', 
+      error: error.message 
+    });
+  }
+}
+
+// POST /api/super-admin/education/discussions
+async function createDiscussionAdmin(req, res) {
+  try {
+    const { title, description, courseId, type, category, createdBy } = req.body;
+    if (!title || !courseId) {
+      return res.status(400).json({ success: false, message: 'title and courseId are required' });
+    }
+    const discussion = new Discussion({
+      title,
+      description: description || '',
+      courseId,
+      type: type || 'general',
+      category: category || 'general',
+      createdBy: createdBy || (req.user ? req.user._id : undefined),
+      lastActivity: new Date(),
+    });
+    await discussion.save();
+    await discussion.populate('courseId', 'title');
+    await discussion.populate('createdBy', 'firstName lastName email');
+    res.status(201).json({ success: true, message: 'Discussion created', discussion });
+  } catch (error) {
+    console.error('Create discussion (admin) error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create discussion', error: error.message });
+  }
+}
+
+// GET /api/super-admin/education/discussions/:id
+async function getDiscussionById(req, res) {
+  try {
+    const { id } = req.params;
+    const discussion = await Discussion.findById(id)
+      .populate('courseId', 'title')
+      .populate('createdBy', 'firstName lastName email');
+    if (!discussion) return res.status(404).json({ success: false, message: 'Discussion not found' });
+    res.json({ success: true, discussion });
+  } catch (error) {
+    console.error('Get discussion by id error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch discussion', error: error.message });
+  }
+}
+
+// ======================
+// ASSIGNMENTS (REAL DATA)
+// ======================
+
+// GET /api/super-admin/education/assignments
+async function getAllAssignments(req, res) {
+  try {
+    const { page = 1, limit = 20, courseId, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const query = {};
+    if (courseId) query.courseId = courseId;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    const sort = {}; sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [items, total] = await Promise.all([
+      Assignment.find(query)
+        .populate('courseId', 'title')
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Assignment.countDocuments(query)
+    ]);
+
+    res.json({ success: true, items, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Get assignments error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch assignments', error: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/assignments/:id
+async function updateAssignment(req, res) {
+  try {
+    const { id } = req.params;
+    const update = { ...req.body, updatedAt: new Date() };
+    const updated = await Assignment.findByIdAndUpdate(id, update, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Assignment not found' });
+    res.json({ success: true, message: 'Assignment updated', assignment: updated });
+  } catch (error) {
+    console.error('Update assignment error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update assignment', error: error.message });
+  }
+}
+
+// DELETE /api/super-admin/education/assignments/:id
+async function deleteAssignment(req, res) {
+  try {
+    const { id } = req.params;
+    const existing = await Assignment.findById(id);
+    if (!existing) return res.status(404).json({ success: false, message: 'Assignment not found' });
+    await Assignment.deleteOne({ _id: id });
+    res.json({ success: true, message: 'Assignment deleted' });
+  } catch (error) {
+    console.error('Delete assignment error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete assignment', error: error.message });
+  }
+}
+
+// ======================
+// DISCUSSIONS (REAL DATA)
+// ======================
+
+// GET /api/super-admin/education/discussions
+async function getAllDiscussions(req, res) {
+  try {
+    const { page = 1, limit = 20, courseId, search, sortBy = 'lastActivity', sortOrder = 'desc' } = req.query;
+    const query = {};
+    if (courseId) query.courseId = courseId;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    const sort = {}; sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [items, total] = await Promise.all([
+      Discussion.find(query)
+        .populate('courseId', 'title')
+        .populate('createdBy', 'firstName lastName email')
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Discussion.countDocuments(query)
+    ]);
+
+    res.json({ success: true, items, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Get discussions error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch discussions', error: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/discussions/:id/moderate
+async function moderateDiscussion(req, res) {
+  try {
+    const { id } = req.params;
+    const { isPinned, isLocked } = req.body;
+    const update = { lastActivity: new Date() };
+    if (typeof isPinned === 'boolean') update.isPinned = isPinned;
+    if (typeof isLocked === 'boolean') update.isLocked = isLocked;
+    const updated = await Discussion.findByIdAndUpdate(id, { $set: update }, { new: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Discussion not found' });
+    res.json({ success: true, message: 'Discussion updated', discussion: updated });
+  } catch (error) {
+    console.error('Moderate discussion error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update discussion', error: error.message });
+  }
+}
+
+// DELETE /api/super-admin/education/discussions/:id
+async function deleteDiscussion(req, res) {
+  try {
+    const { id } = req.params;
+    const existing = await Discussion.findById(id);
+    if (!existing) return res.status(404).json({ success: false, message: 'Discussion not found' });
+    await Discussion.deleteOne({ _id: id });
+    res.json({ success: true, message: 'Discussion deleted' });
+  } catch (error) {
+    console.error('Delete discussion error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete discussion', error: error.message });
+  }
+}
+
+// ======================
+// ENROLLMENTS (REAL DATA)
+// ======================
+
+// GET /api/super-admin/education/enrollments
+async function getAllEnrollments(req, res) {
+  try {
+    const { page = 1, limit = 20, courseId, userId, status, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    // Build aggregation pipeline for complex filtering
+    const pipeline = [];
+
+    // Match stage
+    const matchConditions = {};
+    if (courseId) matchConditions['courses.courseId'] = courseId;
+    if (userId) matchConditions.userId = userId;
+
+    pipeline.push({ $match: matchConditions });
+
+    // Unwind courses for individual enrollment records
+    pipeline.push({ $unwind: '$courses' });
+
+    // Status filtering after unwind
+    if (status) {
+      pipeline.push({ $match: { 'courses.status': status } });
+    }
+
+    // Lookup course details
+    pipeline.push({
+      $lookup: {
+        from: 'courses',
+        localField: 'courses.courseId',
+        foreignField: '_id',
+        as: 'courseDetails'
+      }
+    });
+
+    // Lookup user details
+    pipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'userDetails'
+      }
+    });
+
+    // Add course and user info
+    pipeline.push({
+      $addFields: {
+        course: { $arrayElemAt: ['$courseDetails', 0] },
+        user: { $arrayElemAt: ['$userDetails', 0] }
+      }
+    });
+
+    // Search functionality
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'course.title': { $regex: search, $options: 'i' } },
+            { 'course.category': { $regex: search, $options: 'i' } },
+            { 'user.name': { $regex: search, $options: 'i' } },
+            { 'user.email': { $regex: search, $options: 'i' } }
+          ]
+        }
+      });
+    }
+
+    // Project final structure
+    pipeline.push({
+      $project: {
+        enrollmentId: '$courses._id',
+        userId: 1,
+        courseId: '$courses.courseId',
+        status: '$courses.status',
+        enrolledAt: '$courses.enrolledAt',
+        startedAt: '$courses.startedAt',
+        completedAt: '$courses.completedAt',
+        progress: '$courses.progress',
+        totalLessonsCompleted: { $size: { $ifNull: ['$courses.lessons', []] } },
+        course: {
+          _id: '$course._id',
+          title: '$course.title',
+          category: '$course.category',
+          difficulty: '$course.difficulty',
+          image: '$course.image',
+          instructor: '$course.instructor'
+        },
+        user: {
+          _id: '$user._id',
+          name: '$user.name',
+          email: '$user.email',
+          role: '$user.role'
+        }
+      }
+    });
+
+    // Get total count for pagination
+    const countPipeline = [...pipeline];
+    countPipeline.push({ $count: 'total' });
+    const totalResult = await LearningProgress.aggregate(countPipeline);
+    const totalCount = totalResult[0]?.total || 0;
+
+    // Sort
+    const sortStage = {};
+    sortStage[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    pipeline.push({ $sort: sortStage });
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: parseInt(limit) });
+
+    const enrollments = await LearningProgress.aggregate(pipeline);
+
+    res.json({
+      success: true,
+      enrollments,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / parseInt(limit)),
+        totalEnrollments: totalCount,
+        hasNextPage: skip + enrollments.length < totalCount,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('Get enrollments error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch enrollments', error: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/enrollments/:id
+async function updateEnrollment(req, res) {
+  try {
+    const { id } = req.params;
+    const { status, progress } = req.body;
+
+    const updateData = { updatedAt: new Date() };
+    if (status) updateData['courses.$.status'] = status;
+    if (typeof progress === 'number') updateData['courses.$.progress'] = progress;
+
+    if (status === 'completed') {
+      updateData['courses.$.completedAt'] = new Date();
+    }
+
+    const updated = await LearningProgress.findOneAndUpdate(
+      { 'courses._id': id },
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ success: false, message: 'Enrollment not found' });
+
+    res.json({ success: true, message: 'Enrollment updated', enrollment: updated });
+  } catch (error) {
+    console.error('Update enrollment error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update enrollment', error: error.message });
+  }
+}
+
+// DELETE /api/super-admin/education/enrollments/:id
+async function deleteEnrollment(req, res) {
+  try {
+    const { id } = req.params;
+
+    const result = await LearningProgress.updateMany(
+      { 'courses._id': id },
+      { $pull: { courses: { _id: id } } }
+    );
+
+    if (result.modifiedCount === 0) return res.status(404).json({ success: false, message: 'Enrollment not found' });
+
+    res.json({ success: true, message: 'Enrollment deleted' });
+  } catch (error) {
+    console.error('Delete enrollment error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete enrollment', error: error.message });
+  }
+}
+
+// ======================
+// LEARNING PROGRESS (REAL DATA)
+// ======================
+
+// GET /api/super-admin/education/progress
+async function getAllProgress(req, res) {
+  try {
+    const { page = 1, limit = 20, userId, courseId, search, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+
+    const query = {};
+    if (userId) query.userId = userId;
+    if (courseId) query['courses.courseId'] = courseId;
+    if (search) {
+      // This would require more complex aggregation for search
+    }
+
+    const sort = {}; sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [items, total] = await Promise.all([
+      LearningProgress.find(query)
+        .populate('userId', 'name email')
+        .populate('courses.courseId', 'title category')
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      LearningProgress.countDocuments(query)
+    ]);
+
+    res.json({ success: true, items, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Get progress error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch progress', error: error.message });
+  }
+}
+
+// ======================
+// COURSE CREATION (SUPER ADMIN)
+// ======================
+
+// POST /api/super-admin/education/courses
+async function createCourseSuperAdmin(req, res) {
+  try {
+    const courseData = req.body;
+
+    // Handle uploaded files
+    let imageUrl = courseData.image || 'https://picsum.photos/400/300';
+    let thumbnailUrl = courseData.thumbnail || 'https://picsum.photos/200/150';
+
+    if (req.files) {
+      if (req.files.courseImage && req.files.courseImage[0]) {
+        imageUrl = `/uploads/courses/images/${req.files.courseImage[0].filename}`;
+      }
+      if (req.files.courseThumbnail && req.files.courseThumbnail[0]) {
+        thumbnailUrl = `/uploads/courses/images/${req.files.courseThumbnail[0].filename}`;
+      }
+    }
+
+    const newCourse = new Course({
+      ...courseData,
+      organizerId: null, // Super admin created courses don't belong to specific organizers
+      createdBy: req.user ? req.user._id : null,
+      status: 'published', // Super admin courses are published by default
+      enrollmentCount: 0,
+      averageRating: 0,
+      isActive: true,
+      image: imageUrl,
+      imageUrl: imageUrl,
+      thumbnail: thumbnailUrl,
+      thumbnailUrl: thumbnailUrl,
+      isSuperAdminCourse: true // Flag to identify super admin created courses
+    });
+
+    await newCourse.save();
+
+    const transformedCourse = {
+      id: newCourse._id.toString(),
+      title: newCourse.title,
+      description: newCourse.description,
+      category: newCourse.category,
+      difficulty: newCourse.difficulty,
+      duration: newCourse.duration || 4,
+      maxStudents: newCourse.maxStudents || 30,
+      enrolledStudents: 0,
+      startDate: newCourse.startDate,
+      endDate: newCourse.endDate,
+      price: newCourse.price || 0,
+      status: 'published',
+      instructor: newCourse.instructor || 'Heritage Expert',
+      rating: 0,
+      completionRate: 0,
+      totalLessons: Math.floor((newCourse.estimatedDuration || 240) / 30),
+      curriculum: newCourse.curriculum || [],
+      createdAt: newCourse.createdAt,
+      updatedAt: newCourse.updatedAt,
+      isSuperAdminCourse: true
+    };
+
+    res.status(201).json({
+      success: true,
+      data: transformedCourse,
+      message: 'Course created successfully by Super Admin'
+    });
+  } catch (error) {
+    console.error('Create course (super admin) error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/progress/:id
+async function updateProgress(req, res) {
+  try {
+    const { id } = req.params;
+    const { courses } = req.body;
+
+    const updated = await LearningProgress.findByIdAndUpdate(
+      id,
+      { $set: { courses, updatedAt: new Date() } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) return res.status(404).json({ success: false, message: 'Progress record not found' });
+
+    res.json({ success: true, message: 'Progress updated', progress: updated });
+  } catch (error) {
+    console.error('Update progress error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update progress', error: error.message });
+  }
+}
+
+// DELETE /api/super-admin/education/progress/:id
+async function deleteProgress(req, res) {
+  try {
+    const { id } = req.params;
+
+    const deleted = await LearningProgress.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ success: false, message: 'Progress record not found' });
+
+    res.json({ success: true, message: 'Progress record deleted' });
+  } catch (error) {
+    console.error('Delete progress error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete progress', error: error.message });
+  }
+}
+
+// ======================
+// EDUCATION MANAGEMENT (REAL DATA)
+// ======================
+
+// GET /api/super-admin/education/overview
+async function getEducationOverview(req, res) {
+  try {
+    const [
+      totalTours,
+      publishedTours,
+      draftTours,
+      archivedTours,
+      upcomingTours,
+      ongoingTours,
+      totalEnrollments,
+      avgTourRating,
+      totalCourses,
+      publishedCourses,
+      draftCourses,
+      archivedCourses
+    ] = await Promise.all([
+      EducationalTour.countDocuments({}),
+      EducationalTour.countDocuments({ status: 'published', isActive: true }),
+      EducationalTour.countDocuments({ status: 'draft', isActive: true }),
+      EducationalTour.countDocuments({ status: 'archived' }),
+      EducationalTour.countDocuments({ startDate: { $gt: new Date() }, isActive: true }),
+      EducationalTour.countDocuments({ startDate: { $lte: new Date() }, endDate: { $gte: new Date() }, isActive: true }),
+      EducationalTour.aggregate([
+        { $unwind: '$enrollments' },
+        { $match: { 'enrollments.status': { $in: ['pending', 'confirmed', 'completed'] } } },
+        { $count: 'count' }
+      ]).then(r => r[0]?.count || 0),
+      EducationalTour.aggregate([
+        { $group: { _id: null, rating: { $avg: '$stats.averageRating' } } }
+      ]).then(r => r[0]?.rating || 0),
+      Course.countDocuments({}),
+      Course.countDocuments({ status: 'published', isActive: true }),
+      Course.countDocuments({ status: 'draft', isActive: true }),
+      Course.countDocuments({ status: 'archived' })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        tours: {
+          total: totalTours,
+          published: publishedTours,
+          draft: draftTours,
+          archived: archivedTours,
+          upcoming: upcomingTours,
+          ongoing: ongoingTours,
+          totalEnrollments,
+          averageRating: Number(avgTourRating?.toFixed?.(2) || 0)
+        },
+        courses: {
+          total: totalCourses,
+          published: publishedCourses,
+          draft: draftCourses,
+          archived: archivedCourses
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Education overview error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load education overview', error: error.message });
+  }
+}
+
+// GET /api/super-admin/education/tours
+async function getAllEducationalTours(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+    if (status && status !== 'all') query.status = status;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { shortDescription: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const sort = {}; sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [items, total] = await Promise.all([
+      EducationalTour.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('organizerId', 'firstName lastName email'),
+      EducationalTour.countDocuments(query)
+    ]);
+
+    res.json({ success: true, items, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Get educational tours error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch educational tours', error: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/tours/:id/status
+async function updateEducationalTourStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // expected: 'published' | 'draft' | 'archived'
+    if (!['published', 'draft', 'archived'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+    const updated = await EducationalTour.findByIdAndUpdate(
+      id,
+      { $set: { status, isActive: status !== 'archived', updatedAt: new Date() } },
+      { new: true, runValidators: true }
+    );
+    if (!updated) return res.status(404).json({ success: false, message: 'Tour not found' });
+    res.json({ success: true, message: 'Tour status updated', tour: updated });
+  } catch (error) {
+    console.error('Update tour status error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update tour status', error: error.message });
+  }
+}
+
+// DELETE /api/super-admin/education/tours/:id
+async function deleteEducationalTour(req, res) {
+  try {
+    const { id } = req.params;
+    const tour = await EducationalTour.findById(id);
+    if (!tour) return res.status(404).json({ success: false, message: 'Tour not found' });
+    // If active enrollments exist, prefer archive over delete in production
+    const activeEnrollments = (tour.enrollments || []).filter(e => ['pending', 'confirmed'].includes(e.status)).length;
+    if (activeEnrollments > 0) {
+      tour.status = 'archived';
+      tour.isActive = false;
+      await tour.save();
+      return res.json({ success: true, message: 'Tour had active enrollments; archived instead of delete', tour });
+    }
+    await EducationalTour.deleteOne({ _id: id });
+    res.json({ success: true, message: 'Tour deleted' });
+  } catch (error) {
+    console.error('Delete tour error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete tour', error: error.message });
+  }
+}
+
+// GET /api/super-admin/education/courses
+async function getAllCourses(req, res) {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+    if (status && status !== 'all') query.status = status;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const sort = {}; sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const [items, total] = await Promise.all([
+      Course.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit))
+        .populate('organizerId', 'firstName lastName email'),
+      Course.countDocuments(query)
+    ]);
+
+    res.json({ success: true, items, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    console.error('Get courses error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch courses', error: error.message });
+  }
+}
+
+// PUT /api/super-admin/education/courses/:id/status
+async function updateCourseStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'published' | 'draft' | 'archived'
+    if (!['published', 'draft', 'archived'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+    const updated = await Course.findByIdAndUpdate(
+      id,
+      { $set: { status, isActive: status !== 'archived', updatedAt: new Date() } },
+      { new: true, runValidators: true }
+    );
+    if (!updated) return res.status(404).json({ success: false, message: 'Course not found' });
+    res.json({ success: true, message: 'Course status updated', course: updated });
+  } catch (error) {
+    console.error('Update course status error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update course status', error: error.message });
+  }
+}
+
+// DELETE /api/super-admin/education/courses/:id
+async function deleteCourse(req, res) {
+  try {
+    const { id } = req.params;
+    const course = await Course.findById(id);
+    if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+    // If enrollments tracked elsewhere, consider archiving; for now delete when safe
+    if (course.enrollmentCount && course.enrollmentCount > 0) {
+      course.status = 'archived';
+      course.isActive = false;
+      await course.save();
+      return res.json({ success: true, message: 'Course had enrollments; archived instead of delete', course });
+    }
+    await Course.deleteOne({ _id: id });
+    res.json({ success: true, message: 'Course deleted' });
+  } catch (error) {
+    console.error('Delete course error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete course', error: error.message });
+  }
+}
+
+// GET /api/super-admin/dashboard/stats (Fixed)
+async function getDashboardStats(req, res) {
+  try {
+    const now = new Date();
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const [
+      totalUsers,
+      activeUsers,
+      newUsersThisMonth,
+      newUsersLastMonth,
+      newUsersThisWeek,
+      newUsersToday,
+      usersByRole,
+      verifiedUsers,
+      unverifiedUsers,
+      totalMuseums,
+      activeMuseums,
+      pendingMuseumApprovals,
+      rejectedMuseums,
+      museumsByRegion,
+      museumsByStatus,
+      museumAdmins,
+      totalHeritageSites,
+      activeHeritageSites,
+      unescoSites,
+      sitesByRegion,
+      sitesByType,
+      sitesByDesignation,
+      verifiedSites,
+      pendingSites,
+      totalArtifacts,
+      publishedArtifacts,
+      pendingArtifacts,
+      artifactsByMuseum,
+      artifactsByCategory,
+      newArtifactsThisMonth,
+      totalRentals,
+      activeRentals,
+      pendingRentalApprovals,
+      completedRentals,
+      totalRevenueResult,
+      systemHealth,
+      recentActivities,
+      performanceMetrics,
+      securityMetrics
+    ] = await Promise.all([
+      User.countDocuments({}),
+      User.countDocuments({ 
+        lastLoginAt: { $gte: lastWeek }
       }),
       User.countDocuments({ createdAt: { $gte: thisMonth } }),
       User.countDocuments({
@@ -3600,6 +5367,28 @@ module.exports = {
   // Dashboard & Analytics
   getDashboard,
   getAnalytics,
+  // Education Overview/Tours/Courses
+  getEducationOverview,
+  getAllEducationalTours,
+  updateEducationalTourStatus,
+  deleteEducationalTour,
+  getAllCourses,
+  updateCourseStatus,
+  deleteCourse,
+  // Course Creation (Super Admin)
+  createCourseSuperAdmin,
+  // Assignments (Super Admin)
+  createAssignmentAdmin,
+  getAllAssignments,
+  getAssignmentById,
+  updateAssignment,
+  deleteAssignment,
+  // Discussions (Super Admin)
+  createDiscussionAdmin,
+  getAllDiscussions,
+  getDiscussionById,
+  moderateDiscussion,
+  deleteDiscussion,
 
   // User Management
   getAllUsers,
@@ -3664,5 +5453,15 @@ module.exports = {
   createHeritageSite,
   getHeritageSite,
   updateHeritageSite,
-  deleteHeritageSite
+  deleteHeritageSite,
+
+  // Enrollment Management
+  getAllEnrollments,
+  updateEnrollment,
+  deleteEnrollment,
+
+  // Learning Progress Management
+  getAllProgress,
+  updateProgress,
+  deleteProgress
 };

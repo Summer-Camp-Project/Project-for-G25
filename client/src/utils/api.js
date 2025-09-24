@@ -15,10 +15,6 @@ class ApiClient {
   async checkBackendAvailability() {
     if (this.backendChecked) return !this.useMockAPI
 
-    console.log('=== CHECKING BACKEND AVAILABILITY ===');
-    console.log('API Base URL:', this.baseURL);
-    console.log('Initial useMockAPI:', this.useMockAPI);
-
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 3000)
@@ -35,19 +31,15 @@ class ApiClient {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('✅ Backend connected:', data.message || 'Health check passed')
         this.useMockAPI = false
       } else {
-        console.warn('❌ Backend health check failed with status:', response.status)
         this.useMockAPI = true
       }
     } catch (error) {
-      console.warn('❌ Backend not available, enabling mock API:', error.message)
       this.useMockAPI = true
     }
 
     this.backendChecked = true
-    console.log('Final useMockAPI:', this.useMockAPI);
     return !this.useMockAPI
   }
 
@@ -95,28 +87,21 @@ class ApiClient {
 
   // Auth endpoints
   async login(credentials) {
-    console.log('API Login attempt with credentials:', { email: credentials.email, password: '***' })
-
     try {
       await this.checkBackendAvailability()
 
       if (this.useMockAPI) {
-        console.log('Using mock API for login')
         return mockApi.login(credentials)
       }
 
-      console.log('Using real backend for login')
       const result = await this.request('/auth/login', {
         method: 'POST',
         body: credentials,
       })
 
-      console.log('Login successful:', { success: result.success, hasToken: !!result.token, hasUser: !!result.user })
       return result
 
     } catch (error) {
-      console.error('Login failed:', error.message)
-      
       // Don't fall back to mock API for authentication errors (4xx)
       // Only fall back for network/server errors (5xx)
       if (error.message.includes('Invalid email or password') || 
@@ -129,42 +114,24 @@ class ApiClient {
       }
       
       // Fall back to mock API only for network/server errors
-      console.log('Network/server error, falling back to mock API:', error.message)
       try {
         return mockApi.login(credentials)
       } catch (mockError) {
-        console.error('Mock API login also failed:', mockError.message)
         throw new Error('Authentication service unavailable')
       }
     }
   }
 
   async register(userData) {
-    console.log('🌐 API REGISTER: Starting API registration request')
-    console.log('📊 API REGISTER: User data received:', {
-      ...userData,
-      password: '[HIDDEN]'
-    })
-
     await this.checkBackendAvailability()
 
     if (this.useMockAPI) {
-      console.log('🔄 API REGISTER: Using mock API')
       return mockApi.register(userData)
     }
 
-    console.log('🔄 API REGISTER: Using real backend')
     const result = await this.request('/auth/register', {
       method: 'POST',
       body: userData,
-    })
-
-    console.log('✅ API REGISTER: Backend response:', {
-      success: result?.success,
-      hasToken: !!result?.token,
-      hasUser: !!result?.user,
-      userRole: result?.user?.role,
-      userName: result?.user?.name || result?.user?.firstName
     })
 
     return result
@@ -745,43 +712,24 @@ class ApiClient {
 
   // Museum Admin endpoints
   async getMuseumProfile() {
-    // Force check backend availability before making the call
     await this.checkBackendAvailability();
 
     if (this.useMockAPI) {
       return mockApi.getMuseumProfile()
     }
 
-    console.log('=== GET MUSEUM PROFILE API CALL ===');
-    console.log('Using mock API:', this.useMockAPI);
-
-    try {
-      const response = await this.request('/museums/profile', {
-        method: 'GET',
-      });
-
-      console.log('Museum profile API response:', response);
-      return response;
-    } catch (error) {
-      console.error('Could not get museum profile:', error.message);
-      throw error;
-    }
+    return this.request('/museums/profile', {
+      method: 'GET',
+    });
   }
 
   async updateMuseumProfile(profileData) {
-    console.log('=== UPDATE MUSEUM PROFILE API CALL ===');
-    console.log('Using mock API:', this.useMockAPI);
-    console.log('Profile data:', profileData);
-
-    // Force check backend availability before making the call
     await this.checkBackendAvailability();
 
     if (this.useMockAPI) {
-      console.log('Using mock API for update');
       return mockApi.updateMuseumProfile(profileData)
     }
 
-    console.log('Using real API for update');
     return this.request('/museums/profile', {
       method: 'PUT',
       body: profileData,
@@ -829,19 +777,9 @@ class ApiClient {
       }
     }
 
-    console.log('=== GET MUSEUM DASHBOARD STATS API CALL ===');
-
-    try {
-      const response = await this.request('/museums/dashboard/stats', {
-        method: 'GET',
-      });
-
-      console.log('Dashboard stats API response:', response);
-      return response;
-    } catch (error) {
-      console.error('Could not get dashboard stats:', error.message);
-      throw error;
-    }
+    return this.request('/museums/dashboard/stats', {
+      method: 'GET',
+    });
   }
 
   async getRecentArtifacts() {
@@ -854,19 +792,9 @@ class ApiClient {
       ]
     }
 
-    console.log('=== GET RECENT ARTIFACTS API CALL ===');
-
-    try {
-      const response = await this.request('/museums/dashboard/recent-artifacts', {
-        method: 'GET',
-      });
-
-      console.log('Recent artifacts API response:', response);
-      return response;
-    } catch (error) {
-      console.error('Could not get recent artifacts:', error.message);
-      throw error;
-    }
+    return this.request('/museums/dashboard/recent-artifacts', {
+      method: 'GET',
+    });
   }
 
   async getPendingTasks() {
@@ -880,19 +808,9 @@ class ApiClient {
       ]
     }
 
-    console.log('=== GET PENDING TASKS API CALL ===');
-
-    try {
-      const response = await this.request('/museums/dashboard/pending-tasks', {
-        method: 'GET',
-      });
-
-      console.log('Pending tasks API response:', response);
-      return response;
-    } catch (error) {
-      console.error('Could not get pending tasks:', error.message);
-      throw error;
-    }
+    return this.request('/museums/dashboard/pending-tasks', {
+      method: 'GET',
+    });
   }
 
   async getMuseumArtifacts({ page = 1, limit = 20, category, search } = {}) {
@@ -1227,13 +1145,6 @@ class ApiClient {
     })
   }
 
-  // System monitoring
-  async getSystemHealth() {
-    if (this.useMockAPI) {
-      return mockApi.getSystemHealth()
-    }
-    return this.request('/admin/health')
-  }
 
   async getActivityLogs({ page = 1, limit = 50 } = {}) {
     if (this.useMockAPI) {
@@ -1291,27 +1202,19 @@ class ApiClient {
 
   // Course/Education endpoints
   async getCourses(filters = {}) {
-    console.log('🎓 API: Getting courses with filters:', filters);
-    
     try {
       await this.checkBackendAvailability();
       
       if (this.useMockAPI) {
-        console.log('🎓 API: Using mock API for courses');
-        // Build endpoint string with query parameters for mock API
         const params = new URLSearchParams(filters);
         const endpoint = `/education/public/courses?${params.toString()}`;
         return mockApi.getCourses(endpoint);
       }
       
-      console.log('🎓 API: Using real backend for courses');
       const params = new URLSearchParams(filters);
       return this.request(`/learning/courses?${params.toString()}`);
     } catch (error) {
-      console.error('🎓 API: Error getting courses:', error);
-      
       // Fallback to mock API on error
-      console.log('🎓 API: Falling back to mock API');
       const params = new URLSearchParams(filters);
       const endpoint = `/education/public/courses?${params.toString()}`;
       return mockApi.getCourses(endpoint);
@@ -1319,52 +1222,34 @@ class ApiClient {
   }
 
   async getCourseById(courseId) {
-    console.log('🎓 API: Getting course by ID:', courseId);
-    
     try {
       await this.checkBackendAvailability();
       
       if (this.useMockAPI) {
-        console.log('🎓 API: Using mock API for course details');
         return mockApi.getCourseById(courseId);
       }
       
-      console.log('🎓 API: Using real backend for course details');
       return this.request(`/learning/courses/${courseId}`);
     } catch (error) {
-      console.error('🎓 API: Error getting course:', error);
-      
-      // Fallback to mock API
-      console.log('🎓 API: Falling back to mock API');
       return mockApi.getCourseById(courseId);
     }
   }
 
   async getCourseLessons(courseId) {
-    console.log('🎓 API: Getting course lessons for:', courseId);
-    
     try {
       await this.checkBackendAvailability();
       
       if (this.useMockAPI) {
-        console.log('🎓 API: Using mock API for course lessons');
         return mockApi.getCourseLessons(courseId);
       }
       
-      console.log('🎓 API: Using real backend for course lessons');
       return this.request(`/learning/courses/${courseId}/lessons`);
     } catch (error) {
-      console.error('🎓 API: Error getting course lessons:', error);
-      
-      // Fallback to mock API
-      console.log('🎓 API: Falling back to mock API');
       return mockApi.getCourseLessons(courseId);
     }
   }
 
   async enrollInCourse(courseId) {
-    console.log('🎓 API: Enrolling in course:', courseId);
-    
     try {
       await this.checkBackendAvailability();
       
@@ -1376,16 +1261,11 @@ class ApiClient {
         method: 'POST'
       });
     } catch (error) {
-      console.error('🎓 API: Error enrolling in course:', error);
-      
-      // Fallback to mock API
       return mockApi.enrollInCourse(courseId);
     }
   }
 
   async getCourseProgress(courseId) {
-    console.log('🎓 API: Getting course progress:', courseId);
-    
     try {
       await this.checkBackendAvailability();
       
@@ -1395,16 +1275,11 @@ class ApiClient {
       
       return this.request(`/learning/courses/${courseId}/progress`);
     } catch (error) {
-      console.error('🎓 API: Error getting course progress:', error);
-      
-      // Fallback to mock API
       return mockApi.getCourseProgress(courseId);
     }
   }
 
   async updateLessonProgress(courseId, lessonId, completed = true) {
-    console.log('🎓 API: Updating lesson progress:', { courseId, lessonId, completed });
-    
     try {
       await this.checkBackendAvailability();
       
@@ -1417,17 +1292,12 @@ class ApiClient {
         body: { completed }
       });
     } catch (error) {
-      console.error('🎓 API: Error updating lesson progress:', error);
-      
-      // Fallback to mock API
       return mockApi.updateLessonProgress(courseId, lessonId, completed);
     }
   }
 
   // Course management for educators
   async createCourse(courseData) {
-    console.log('🎓 API: Creating course:', courseData);
-    
     try {
       await this.checkBackendAvailability();
       
@@ -1440,16 +1310,11 @@ class ApiClient {
         body: courseData
       });
     } catch (error) {
-      console.error('🎓 API: Error creating course:', error);
-      
-      // Fallback to mock API
       return mockApi.createCourse(courseData);
     }
   }
 
   async updateCourse(courseId, courseData) {
-    console.log('🎓 API: Updating course:', courseId);
-    
     try {
       await this.checkBackendAvailability();
       
@@ -1462,16 +1327,11 @@ class ApiClient {
         body: courseData
       });
     } catch (error) {
-      console.error('🎓 API: Error updating course:', error);
-      
-      // Fallback to mock API
       return mockApi.updateCourse(courseId, courseData);
     }
   }
 
   async deleteCourse(courseId) {
-    console.log('🎓 API: Deleting course:', courseId);
-    
     try {
       await this.checkBackendAvailability();
       
@@ -1483,9 +1343,6 @@ class ApiClient {
         method: 'DELETE'
       });
     } catch (error) {
-      console.error('🎓 API: Error deleting course:', error);
-      
-      // Fallback to mock API
       return mockApi.deleteCourse(courseId);
     }
   }

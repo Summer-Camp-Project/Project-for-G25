@@ -92,6 +92,19 @@ const createCourse = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Organizer ID required' });
     }
     
+    // Handle uploaded files
+    let imageUrl = courseData.image || 'https://picsum.photos/400/300';
+    let thumbnailUrl = courseData.thumbnail || 'https://picsum.photos/200/150';
+    
+    if (req.files) {
+      if (req.files.courseImage && req.files.courseImage[0]) {
+        imageUrl = `/uploads/courses/images/${req.files.courseImage[0].filename}`;
+      }
+      if (req.files.courseThumbnail && req.files.courseThumbnail[0]) {
+        thumbnailUrl = `/uploads/courses/images/${req.files.courseThumbnail[0].filename}`;
+      }
+    }
+    
     const newCourse = new Course({
       ...courseData,
       organizerId: new mongoose.Types.ObjectId(organizerId),
@@ -99,7 +112,11 @@ const createCourse = async (req, res) => {
       status: 'published',
       enrollmentCount: 0,
       averageRating: 0,
-      isActive: true
+      isActive: true,
+      image: imageUrl,
+      imageUrl: imageUrl,
+      thumbnail: thumbnailUrl,
+      thumbnailUrl: thumbnailUrl
     });
     
     await newCourse.save();
@@ -185,6 +202,18 @@ const updateCourse = async (req, res) => {
     delete updateData._id;
     delete updateData.__v;
     delete updateData.createdAt;
+    
+    // Handle uploaded files
+    if (req.files) {
+      if (req.files.courseImage && req.files.courseImage[0]) {
+        updateData.image = `/uploads/courses/images/${req.files.courseImage[0].filename}`;
+        updateData.imageUrl = updateData.image;
+      }
+      if (req.files.courseThumbnail && req.files.courseThumbnail[0]) {
+        updateData.thumbnail = `/uploads/courses/images/${req.files.courseThumbnail[0].filename}`;
+        updateData.thumbnailUrl = updateData.thumbnail;
+      }
+    }
     
     const course = await Course.findByIdAndUpdate(id, updateData, { new: true });
     
