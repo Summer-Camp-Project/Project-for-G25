@@ -1347,6 +1347,156 @@ class ApiClient {
     }
   }
 
+  // ======================
+  // RENTAL REQUESTS API
+  // ======================
+
+  async getAllRentalRequests(params = {}) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.getAllRentalRequests(params);
+      }
+      
+      const queryParams = new URLSearchParams(params).toString()
+      const endpoint = `/rentals${queryParams ? `?${queryParams}` : ''}`
+      return this.request(endpoint)
+    } catch (error) {
+      return mockApi.getAllRentalRequests(params);
+    }
+  }
+
+  async getRentalRequestById(id) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.getRentalRequestById(id);
+      }
+      
+      return this.request(`/rentals/${id}`)
+    } catch (error) {
+      return mockApi.getRentalRequestById(id);
+    }
+  }
+
+  async createRentalRequest(data) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.createRentalRequest(data);
+      }
+      
+      return this.request('/rentals', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      return mockApi.createRentalRequest(data);
+    }
+  }
+
+  async updateRentalRequestStatus(id, data) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.updateRentalRequestStatus(id, data);
+      }
+      
+      return this.request(`/rentals/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      return mockApi.updateRentalRequestStatus(id, data);
+    }
+  }
+
+  async addRentalRequestMessage(id, data) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.addRentalRequestMessage(id, data);
+      }
+      
+      return this.request(`/rentals/${id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      return mockApi.addRentalRequestMessage(id, data);
+    }
+  }
+
+  async updateRentalPaymentStatus(id, data) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.updateRentalPaymentStatus(id, data);
+      }
+      
+      return this.request(`/rentals/${id}/payment-status`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      return mockApi.updateRentalPaymentStatus(id, data);
+    }
+  }
+
+  async updateRental3DIntegration(id, data) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.updateRental3DIntegration(id, data);
+      }
+      
+      return this.request(`/rentals/${id}/3d-integration`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      return mockApi.updateRental3DIntegration(id, data);
+    }
+  }
+
+  async updateRentalVirtualMuseum(id, data) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.updateRentalVirtualMuseum(id, data);
+      }
+      
+      return this.request(`/rentals/${id}/virtual-museum`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      })
+    } catch (error) {
+      return mockApi.updateRentalVirtualMuseum(id, data);
+    }
+  }
+
+  async getRentalStatistics() {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.getRentalStatistics();
+      }
+      
+      return this.request('/rentals/stats')
+    } catch (error) {
+      return mockApi.getRentalStatistics();
+    }
+  }
+
   // File upload
   async uploadFile(file, type = 'image') {
     const formData = new FormData()

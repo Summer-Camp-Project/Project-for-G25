@@ -1,24 +1,32 @@
-const Rental = require('../models/Rental');
+const RentalRequest = require('../models/RentalRequest');
 const Artifact = require('../models/Artifact');
 const Museum = require('../models/Museum');
 const User = require('../models/User');
-const mongoose = require('mongoose');
 
-// Create new rental request
-exports.createRental = async (req, res) => {
+// Generate unique request ID
+const generateRequestId = () => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substr(2, 5);
+  return `RR-${timestamp}-${random}`.toUpperCase();
+};
+
+// Create rental request
+async function createRentalRequest(req, res) {
   try {
     const {
+      requestType,
       artifactId,
       museumId,
-      renterInfo,
-      rentalType,
-      purpose,
-      requestedDuration,
-      location,
-      pricing,
-      insurance,
-      conditions
+      duration,
+      startDate,
+      endDate,
+      rentalFee,
+      currency = 'ETB',
+      description,
+      specialRequirements
     } = req.body;
+
+    const requestedBy = req.user.id;
 
     // Validate artifact exists
     const artifact = await Artifact.findById(artifactId);
@@ -38,1185 +46,265 @@ exports.createRental = async (req, res) => {
       });
     }
 
-    // Check if artifact is available for rental
-    const existingRental = await Rental.findOne({
-      artifact: artifactId,
-      status: { $in: ['approved', 'confirmed', 'active', 'in_transit'] },
-      $or: [
-        {
-          'requestedDuration.startDate': { $lte: new Date(requestedDuration.endDate) },
-          'requestedDuration.endDate': { $gte: new Date(requestedDuration.startDate) }
-        },
-        {
-          'actualDuration.startDate': { $lte: new Date(requestedDuration.endDate) },
-          'actualDuration.endDate': { $gte: new Date(requestedDuration.startDate) }
-        }
-      ]
-    });
-
-    if (existingRental) {
-      return res.status(400).json({
-        success: false,
-        message: 'Artifact is not available for the requested dates'
-      });
-    }
-
     // Create rental request
-    const rentalData = {
+    const rentalRequest = new RentalRequest({
+      requestId: generateRequestId(),
+      requestType,
       artifact: artifactId,
       museum: museumId,
-      renter: req.user._id,
-      renterInfo,
-      rentalType,
-      purpose,
-      requestedDuration,
-      location,
-      pricing,
-      insurance,
-      conditions
-    };
+      requestedBy,
+      rentalDetails: {
+        duration,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        rentalFee,
+        currency
+      },
+      description,
+      specialRequirements,
+      approvals: [{
+        approver: requestedBy,
+        role: requestType === 'museum_to_super' ? 'museum_admin' : 'super_admin',
+        status: 'pending'
+      }]
+    });
 
-    const rental = new Rental(rentalData);
-    await rental.save();
+    await rentalRequest.save();
 
-    // Add initial timeline entry
-    await rental.addTimelineEntry('created', 'Rental request created', req.user._id);
-
-    // Populate references for response
-    await rental.populate([
-      { path: 'artifact', select: 'name description images estimatedValue' },
-      { path: 'museum', select: 'name location contactInfo' },
-      { path: 'renter', select: 'name email' }
+    // Populate the response
+    await rentalRequest.populate([
+      { path: 'artifact', select: 'name description images' },
+      { path: 'museum', select: 'name location' },
+      { path: 'requestedBy', select: 'name email role' }
     ]);
 
     res.status(201).json({
       success: true,
       message: 'Rental request created successfully',
-      data: rental
+      data: rentalRequest
     });
 
   } catch (error) {
-    console.error('Create rental error:', error);
+    console.error('Create rental request error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create rental request',
       error: error.message
     });
   }
-};
+}
 
-// Get all rentals with filters
-exports.getAllRentals = async (req, res) => {
+// Get all rental requests with filtering
+async function getAllRentalRequests(req, res) {
   try {
     const {
-      status,
-      museumId,
-      renterId,
-      artifactId,
-      approvalStatus,
       page = 1,
-      limit = 10
+      limit = 10,
+      status,
+      requestType,
+      museumId,
+      userId,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
     } = req.query;
 
-    // Build filter object
-    const filter = {};
-    if (status) filter.status = status;
-    if (museumId) filter.museum = museumId;
-    if (renterId) filter.renter = renterId;
-    if (artifactId) filter.artifact = artifactId;
+    const query = {};
 
-    // Approval status filter
-    if (approvalStatus) {
-      switch (approvalStatus) {
-        case 'pending_museum':
-          filter['approvals.museumAdmin.status'] = 'pending';
-          break;
-        case 'pending_super':
-          filter['approvals.superAdmin.status'] = 'pending';
-          break;
-        case 'approved':
-          filter.status = 'approved';
-          break;
-        case 'rejected':
-          filter.status = 'rejected';
-          break;
-      }
-    }
+    if (status) query.status = status;
+    if (requestType) query.requestType = requestType;
+    if (museumId) query.museum = museumId;
+    if (userId) query.requestedBy = userId;
 
-    // Role-based access control
-    if (req.user) {
-      if (req.user.role === 'museumAdmin') {
-        // Museum admin can only see rentals for their museum
-        filter.museum = req.user.museumId;
-      } else if (req.user.role === 'visitor') {
-        // Regular users can only see their own rental requests
-        filter.renter = req.user._id;
-      }
-      // superAdmin can see all rentals
-    }
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    const skip = (page - 1) * limit;
-
-    const rentals = await Rental.find(filter)
-      .populate('artifact', 'name description images estimatedValue')
-      .populate('museum', 'name location contactInfo')
-      .populate('renter', 'name email organization')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Rental.countDocuments(filter);
-
-    // Disable caching for this endpoint
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-
-    res.json({
-      success: true,
-      data: rentals,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: rentals.length,
-        totalRecords: total
-      }
-    });
-
-  } catch (error) {
-    console.error('Get rentals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch rentals',
-      error: error.message
-    });
-  }
-};
-
-// Get rental by ID
-exports.getRentalById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid rental ID'
-      });
-    }
-
-    const rental = await Rental.findById(id)
-      .populate('artifact', 'name description images estimatedValue')
-      .populate('museum', 'name location contactInfo admin')
-      .populate('renter', 'name email organization')
-      .populate('approvals.museumAdmin.approvedBy', 'name email')
-      .populate('approvals.superAdmin.approvedBy', 'name email')
-      .populate('timeline.user', 'name email')
-      .populate('communications.from', 'name email')
-      .populate('communications.to', 'name email');
-
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // Check access permissions
-    if (req.user && req.user.role !== 'super_admin') {
-      const hasAccess =
-        rental.renter.equals(req.user._id) || // Renter
-        rental.museum.admin.equals(req.user._id) || // Museum admin
-        req.user.role === 'admin'; // General admin
-
-      if (!hasAccess) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied'
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Get rental error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch rental',
-      error: error.message
-    });
-  }
-};
-
-// Museum admin approval
-exports.approveByMuseumAdmin = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { comments, conditions } = req.body;
-
-    // Check if user is museum admin
-    if (!req.user || req.user.role !== 'museumAdmin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Museum admin privileges required.'
-      });
-    }
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // BIDIRECTIONAL APPROVAL LOGIC: Only receiver can approve
-    if (rental.rentalDirection === 'museum_to_superadmin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This request was sent by a museum to super admin. Only super admin can approve this request.'
-      });
-    }
-
-    // Verify this admin manages the museum
-    const museum = await Museum.findOne({
-      _id: rental.museum,
-      admin: req.user._id
-    });
-
-    if (!museum) {
-      return res.status(403).json({
-        success: false,
-        message: 'You can only approve rentals for your own museum'
-      });
-    }
-
-    if (rental.approvals.museumAdmin.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: 'This rental has already been processed by museum admin'
-      });
-    }
-
-    // Approve by museum admin
-    await rental.approveByMuseumAdmin(req.user._id, comments, conditions);
-
-    await rental.populate([
-      { path: 'artifact', select: 'name description images' },
-      { path: 'museum', select: 'name location' },
-      { path: 'renter', select: 'name email' }
+    const [requests, total] = await Promise.all([
+      RentalRequest.find(query)
+        .populate('artifact', 'name description images')
+        .populate('museum', 'name location')
+        .populate('requestedBy', 'name email role')
+        .populate('approvals.approver', 'name email role')
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      RentalRequest.countDocuments(query)
     ]);
-
-    res.json({
-      success: true,
-      message: 'Rental approved by museum admin',
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Museum admin approval error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to approve rental',
-      error: error.message
-    });
-  }
-};
-
-// Reject by museum admin
-exports.rejectByMuseumAdmin = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { comments } = req.body;
-
-    if (!req.user || req.user.role !== 'museumAdmin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Museum admin privileges required.'
-      });
-    }
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // BIDIRECTIONAL APPROVAL LOGIC: Only receiver can reject
-    if (rental.rentalDirection === 'museum_to_superadmin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This request was sent by a museum to super admin. Only super admin can reject this request.'
-      });
-    }
-
-    const museum = await Museum.findOne({
-      _id: rental.museum,
-      admin: req.user._id
-    });
-
-    if (!museum) {
-      return res.status(403).json({
-        success: false,
-        message: 'You can only reject rentals for your own museum'
-      });
-    }
-
-    if (rental.approvals.museumAdmin.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: 'This rental has already been processed by museum admin'
-      });
-    }
-
-    await rental.rejectByMuseumAdmin(req.user._id, comments);
-
-    res.json({
-      success: true,
-      message: 'Rental rejected by museum admin',
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Museum admin rejection error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to reject rental',
-      error: error.message
-    });
-  }
-};
-
-// Super admin approval
-exports.approveBySuperAdmin = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { comments, specialConditions } = req.body;
-
-    if (!req.user || req.user.role !== 'super_admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Super admin privileges required.'
-      });
-    }
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // BIDIRECTIONAL APPROVAL LOGIC: Only receiver can approve
-    if (rental.rentalDirection === 'superadmin_to_museum') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This request was sent by super admin to museum. Only museum admin can approve this request.'
-      });
-    }
-
-    if (rental.approvals.superAdmin.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: 'This rental does not require super admin approval or has already been processed'
-      });
-    }
-
-    await rental.approveBySuperAdmin(req.user._id, comments, specialConditions);
-
-    await rental.populate([
-      { path: 'artifact', select: 'name description images' },
-      { path: 'museum', select: 'name location' },
-      { path: 'renter', select: 'name email' }
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Rental approved by super admin',
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Super admin approval error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to approve rental',
-      error: error.message
-    });
-  }
-};
-
-// Reject by super admin
-exports.rejectBySuperAdmin = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { comments } = req.body;
-
-    if (!req.user || req.user.role !== 'super_admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Super admin privileges required.'
-      });
-    }
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // BIDIRECTIONAL APPROVAL LOGIC: Only receiver can reject
-    if (rental.rentalDirection === 'superadmin_to_museum') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This request was sent by super admin to museum. Only museum admin can reject this request.'
-      });
-    }
-
-    if (rental.approvals.superAdmin.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: 'This rental does not require super admin approval or has already been processed'
-      });
-    }
-
-    await rental.rejectBySuperAdmin(req.user._id, comments);
-
-    res.json({
-      success: true,
-      message: 'Rental rejected by super admin',
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Super admin rejection error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to reject rental',
-      error: error.message
-    });
-  }
-};
-
-// Update rental status
-exports.updateRentalStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, notes } = req.body;
-
-    const validStatuses = [
-      'pending_review', 'approved', 'rejected', 'payment_pending',
-      'confirmed', 'in_transit', 'active', 'completed', 'overdue', 'cancelled'
-    ];
-
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid status'
-      });
-    }
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // Check permissions
-    const hasPermission =
-      req.user.role === 'super_admin' ||
-      (req.user.role === 'museumAdmin' && rental.museum.toString() === req.user.museumId?.toString());
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    rental.status = status;
-    await rental.save();
-
-    await rental.addTimelineEntry(`status_updated_${status}`, notes || `Status updated to ${status}`, req.user._id);
-
-    res.json({
-      success: true,
-      message: 'Rental status updated successfully',
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Update rental status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update rental status',
-      error: error.message
-    });
-  }
-};
-
-// Add communication to rental
-exports.addCommunication = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { message, type = 'message', recipientId } = req.body;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // Verify access
-    const hasAccess =
-      rental.renter.equals(req.user._id) ||
-      req.user.role === 'super_admin' ||
-      (req.user.role === 'museumAdmin' && rental.museum.toString() === req.user.museumId?.toString());
-
-    if (!hasAccess) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    await rental.addCommunication(req.user._id, recipientId, message, type);
-
-    res.json({
-      success: true,
-      message: 'Communication added successfully'
-    });
-
-  } catch (error) {
-    console.error('Add communication error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to add communication',
-      error: error.message
-    });
-  }
-};
-
-// Get rental statistics
-exports.getRentalStats = async (req, res) => {
-  try {
-    const { museumId } = req.query;
-
-    let stats;
-    if (museumId) {
-      // Get stats for specific museum
-      if (req.user.role === 'museumAdmin') {
-        const museum = await Museum.findOne({ _id: museumId, admin: req.user._id });
-        if (!museum) {
-          return res.status(403).json({
-            success: false,
-            message: 'Access denied'
-          });
-        }
-      }
-      stats = await Rental.getMuseumStats(museumId);
-    } else {
-      // Get platform-wide stats (super admin only)
-      if (req.user.role !== 'super_admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied. Super admin privileges required.'
-        });
-      }
-      stats = await Rental.getPlatformStats();
-    }
-
-    res.json({
-      success: true,
-      data: stats
-    });
-
-  } catch (error) {
-    console.error('Get rental stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch rental statistics',
-      error: error.message
-    });
-  }
-};
-
-// Get museum-specific rental statistics (Museum Admin)
-exports.getMuseumRentalStats = async (req, res) => {
-  try {
-    console.log('=== MUSEUM STATS DEBUG ===');
-    console.log('User:', req.user);
-    console.log('User museumId:', req.user.museumId);
-
-    let museumId = req.user.museumId;
-
-    // If museumId is not directly available, try to find it from the Museum collection
-    if (!museumId) {
-      console.log('No museumId in user, searching by admin field...');
-      const museum = await Museum.findOne({ admin: req.user._id });
-      if (museum) {
-        museumId = museum._id;
-        console.log('Found museum by admin:', museumId);
-      }
-    }
-
-    if (!museumId) {
-      console.log('No museum found for user');
-      return res.status(400).json({
-        success: false,
-        message: 'Museum ID not found in user profile'
-      });
-    }
-
-    console.log('Using museumId:', museumId);
-
-    // Get stats for this specific museum
-    const totalRentals = await Rental.countDocuments({ museum: museumId });
-    const pendingRentals = await Rental.countDocuments({
-      museum: museumId,
-      status: 'pending_review'
-    });
-    const approvedRentals = await Rental.countDocuments({
-      museum: museumId,
-      status: 'approved'
-    });
-
-    console.log('Stats found:', { totalRentals, pendingRentals, approvedRentals });
-
-    // Calculate total revenue from approved rentals for this museum
-    const approvedRentalsData = await Rental.find({
-      museum: museumId,
-      status: 'approved'
-    }).select('pricing.totalAmount');
-
-    const totalRevenue = approvedRentalsData.reduce((sum, rental) => {
-      return sum + (rental.pricing?.totalAmount || 0);
-    }, 0);
-
-    console.log('Total revenue:', totalRevenue);
-    console.log('=== END MUSEUM STATS DEBUG ===');
 
     res.json({
       success: true,
       data: {
-        totalRequests: totalRentals,
-        pendingRequests: pendingRentals,
-        approvedRequests: approvedRentals,
-        totalRevenue: totalRevenue
+        requests,
+      pagination: {
+          current: Number(page),
+          pages: Math.ceil(total / limit),
+          total
+        }
       }
     });
+
   } catch (error) {
-    console.error('Get museum rental stats error:', error);
+    console.error('Get rental requests error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch museum rental statistics',
+      message: 'Failed to fetch rental requests',
       error: error.message
     });
   }
-};
+}
 
-// Get pending approvals
-exports.getPendingApprovals = async (req, res) => {
-  try {
-    let pendingRentals;
-
-    if (req.user.role === 'museumAdmin') {
-      // Get rentals pending museum admin approval
-      const userMuseums = await Museum.find({ admin: req.user._id });
-      const museumIds = userMuseums.map(m => m._id);
-
-      pendingRentals = await Rental.find({
-        museum: { $in: museumIds },
-        'approvals.museumAdmin.status': 'pending',
-        status: 'pending_review'
-      }).populate('artifact', 'name images')
-        .populate('renter', 'name email');
-
-    } else if (req.user.role === 'super_admin') {
-      // Get rentals pending super admin approval
-      pendingRentals = await Rental.findPendingSuperAdminApproval();
-    } else {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: pendingRentals,
-      count: pendingRentals.length
-    });
-
-  } catch (error) {
-    console.error('Get pending approvals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch pending approvals',
-      error: error.message
-    });
-  }
-};
-
-// Get overdue rentals
-exports.getOverdueRentals = async (req, res) => {
-  try {
-    if (!['museum_admin', 'super_admin'].includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    let filter = {};
-    if (req.user.role === 'museumAdmin') {
-      const userMuseums = await Museum.find({ admin: req.user._id });
-      const museumIds = userMuseums.map(m => m._id);
-      filter.museum = { $in: museumIds };
-    }
-
-    const overdueRentals = await Rental.findOverdue();
-
-    // Filter by museum if museum admin
-    const filteredRentals = req.user.role === 'museumAdmin'
-      ? overdueRentals.filter(rental => filter.museum.$in.some(id => id.equals(rental.museum._id)))
-      : overdueRentals;
-
-    res.json({
-      success: true,
-      data: filteredRentals,
-      count: filteredRentals.length
-    });
-
-  } catch (error) {
-    console.error('Get overdue rentals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch overdue rentals',
-      error: error.message
-    });
-  }
-};
-
-// Alias methods for route compatibility
-exports.getRental = exports.getRentalById;
-
-// Additional methods expected by routes
-exports.updateRental = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = req.body;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // Check if user can update (renter or admin)
-    const canUpdate =
-      rental.renter.equals(req.user._id) ||
-      req.user.role === 'super_admin' ||
-      (req.user.role === 'museumAdmin' && rental.museum.toString() === req.user.museumId?.toString());
-
-    if (!canUpdate) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    // Only allow updates if not yet approved
-    if (rental.status !== 'pending_review') {
-      return res.status(400).json({
-        success: false,
-        message: 'Can only update pending rental requests'
-      });
-    }
-
-    const updatedRental = await Rental.findByIdAndUpdate(
-      id,
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).populate('artifact museum renter');
-
-    await updatedRental.addTimelineEntry('updated', 'Rental request updated', req.user._id);
-
-    res.json({
-      success: true,
-      message: 'Rental updated successfully',
-      data: updatedRental
-    });
-
-  } catch (error) {
-    console.error('Update rental error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update rental',
-      error: error.message
-    });
-  }
-};
-
-exports.cancelRental = async (req, res) => {
+// Get single rental request
+async function getRentalRequest(req, res) {
   try {
     const { id } = req.params;
 
-    const rental = await Rental.findById(id);
-    if (!rental) {
+    const request = await RentalRequest.findById(id)
+      .populate('artifact')
+      .populate('museum')
+      .populate('requestedBy', 'name email role')
+      .populate('approvals.approver', 'name email role')
+      .populate('messages.sender', 'name email role');
+
+    if (!request) {
       return res.status(404).json({
         success: false,
-        message: 'Rental not found'
+        message: 'Rental request not found'
       });
     }
-
-    // Check permissions
-    const canCancel =
-      rental.renter.equals(req.user._id) ||
-      req.user.role === 'super_admin' ||
-      (req.user.role === 'museumAdmin' && rental.museum.toString() === req.user.museumId?.toString());
-
-    if (!canCancel) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    rental.status = 'cancelled';
-    await rental.save();
-
-    await rental.addTimelineEntry('cancelled', 'Rental request cancelled', req.user._id);
 
     res.json({
       success: true,
-      message: 'Rental cancelled successfully',
-      data: rental
+      data: request
     });
 
   } catch (error) {
-    console.error('Cancel rental error:', error);
+    console.error('Get rental request error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to cancel rental',
+      message: 'Failed to fetch rental request',
       error: error.message
     });
   }
-};
+}
 
-// Additional route methods that may be referenced
-exports.escalateToSuperAdmin = async (req, res) => {
+// Approve/Reject rental request
+async function updateRentalRequestStatus(req, res) {
   try {
     const { id } = req.params;
-    const { reason } = req.body;
+    const { status, comments } = req.body;
+    const approverId = req.user.id;
+    const approverRole = req.user.role;
 
-    const rental = await Rental.findById(id);
-    if (!rental) {
+    const request = await RentalRequest.findById(id);
+    if (!request) {
       return res.status(404).json({
         success: false,
-        message: 'Rental not found'
+        message: 'Rental request not found'
       });
     }
 
-    if (req.user.role !== 'museumAdmin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Only museum admins can escalate rentals'
-      });
+    // Add approval
+    await request.addApproval(approverId, approverRole, status, comments);
+
+    // Update overall status based on approvals
+    if (status === 'approved') {
+      // Check if all required approvals are received
+      const requiredApprovals = request.requestType === 'museum_to_super'
+        ? ['museum_admin', 'super_admin']
+        : ['super_admin', 'museum_admin'];
+
+      const receivedApprovals = request.approvals
+        .filter(a => a.status === 'approved')
+        .map(a => a.role);
+
+      const hasAllApprovals = requiredApprovals.every(role =>
+        receivedApprovals.includes(role)
+      );
+
+      if (hasAllApprovals) {
+        request.status = 'approved';
+      }
+    } else if (status === 'rejected') {
+      request.status = 'rejected';
     }
 
-    await rental.escalateToSuperAdmin(req.user._id, reason);
+    await request.save();
 
     res.json({
       success: true,
-      message: 'Rental escalated to super admin',
-      data: rental
+      message: `Rental request ${status} successfully`,
+      data: request
     });
 
   } catch (error) {
-    console.error('Escalate rental error:', error);
+    console.error('Update rental request status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to escalate rental',
+      message: 'Failed to update rental request status',
       error: error.message
     });
   }
-};
+}
 
-// Missing methods for routes compatibility
-exports.getMuseumPendingRentals = async (req, res) => {
-  try {
-    const { museumId } = req.params;
-
-    const pendingRentals = await Rental.find({
-      museum: museumId,
-      'approvals.museumAdmin.status': 'pending',
-      status: 'pending_review'
-    }).populate('artifact', 'name images')
-      .populate('renter', 'name email');
-
-    res.json({
-      success: true,
-      data: pendingRentals,
-      count: pendingRentals.length
-    });
-
-  } catch (error) {
-    console.error('Get museum pending rentals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch museum pending rentals',
-      error: error.message
-    });
-  }
-};
-
-exports.getSuperAdminPendingRentals = async (req, res) => {
-  try {
-    const pendingRentals = await Rental.findPendingSuperAdminApproval();
-
-    res.json({
-      success: true,
-      data: pendingRentals,
-      count: pendingRentals.length
-    });
-
-  } catch (error) {
-    console.error('Get super admin pending rentals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch super admin pending rentals',
-      error: error.message
-    });
-  }
-};
-
-// Placeholder methods for additional route functionality
-exports.activateRental = async (req, res) => {
+// Add message to rental request
+async function addRentalRequestMessage(req, res) {
   try {
     const { id } = req.params;
+    const { message } = req.body;
+    const senderId = req.user.id;
 
-    const rental = await Rental.findById(id);
-    if (!rental) {
+    const request = await RentalRequest.findById(id);
+    if (!request) {
       return res.status(404).json({
         success: false,
-        message: 'Rental not found'
+        message: 'Rental request not found'
       });
     }
 
-    rental.status = 'active';
-    rental.actualDuration.startDate = new Date();
-    await rental.save();
-
-    await rental.addTimelineEntry('activated', 'Rental activated', req.user._id);
+    await request.addMessage(senderId, message);
 
     res.json({
       success: true,
-      message: 'Rental activated successfully',
-      data: rental
+      message: 'Message added successfully',
+      data: request
     });
 
   } catch (error) {
-    console.error('Activate rental error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to activate rental',
-      error: error.message
-    });
-  }
-};
-
-exports.completeRental = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    rental.status = 'completed';
-    rental.actualDuration.endDate = new Date();
-    await rental.save();
-
-    await rental.addTimelineEntry('completed', 'Rental completed', req.user._id);
-
-    res.json({
-      success: true,
-      message: 'Rental completed successfully',
-      data: rental
-    });
-
-  } catch (error) {
-    console.error('Complete rental error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to complete rental',
-      error: error.message
-    });
-  }
-};
-
-exports.requestExtension = async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Extension functionality not yet implemented'
-  });
-};
-
-exports.addMessage = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { message, type = 'message' } = req.body;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    await rental.addCommunication(req.user._id, null, message, type);
-
-    res.json({
-      success: true,
-      message: 'Message added successfully'
-    });
-
-  } catch (error) {
-    console.error('Add message error:', error);
+    console.error('Add rental request message error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to add message',
       error: error.message
     });
   }
-};
+}
 
-exports.getMessages = async (req, res) => {
+// Update payment status
+async function updatePaymentStatus(req, res) {
   try {
     const { id } = req.params;
+    const { paymentStatus, transactionId, paymentMethod } = req.body;
 
-    const rental = await Rental.findById(id)
-      .populate('communications.from', 'name email')
-      .populate('communications.to', 'name email');
-
-    if (!rental) {
+    const request = await RentalRequest.findById(id);
+    if (!request) {
       return res.status(404).json({
         success: false,
-        message: 'Rental not found'
+        message: 'Rental request not found'
       });
     }
 
-    res.json({
-      success: true,
-      data: rental.communications
-    });
-
-  } catch (error) {
-    console.error('Get messages error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch messages',
-      error: error.message
-    });
-  }
-};
-
-// Placeholder methods for document and other functionality
-exports.uploadDocument = async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Document upload functionality not yet implemented'
-  });
-};
-
-exports.getDocuments = async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Document retrieval functionality not yet implemented'
-  });
-};
-
-exports.addConditionReport = async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Condition report functionality not yet implemented'
-  });
-};
-
-exports.getRentalTimeline = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const rental = await Rental.findById(id)
-      .populate('timeline.user', 'name email');
-
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
+    request.payment.status = paymentStatus;
+    if (transactionId) request.payment.transactionId = transactionId;
+    if (paymentMethod) request.payment.paymentMethod = paymentMethod;
+    if (paymentStatus === 'paid') {
+      request.payment.paidAt = new Date();
     }
 
-    res.json({
-      success: true,
-      data: rental.timeline
-    });
-
-  } catch (error) {
-    console.error('Get rental timeline error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch rental timeline',
-      error: error.message
-    });
-  }
-};
-
-exports.updatePaymentStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { paymentStatus } = req.body;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    rental.pricing.paymentStatus = paymentStatus;
-    await rental.save();
-
-    await rental.addTimelineEntry('payment_updated', `Payment status updated to ${paymentStatus}`, req.user._id);
+    await request.save();
 
     res.json({
       success: true,
       message: 'Payment status updated successfully',
-      data: rental
+      data: request
     });
 
   } catch (error) {
@@ -1227,448 +315,171 @@ exports.updatePaymentStatus = async (req, res) => {
       error: error.message
     });
   }
-};
+}
 
-exports.getUserRentals = async (req, res) => {
+// Update 3D integration status
+async function update3DIntegrationStatus(req, res) {
   try {
-    const { userId } = req.params;
+    const { id } = req.params;
+    const { status, modelUrl, previewUrl } = req.body;
 
-    const rentals = await Rental.find({ renter: userId })
-      .populate('artifact', 'name images')
-      .populate('museum', 'name location')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: rentals,
-      count: rentals.length
-    });
-
-  } catch (error) {
-    console.error('Get user rentals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch user rentals',
-      error: error.message
-    });
-  }
-};
-
-exports.getArtifactRentals = async (req, res) => {
-  try {
-    const { artifactId } = req.params;
-
-    const rentals = await Rental.find({ artifact: artifactId })
-      .populate('renter', 'name email')
-      .populate('museum', 'name location')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: rentals,
-      count: rentals.length
-    });
-
-  } catch (error) {
-    console.error('Get artifact rentals error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch artifact rentals',
-      error: error.message
-    });
-  }
-};
-
-exports.addReview = async (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Review functionality not yet implemented'
-  });
-};
-
-// ======================
-// BIDIRECTIONAL RENTAL SYSTEM
-// ======================
-
-/**
- * @desc    Create rental request from Museum to Super Admin (for 3D digitization)
- * @route   POST /api/rentals/museum-to-superadmin
- * @access  Museum Admin
- */
-exports.createMuseumToSuperAdminRequest = async (req, res) => {
-  try {
-    const {
-      artifactId,
-      virtualMuseumDetails,
-      purpose,
-      requestedDuration,
-      pricing,
-      conditions
-    } = req.body;
-
-    // Validate artifact exists and belongs to museum
-    const artifact = await Artifact.findOne({
-      _id: artifactId,
-      museum: req.user.museumId
-    });
-
-    if (!artifact) {
+    const request = await RentalRequest.findById(id);
+    if (!request) {
       return res.status(404).json({
         success: false,
-        message: 'Artifact not found or does not belong to your museum'
+        message: 'Rental request not found'
       });
     }
 
-    // Create rental request
-    const rentalRequest = new Rental({
-      artifact: artifactId,
-      museum: req.user.museumId,
-      renter: req.user._id,
-      rentalDirection: 'museum_to_superadmin',
-      isForVirtualMuseum: true,
-      virtualMuseumDetails,
-      renterInfo: {
-        name: req.user.name,
-        organization: req.user.organization || 'Museum',
-        contactEmail: req.user.email,
-        phone: req.user.phone || 'N/A',
-        address: {
-          country: 'Ethiopia' // Default value for virtual museum requests
+    request.threeDIntegration.status = status;
+    if (modelUrl) request.threeDIntegration.modelUrl = modelUrl;
+    if (previewUrl) request.threeDIntegration.previewUrl = previewUrl;
+    if (status === 'completed') {
+      request.threeDIntegration.completedAt = new Date();
+    }
+
+    await request.save();
+
+    res.json({
+      success: true,
+      message: '3D integration status updated successfully',
+      data: request
+    });
+
+  } catch (error) {
+    console.error('Update 3D integration status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update 3D integration status',
+      error: error.message
+    });
+  }
+}
+
+// Update virtual museum integration
+async function updateVirtualMuseumIntegration(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const request = await RentalRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rental request not found'
+      });
+    }
+
+    request.virtualMuseum.status = status;
+    if (status === 'added') {
+      request.virtualMuseum.addedAt = new Date();
+    } else if (status === 'removed') {
+      request.virtualMuseum.removedAt = new Date();
+    }
+
+    await request.save();
+
+    res.json({
+      success: true,
+      message: 'Virtual museum integration updated successfully',
+      data: request
+    });
+
+  } catch (error) {
+    console.error('Update virtual museum integration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update virtual museum integration',
+      error: error.message
+    });
+  }
+}
+
+// Get rental statistics
+async function getRentalStatistics(req, res) {
+  try {
+    const { timeRange = '30d' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    let startDate;
+    switch (timeRange) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case '1y':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    const [
+      totalRequests,
+      pendingRequests,
+      approvedRequests,
+      completedRequests,
+      totalRevenue,
+      requestsByStatus,
+      requestsByType
+    ] = await Promise.all([
+      RentalRequest.countDocuments(),
+      RentalRequest.countDocuments({ status: 'pending' }),
+      RentalRequest.countDocuments({ status: 'approved' }),
+      RentalRequest.countDocuments({ status: 'completed' }),
+      RentalRequest.aggregate([
+        { $match: { 'payment.status': 'paid' } },
+        { $group: { _id: null, total: { $sum: '$rentalDetails.rentalFee' } } }
+      ]),
+      RentalRequest.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ]),
+      RentalRequest.aggregate([
+        { $group: { _id: '$requestType', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalRequests,
+          pendingRequests,
+          approvedRequests,
+          completedRequests,
+          totalRevenue: totalRevenue[0]?.total || 0
+        },
+        distribution: {
+          byStatus: requestsByStatus,
+          byType: requestsByType
         }
-      },
-      rentalType: 'virtual_museum',
-      purpose: purpose || '3D digitization for virtual museum',
-      requestedDuration,
-      pricing,
-      conditions,
-      location: {
-        venue: 'Virtual Museum Platform', // Default value for virtual museum requests
-        address: 'Digital Platform' // Default value for virtual museum requests
-      },
-      status: 'pending_review'
-    });
-
-    await rentalRequest.save();
-
-    // Populate the created request
-    await rentalRequest.populate([
-      { path: 'artifact', select: 'name description images' },
-      { path: 'museum', select: 'name location' },
-      { path: 'renter', select: 'name email' }
-    ]);
-
-    res.status(201).json({
-      success: true,
-      data: rentalRequest,
-      message: 'Rental request created successfully. Awaiting Super Admin approval.'
-    });
-
-  } catch (error) {
-    console.error('Create museum to super admin request error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create rental request',
-      error: error.message
-    });
-  }
-};
-
-/**
- * @desc    Create rental request from Super Admin to Museum (for 3D digitization)
- * @route   POST /api/rentals/superadmin-to-museum
- * @access  Super Admin
- */
-exports.createSuperAdminToMuseumRequest = async (req, res) => {
-  try {
-    const {
-      artifactId,
-      museumId,
-      virtualMuseumDetails,
-      purpose,
-      requestedDuration,
-      pricing,
-      conditions
-    } = req.body;
-
-    // Validate artifact exists
-    const artifact = await Artifact.findOne({
-      _id: artifactId,
-      museum: museumId
-    });
-
-    if (!artifact) {
-      return res.status(404).json({
-        success: false,
-        message: 'Artifact not found in the specified museum'
-      });
-    }
-
-    // Create rental request
-    const rentalRequest = new Rental({
-      artifact: artifactId,
-      museum: museumId,
-      renter: req.user._id,
-      rentalDirection: 'superadmin_to_museum',
-      isForVirtualMuseum: true,
-      virtualMuseumDetails,
-      renterInfo: {
-        name: req.user.name,
-        organization: 'EthioHeritage360 Platform',
-        contactEmail: req.user.email,
-        phone: req.user.phone || 'N/A'
-      },
-      rentalType: 'virtual_museum',
-      purpose: purpose || '3D digitization for virtual museum',
-      requestedDuration,
-      pricing,
-      conditions,
-      status: 'pending_review'
-    });
-
-    await rentalRequest.save();
-
-    // Populate the created request
-    await rentalRequest.populate([
-      { path: 'artifact', select: 'name description images' },
-      { path: 'museum', select: 'name location admin' },
-      { path: 'renter', select: 'name email' }
-    ]);
-
-    res.status(201).json({
-      success: true,
-      data: rentalRequest,
-      message: 'Rental request created successfully. Awaiting Museum approval.'
-    });
-
-  } catch (error) {
-    console.error('Create super admin to museum request error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create rental request',
-      error: error.message
-    });
-  }
-};
-
-/**
- * @desc    Upload 3D model for approved rental
- * @route   POST /api/rentals/:id/upload-model
- * @access  Super Admin
- */
-exports.uploadModel = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { modelId, modelUrl, thumbnailUrl, fileSize, notes } = req.body;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // Check if user has permission to upload (Super Admin only)
-    if (req.user.role !== 'superAdmin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Only Super Admin can upload 3D models'
-      });
-    }
-
-    // Update model information
-    rental.modelInfo = {
-      modelId,
-      modelUrl,
-      thumbnailUrl,
-      fileSize,
-      uploadDate: new Date(),
-      uploadBy: req.user._id,
-      notes
-    };
-
-    // Update status
-    rental.status = 'model_uploaded';
-
-    await rental.save();
-
-    res.json({
-      success: true,
-      data: rental,
-      message: '3D model uploaded successfully'
-    });
-
-  } catch (error) {
-    console.error('Upload model error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to upload 3D model',
-      error: error.message
-    });
-  }
-};
-
-/**
- * @desc    Approve 3D model (Museum Admin)
- * @route   PUT /api/rentals/:id/approve-model
- * @access  Museum Admin
- */
-exports.approveModel = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { notes } = req.body;
-
-    const rental = await Rental.findById(id);
-    if (!rental) {
-      return res.status(404).json({
-        success: false,
-        message: 'Rental not found'
-      });
-    }
-
-    // Check if museum admin has access to this rental
-    if (rental.museum.toString() !== req.user.museumId?.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied to this rental'
-      });
-    }
-
-    // Check if model is uploaded
-    if (!rental.modelInfo.modelUrl) {
-      return res.status(400).json({
-        success: false,
-        message: 'No 3D model uploaded yet'
-      });
-    }
-
-    // Approve the model
-    rental.modelInfo.isApproved = true;
-    rental.modelInfo.approvedBy = req.user._id;
-    rental.modelInfo.approvedDate = new Date();
-    rental.modelInfo.notes = notes;
-
-    // Update status
-    rental.status = 'virtual_museum_ready';
-
-    await rental.save();
-
-    res.json({
-      success: true,
-      data: rental,
-      message: '3D model approved successfully'
-    });
-
-  } catch (error) {
-    console.error('Approve model error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to approve 3D model',
-      error: error.message
-    });
-  }
-};
-
-/**
- * @desc    Get virtual museum ready artifacts
- * @route   GET /api/rentals/virtual-museum-ready
- * @access  Public (for virtual museum display)
- */
-exports.getVirtualMuseumReady = async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const rentals = await Rental.find({
-      status: 'virtual_museum_ready',
-      'modelInfo.isApproved': true
-    })
-      .populate('artifact', 'name description images category')
-      .populate('museum', 'name location')
-      .populate('modelInfo.uploadBy', 'name')
-      .populate('modelInfo.approvedBy', 'name')
-      .sort({ 'modelInfo.approvedDate': -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
-
-    const total = await Rental.countDocuments({
-      status: 'virtual_museum_ready',
-      'modelInfo.isApproved': true
-    });
-
-    res.json({
-      success: true,
-      data: rentals,
-      pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-        limit: parseInt(limit)
       }
     });
 
   } catch (error) {
-    console.error('Get virtual museum ready error:', error);
+    console.error('Get rental statistics error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch virtual museum artifacts',
+      message: 'Failed to fetch rental statistics',
       error: error.message
     });
   }
-};
+}
 
-// Get artifacts for museum (for dropdown)
-exports.getMuseumArtifacts = async (req, res) => {
-  try {
-    const { museumId } = req.params;
-
-    // If no museumId provided, use the authenticated user's museum
-    const targetMuseumId = museumId || req.user.museumId;
-
-    console.log('Get museum artifacts request:', {
-      museumId: museumId,
-      userMuseumId: req.user.museumId,
-      targetMuseumId: targetMuseumId,
-      userId: req.user._id,
-      userRole: req.user.role
-    });
-
-    if (!targetMuseumId) {
-      console.log('No museum ID found');
-      return res.status(400).json({
-        success: false,
-        message: 'Museum ID is required'
-      });
-    }
-
-    // First, let's see all artifacts for this museum
-    const allArtifacts = await Artifact.find({ museum: targetMuseumId });
-    console.log('All artifacts for museum:', allArtifacts.length, allArtifacts.map(a => ({ id: a._id, name: a.name, status: a.status })));
-
-    const artifacts = await Artifact.find({
-      museum: targetMuseumId,
-      status: { $in: ['on_display', 'in_storage', 'under_conservation', 'on_loan'] } // Available artifacts
-    })
-      .select('name description category period material origin status condition')
-      .sort({ name: 1 });
-
-    console.log('Filtered artifacts:', artifacts.length, artifacts.map(a => ({ id: a._id, name: a.name, status: a.status })));
-
-    // Disable caching for this endpoint
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-
-    res.status(200).json({
-      success: true,
-      data: artifacts
-    });
-  } catch (error) {
-    console.error('Get museum artifacts error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve museum artifacts'
-    });
-  }
+module.exports = {
+  createRentalRequest,
+  getAllRentalRequests,
+  getRentalRequest,
+  updateRentalRequestStatus,
+  addRentalRequestMessage,
+  updatePaymentStatus,
+  update3DIntegrationStatus,
+  updateVirtualMuseumIntegration,
+  getRentalStatistics
 };

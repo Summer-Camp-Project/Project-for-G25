@@ -37,10 +37,12 @@ import {
   GraduationCap,
   FileText,
   Users2,
-  Presentation
+  Presentation,
+  Package
 } from 'lucide-react';
 import logo from '../assets/Logo.jpg';
 import HeritageSiteManager from '../components/HeritageSiteManager';
+import RentalRequestManager from '../components/RentalRequestManager';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import PerformanceAnalytics from '../components/PerformanceAnalytics';
 import PerformanceMetricsDashboard from '../components/PerformanceMetricsDashboard';
@@ -269,7 +271,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
     {
       category: 'Business Operations',
       items: [
-        { id: 'rental-oversight', label: 'Rental System', icon: DollarSign, description: 'Manage artifact rental requests from users' },
+        { id: 'rental-requests', label: 'Rental System', icon: Package, description: 'Manage artifact rental requests between museums and virtual museum' },
         { id: 'approval-feedback', label: 'Approval Feedback', icon: MessageSquare, description: 'Send comments/clarifications to Museum Admins' }
       ]
     },
@@ -2144,6 +2146,13 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                 }} />
               </div>
             </div>
+          </div>
+        );
+
+      case 'rental-requests':
+        return (
+          <div className="space-y-6">
+            <RentalRequestManager />
           </div>
         );
 
