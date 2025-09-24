@@ -12,7 +12,11 @@ import {
   Camera,
   Clock,
   Award,
-  X
+  X,
+  FileText,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import api from '../utils/api';
 
@@ -24,15 +28,34 @@ const HeritageSiteManager = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSite, setSelectedSite] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSite, setEditingSite] = useState(null);
+  const [viewMode, setViewMode] = useState('card'); // 'card' or 'table'
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    location: '',
+    location: {
+      region: '',
+      zone: '',
+      woreda: '',
+      city: '',
+      coordinates: { latitude: '', longitude: '' }
+    },
     type: 'Cultural',
+    category: '',
+    designation: '',
     description: '',
-    coordinates: { lat: '', lng: '' },
+    significance: '',
+    management: {
+      authority: ''
+    },
     isUNESCO: false,
     establishedYear: '',
-    significance: '',
     visitingHours: '',
     entryFee: '',
     images: [],
@@ -40,15 +63,48 @@ const HeritageSiteManager = () => {
   });
 
   const siteTypes = [
-    'Cultural Heritage',
-    'Natural Heritage',
+    'Archaeological',
+    'Historical',
+    'Religious',
+    'Natural',
+    'Cultural',
+    'Mixed'
+  ];
+
+  const categories = [
+    'Ancient Ruins',
+    'Churches & Monasteries',
+    'Palaces & Castles',
+    'Rock Art Sites',
+    'Burial Sites',
+    'Archaeological Sites',
+    'Museums',
+    'Cultural Landscapes',
+    'Traditional Architecture',
+    'Natural Monuments',
+    'National Parks',
+    'Religious Centers',
+    'Historical Cities',
+    'Trading Posts',
+    'Other'
+  ];
+
+  const designations = [
     'UNESCO World Heritage',
-    'Historical Site',
-    'Archaeological Site',
-    'Religious Site',
-    'Architectural Heritage',
-    'Museum',
-    'Monument'
+    'National Heritage',
+    'Regional Heritage',
+    'Local Heritage',
+    'Proposed'
+  ];
+
+  const managementAuthorities = [
+    'Authority for Research and Conservation of Cultural Heritage (ARCCH)',
+    'Ethiopian Orthodox Church',
+    'Regional Culture Bureau',
+    'Local Administration',
+    'International Organization',
+    'Private Foundation',
+    'Community-based'
   ];
 
   const regions = [
@@ -93,43 +149,181 @@ const HeritageSiteManager = () => {
 
   const handleAddSite = async () => {
     try {
-      const response = await api.createHeritageSite(formData);
+      // Validate required fields
+      if (!formData.location.region) {
+        setErrorMessage('Please select a region');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.location.zone) {
+        setErrorMessage('Please enter zone/special woreda');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.location.woreda) {
+        setErrorMessage('Please enter woreda');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.location.city) {
+        setErrorMessage('Please enter nearest city');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.location.coordinates.latitude || !formData.location.coordinates.longitude) {
+        setErrorMessage('Please enter latitude and longitude');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.type) {
+        setErrorMessage('Please select a type');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.category) {
+        setErrorMessage('Please select a category');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.designation) {
+        setErrorMessage('Please select a designation');
+        setShowErrorModal(true);
+        return;
+      }
+      if (!formData.management.authority) {
+        setErrorMessage('Please select a managing authority');
+        setShowErrorModal(true);
+        return;
+      }
+
+      // Map coordinates from lat/lng to latitude/longitude format
+      const siteData = {
+        ...formData,
+        location: {
+          ...formData.location,
+          coordinates: {
+            latitude: parseFloat(formData.location.coordinates.latitude),
+            longitude: parseFloat(formData.location.coordinates.longitude)
+          }
+        }
+      };
+
+      const response = await api.createHeritageSite(siteData);
       setSites(prev => [response.data, ...prev]);
       setShowAddModal(false);
       resetForm();
-      alert('Heritage site added successfully!');
+      setSuccessMessage('Heritage site added successfully!');
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to add heritage site:', error);
-      alert('Failed to add heritage site. Please try again.');
+      setErrorMessage('Failed to add heritage site. Please try again.');
+      setShowErrorModal(true);
     }
   };
 
   const handleUpdateSite = async () => {
     try {
-      const response = await api.updateHeritageSite(selectedSite._id, formData);
+      // Map coordinates from lat/lng to latitude/longitude format
+      const siteData = {
+        ...formData,
+        location: {
+          ...formData.location,
+          coordinates: {
+            latitude: parseFloat(formData.location.coordinates.latitude),
+            longitude: parseFloat(formData.location.coordinates.longitude)
+          }
+        }
+      };
+
+      const response = await api.updateHeritageSite(editingSite._id, siteData);
       setSites(prev => prev.map(site =>
-        site._id === selectedSite._id ? response.data : site
+        site._id === editingSite._id ? response.data : site
       ));
-      setShowAddModal(false);
-      setSelectedSite(null);
+      setShowEditModal(false);
+      setEditingSite(null);
       resetForm();
-      alert('Heritage site updated successfully!');
+      setSuccessMessage('Heritage site updated successfully!');
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to update heritage site:', error);
-      alert('Failed to update heritage site. Please try again.');
+      setErrorMessage('Failed to update heritage site. Please try again.');
+      setShowErrorModal(true);
     }
+  };
+
+  const handleDeleteSite = async () => {
+    try {
+      await api.deleteHeritageSite(siteToDelete._id);
+      setSites(prev => prev.filter(site => site._id !== siteToDelete._id));
+      setShowDeleteModal(false);
+      setSiteToDelete(null);
+      setSuccessMessage('Heritage site deleted successfully!');
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Failed to delete heritage site:', error);
+      setErrorMessage('Failed to delete heritage site. Please try again.');
+      setShowErrorModal(true);
+    }
+  };
+
+  const openDeleteModal = (site) => {
+    setSiteToDelete(site);
+    setShowDeleteModal(true);
+  };
+
+  const openEditModal = (site) => {
+    setEditingSite(site);
+    setFormData({
+      name: site.name,
+      location: {
+        region: site.location?.region || '',
+        zone: site.location?.zone || '',
+        woreda: site.location?.woreda || '',
+        city: site.location?.city || '',
+        coordinates: {
+          latitude: site.location?.coordinates?.latitude || site.coordinates?.lat || '',
+          longitude: site.location?.coordinates?.longitude || site.coordinates?.lng || ''
+        }
+      },
+      type: site.type,
+      category: site.category || '',
+      designation: site.designation || '',
+      description: site.description,
+      significance: site.significance || '',
+      management: {
+        authority: site.management?.authority || ''
+      },
+      isUNESCO: site.isUNESCO || false,
+      establishedYear: site.establishedYear || '',
+      visitingHours: site.visitingHours || '',
+      entryFee: site.entryFee || '',
+      images: site.images || [],
+      status: site.status || 'active'
+    });
+    setShowEditModal(true);
+    setShowDetailModal(false);
   };
 
   const resetForm = () => {
     setFormData({
       name: '',
-      location: '',
+      location: {
+        region: '',
+        zone: '',
+        woreda: '',
+        city: '',
+        coordinates: { latitude: '', longitude: '' }
+      },
       type: 'Cultural',
+      category: '',
+      designation: '',
       description: '',
-      coordinates: { lat: '', lng: '' },
+      significance: '',
+      management: {
+        authority: ''
+      },
       isUNESCO: false,
       establishedYear: '',
-      significance: '',
       visitingHours: '',
       entryFee: '',
       images: [],
@@ -137,24 +331,6 @@ const HeritageSiteManager = () => {
     });
   };
 
-  const openEditModal = (site) => {
-    setSelectedSite(site);
-    setFormData({
-      name: site.name,
-      location: site.location,
-      type: site.type,
-      description: site.description,
-      coordinates: site.coordinates,
-      isUNESCO: site.isUNESCO,
-      establishedYear: site.establishedYear,
-      significance: site.significance,
-      visitingHours: site.visitingHours,
-      entryFee: site.entryFee,
-      images: site.images || [],
-      status: site.status
-    });
-    setShowAddModal(true);
-  };
 
   const openDetailModal = (site) => {
     setSelectedSite(site);
@@ -163,7 +339,9 @@ const HeritageSiteManager = () => {
 
   const filteredSites = sites.filter(site => {
     const matchesSearch = site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      site.location.toLowerCase().includes(searchTerm.toLowerCase());
+      site.location?.region?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.location?.zone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      site.location?.woreda?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || site.type === filterType;
     return matchesSearch && matchesFilter;
   });
@@ -175,7 +353,7 @@ const HeritageSiteManager = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-1">{site.name}</h3>
           <div className="flex items-center text-gray-600 text-sm mb-2">
             <MapPin className="h-4 w-4 mr-1" />
-            {site.location}
+            {site.location?.region}, {site.location?.zone}
           </div>
           {site.isUNESCO && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gold-100 text-gold-800">
@@ -222,12 +400,9 @@ const HeritageSiteManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Heritage Site Management</h1>
-          <p className="text-gray-600">Manage Ethiopian cultural and heritage sites</p>
-        </div>
+
+      {/* Add Heritage Site Button */}
+      <div className="flex justify-end">
         <button
           onClick={() => setShowAddModal(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
@@ -235,54 +410,6 @@ const HeritageSiteManager = () => {
           <Plus className="h-4 w-4" />
           <span>Add Heritage Site</span>
         </button>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <MapPin className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{sites.length}</p>
-              <p className="text-sm text-gray-600">Total Sites</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-gold-100 rounded-lg">
-              <Award className="h-6 w-6 text-gold-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{sites.filter(s => s.isUNESCO).length}</p>
-              <p className="text-sm text-gray-600">UNESCO Sites</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Globe className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{new Set(sites.map(s => s.location.split(',')[1]?.trim())).size}</p>
-              <p className="text-sm text-gray-600">Regions</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-2xl font-bold text-gray-900">{sites.filter(s => s.status === 'active').length}</p>
-              <p className="text-sm text-gray-600">Active Sites</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Search and Filters */}
@@ -361,26 +488,127 @@ const HeritageSiteManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region *</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.location.region}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, region: e.target.value } })}
+                    required
+                  >
+                    <option value="">Select Region</option>
+                    {regions.map(region => (
+                      <option key={region} value={region}>{region}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Zone/Special Woreda *</label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    value={formData.location.zone}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, zone: e.target.value } })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Woreda *</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.location.woreda}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, woreda: e.target.value } })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nearest City *</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.location.city}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, city: e.target.value } })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.location.coordinates.latitude}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, coordinates: { ...formData.location.coordinates, latitude: e.target.value } } })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.location.coordinates.longitude}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, coordinates: { ...formData.location.coordinates, longitude: e.target.value } } })}
+                    required
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                   <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    required
                   >
+                    <option value="">Select Type</option>
                     {siteTypes.map(type => (
                       <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Designation *</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.designation}
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Designation</option>
+                    {designations.map(designation => (
+                      <option key={designation} value={designation}>{designation}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Managing Authority *</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={formData.management.authority}
+                    onChange={(e) => setFormData({ ...formData, management: { ...formData.management, authority: e.target.value } })}
+                    required
+                  >
+                    <option value="">Select Authority</option>
+                    {managementAuthorities.map(authority => (
+                      <option key={authority} value={authority}>{authority}</option>
                     ))}
                   </select>
                 </div>
@@ -440,19 +668,21 @@ const HeritageSiteManager = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    value={formData.coordinates.lat}
-                    onChange={(e) => setFormData({ ...formData, coordinates: { ...formData.coordinates, lat: e.target.value } })}
+                    value={formData.location.coordinates.latitude}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, coordinates: { ...formData.location.coordinates, latitude: e.target.value } } })}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    value={formData.coordinates.lng}
-                    onChange={(e) => setFormData({ ...formData, coordinates: { ...formData.coordinates, lng: e.target.value } })}
+                    value={formData.location.coordinates.longitude}
+                    onChange={(e) => setFormData({ ...formData, location: { ...formData.location, coordinates: { ...formData.location.coordinates, longitude: e.target.value } } })}
                   />
                 </div>
               </div>
@@ -519,7 +749,7 @@ const HeritageSiteManager = () => {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
                   <div className="space-y-2 text-sm">
-                    <div><span className="font-medium">Location:</span> {selectedSite.location}</div>
+                    <div><span className="font-medium">Location:</span> {selectedSite.location?.region}, {selectedSite.location?.zone}, {selectedSite.location?.woreda}</div>
                     <div><span className="font-medium">Type:</span> {selectedSite.type}</div>
                     <div><span className="font-medium">Established:</span> {selectedSite.establishedYear}</div>
                     <div><span className="font-medium">Status:</span>
@@ -534,7 +764,7 @@ const HeritageSiteManager = () => {
                   <div className="space-y-2 text-sm">
                     <div><span className="font-medium">Visiting Hours:</span> {selectedSite.visitingHours}</div>
                     <div><span className="font-medium">Entry Fee:</span> {selectedSite.entryFee}</div>
-                    <div><span className="font-medium">Coordinates:</span> {selectedSite.coordinates.lat}, {selectedSite.coordinates.lng}</div>
+                    <div><span className="font-medium">Coordinates:</span> {selectedSite.location?.coordinates?.latitude}, {selectedSite.location?.coordinates?.longitude}</div>
                   </div>
                 </div>
               </div>
@@ -558,6 +788,98 @@ const HeritageSiteManager = () => {
                   <p className="text-gold-700 text-sm mt-1">This site has been recognized by UNESCO for its outstanding universal value.</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Success</h3>
+              </div>
+            </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">{successMessage}</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Error</h3>
+              </div>
+            </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">{errorMessage}</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && siteToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Delete Heritage Site</h3>
+              </div>
+            </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to delete "{siteToDelete.name}"? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSiteToDelete(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteSite}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>

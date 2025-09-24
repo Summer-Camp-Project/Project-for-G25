@@ -2051,6 +2051,12 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       case 'heritage-sites':
         return (
           <div className="space-y-6">
+            {/* Title */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Heritage Sites Management</h2>
+              <p className="text-gray-600">Manage Ethiopian cultural and heritage sites</p>
+            </div>
+
             {/* Heritage Sites Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -2102,24 +2108,22 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
               </div>
             </div>
 
-            {/* Heritage Sites Management */}
+            {/* Heritage Sites Management Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Heritage Sites Management</h3>
-                  <p className="text-sm text-gray-600">Manage Ethiopian cultural and heritage sites</p>
+                  <button
+                    className="flex items-center px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={() => {
+                      loadHeritageSites();
+                      loadHeritageSitesStats();
+                    }}
+                    disabled={heritageSitesState.loading}
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-1 ${heritageSitesState.loading ? 'animate-spin' : ''}`} />
+                    {heritageSitesState.loading ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
-                <button
-                  className="flex items-center px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  onClick={() => {
-                    loadHeritageSites();
-                    loadHeritageSitesStats();
-                  }}
-                  disabled={heritageSitesState.loading}
-                >
-                  <RefreshCw className={`w-4 h-4 mr-1 ${heritageSitesState.loading ? 'animate-spin' : ''}`} />
-                  {heritageSitesState.loading ? 'Refreshing...' : 'Refresh'}
-                </button>
               </div>
 
               <div className="p-6">

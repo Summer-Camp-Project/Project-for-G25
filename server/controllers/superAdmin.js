@@ -5246,9 +5246,9 @@ async function createHeritageSite(req, res) {
       heritageSiteData.createdBy = req.user.id;
       console.log('✅ Using authenticated user ID:', req.user.id);
     } else {
-      console.log('⚠️ No authenticated user, skipping createdBy field');
-      // Remove createdBy field if it exists
-      delete heritageSiteData.createdBy;
+      console.log('⚠️ No authenticated user, using default createdBy');
+      // Use a default createdBy for testing purposes
+      heritageSiteData.createdBy = '507f1f77bcf86cd799439011'; // Default admin user ID
     }
 
     console.log('📋 Final heritage site data:', heritageSiteData);
