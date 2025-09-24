@@ -20,7 +20,6 @@
     "seed": "node scripts/seed.js",
     "seed:dev": "NODE_ENV=development node scripts/seed.js",
     "seed:prod": "NODE_ENV=production node scripts/seed.js",
-    "seed:team": "cross-env SEED_SHOW_PASSWORDS=true node scripts/seed.js",
     "setup-super-admin": "node scripts/seedSystemSettings.js",
     "setup-production": "node scripts/setupProduction.js",
     "clean-db": "node scripts/cleanDatabase.js",
