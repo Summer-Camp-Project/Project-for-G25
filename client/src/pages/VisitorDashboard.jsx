@@ -11,6 +11,7 @@ import bookingService from '../services/bookingService';
 import { toast } from 'sonner';
 import { io } from 'socket.io-client';
 import educationService from '../services/educationService';
+import visitorDashboardService from '../services/visitorDashboardService';
 
 // Import actual images
 import museumImg from '../assets/museum.jpg';
@@ -151,54 +152,92 @@ const VisitorDashboard = () => {
     toast.success('Booking data refreshed');
   };
 
-  // Load visitor dashboard data from API
+  // Load visitor dashboard data from real backend API
   const loadVisitorDashboardData = async () => {
     try {
-      console.log('🔄 Loading visitor dashboard educational content...');
+      console.log('🔄 Loading visitor dashboard data from backend...');
       
-      // Use education service to get platform data
-      const platformData = await educationService.getPlatformStats();
+      // Get comprehensive dashboard data from visitor dashboard service
+      const dashboardResult = await visitorDashboardService.getDashboardData();
       
-      if (platformData.success) {
-        console.log('✅ Platform data loaded:', platformData);
+      if (dashboardResult.success) {
+        console.log('✅ Real dashboard data loaded:', dashboardResult.data);
         
-        // Set educational data
-        setDashboardData(platformData);
-        setFeaturedCourses(platformData.featured?.courses || []);
-        setCategories(platformData.categories || []);
-        setPlatformStats(platformData.stats || {});
-        setTestimonials(platformData.testimonials || []);
-        setQuickActions(platformData.quickActions || []);
+        const data = dashboardResult.data;
         
-        // Update featured museums from API data
-        setFeaturedMuseums(platformData.featured?.museums || []);
-        
-        // Update artifacts from API data
-        setNewArtifacts(platformData.featured?.artifacts || []);
-        
-        // Update upcoming events from API data
-        setUpcomingEvents(platformData.upcoming?.events || []);
-        
-        if (platformData.featured?.courses?.length > 0) {
-          toast.success(`Dashboard loaded with ${platformData.featured.courses.length} educational courses!`);
+        // Set profile data
+        if (data.profile) {
+          setUserStats({
+            totalPoints: data.profile.totalPoints || 0,
+            level: data.profile.level || 1,
+            streakDays: data.profile.streakDays || 0,
+            artifactsViewed: data.profile.stats?.artifactsViewed || 0,
+            toursCompleted: data.profile.stats?.toursCompleted || 0,
+            averageRating: data.profile.stats?.averageScore || 0
+          });
+          
+          setAchievements(data.profile.achievements || []);
         }
-      } else {
-        console.error('❌ Failed to load platform data:', platformData.error);
-        toast.error('Failed to load educational content');
         
-        // Set empty states on error
-        setFeaturedCourses([]);
-        setCategories([]);
-        setPlatformStats({});
+        // Set activity feed from recent activities
+        if (data.activity?.recent) {
+          setActivityFeed(data.activity.recent.map(activity => ({
+            description: `${activity.type.replace('_', ' ')} - ${activity.entityName}`,
+            timestamp: activity.timestamp,
+            action: activity.type
+          })));
+        }
+        
+        // Set favorites data
+        if (data.favorites) {
+          setFavoriteArtifacts(data.favorites.byType?.filter(type => type._id === 'artifact') || []);
+        }
+        
+        // Set recommendations
+        if (data.recommendations) {
+          setRecommendations(data.recommendations);
+          setFeaturedMuseums(data.recommendations.museums || []);
+          setNewArtifacts(data.recommendations.artifacts || []);
+          setFeaturedCourses(data.recommendations.courses || []);
+          setUpcomingEvents(data.recommendations.events || []);
+        }
+        
+        // Set booking data
+        if (data.bookings) {
+          setBookedTours(data.bookings.recent || []);
+          setBookingStats(data.bookings.stats || { total: 0, confirmed: 0, pending: 0 });
+        }
+        
+        toast.success('Dashboard loaded with real data!');
+        
+      } else {
+        console.error('❌ Failed to load real dashboard data:', dashboardResult.error);
+        toast.error(dashboardResult.error || 'Failed to load dashboard data');
+        
+        // Fallback to education service for basic data
+        const fallbackData = await educationService.getPlatformStats();
+        if (fallbackData.success) {
+          setPlatformStats(fallbackData.stats || {});
+          setFeaturedCourses(fallbackData.featured?.courses || []);
+          setCategories(fallbackData.categories || []);
+        }
       }
+      
     } catch (error) {
       console.error('❌ Error loading visitor dashboard data:', error);
       toast.error('Failed to load dashboard content');
       
-      // Set empty states on error
-      setFeaturedCourses([]);
-      setCategories([]);
-      setPlatformStats({});
+      // Try fallback to education service
+      try {
+        const fallbackData = await educationService.getPlatformStats();
+        if (fallbackData.success) {
+          setPlatformStats(fallbackData.stats || {});
+          setFeaturedCourses(fallbackData.featured?.courses || []);
+          setCategories(fallbackData.categories || []);
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback data loading also failed:', fallbackError);
+      }
     }
   };
 

@@ -332,14 +332,17 @@ class EducationService {
   async getPlatformStats() {
     try {
       console.log('🌍 Fetching platform statistics...');
-      const response = await educationAPI.get('/visitor/dashboard');
+      const response = await educationAPI.get('/platform/stats');
       console.log('✅ Platform stats fetched:', response.data);
       
       return {
         success: true,
-        stats: response.data.data?.stats || {},
-        featured: response.data.data?.featured || {},
-        categories: response.data.data?.categories || [],
+        stats: response.data.stats || {},
+        featured: response.data.featured || {},
+        categories: response.data.categories || [],
+        testimonials: response.data.testimonials || [],
+        quickActions: response.data.quickActions || [],
+        upcoming: response.data.upcoming || {},
         message: response.data.message
       };
     } catch (error) {
@@ -349,6 +352,9 @@ class EducationService {
         stats: {},
         featured: {},
         categories: [],
+        testimonials: [],
+        quickActions: [],
+        upcoming: {},
         error: error.response?.data?.message || error.message
       };
     }

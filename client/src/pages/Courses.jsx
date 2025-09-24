@@ -207,17 +207,17 @@ const Courses = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-1 mb-4">
-          {course.tags.slice(0, 3).map((tag, index) => (
+          {(course.tags || []).slice(0, 3).map((tag, index) => (
             <span
-              key={index}
+              key={`${course.id || course._id}-tag-${index}`}
               className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-md"
             >
               {tag}
             </span>
           ))}
-          {course.tags.length > 3 && (
+          {(course.tags || []).length > 3 && (
             <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-md">
-              +{course.tags.length - 3} more
+              +{(course.tags || []).length - 3} more
             </span>
           )}
         </div>
@@ -411,8 +411,8 @@ const Courses = () => {
                 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                 : 'grid-cols-1'
             }`}>
-              {filteredCourses.map(course => (
-                <CourseCard key={course._id} course={course} />
+              {filteredCourses.map((course, index) => (
+                <CourseCard key={course.id || course._id || `course-${index}`} course={course} />
               ))}
             </div>
           ) : (

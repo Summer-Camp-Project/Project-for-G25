@@ -27,6 +27,22 @@ import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
 import ProfileSettings from './pages/visitor/ProfileSettings';
 import MyLearning from './pages/visitor/MyLearning';
 import Certificates from './pages/visitor/Certificates';
+import Bookmarks from './pages/visitor/Bookmarks';
+import Notes from './pages/visitor/Notes';
+import Social from './pages/visitor/Social';
+import Community from './pages/visitor/Community';
+import Analytics from './pages/visitor/Analytics';
+import Tools from './pages/visitor/Tools';
+// New visitor analytics sub-pages
+import Achievements from './pages/visitor/Achievements';
+import Activity from './pages/visitor/Activity';
+import Goals from './pages/visitor/Goals';
+// Community pages
+import Leaderboard from './pages/visitor/Leaderboard';
+// Virtual Museum pages
+import Gallery from './pages/visitor/Gallery';
+// Learning pages
+import Flashcards from './pages/visitor/Flashcards';
 // Museum Admin components
 import MuseumProfile from './components/museum/MuseumProfile'
 import ArtifactManagement from './components/museum/ArtifactManagement'
@@ -379,6 +395,189 @@ function App() {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-4">Heritage Sites</h2>
                   <p className="text-gray-600">Coming soon! Explore Ethiopian heritage locations.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          
+          {/* Visitor Dashboard Enhanced Features */}
+          <Route path="/visitor/bookmarks" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Bookmarks />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/notes" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Notes />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/social" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Social />
+            </RoleBasedRoute>
+          } />
+          
+          {/* Main Sidebar Section Routes */}
+          <Route path="/visitor/community" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Community />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/analytics" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Analytics />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/tools" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Tools />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/collection" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Navigate to="/visitor/bookmarks" replace />
+            </RoleBasedRoute>
+          } />
+          
+          {/* Analytics Sub-pages */}
+          <Route path="/visitor/achievements" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Achievements />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/activity" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Activity />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/stats" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Analytics />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/goals" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Goals />
+            </RoleBasedRoute>
+          } />
+          
+          {/* Community Sub-pages */}
+          <Route path="/visitor/forums" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Community />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/study-groups" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Community />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/leaderboard" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Leaderboard />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/share-progress" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Social />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/find-friends" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Social />
+            </RoleBasedRoute>
+          } />
+          
+          {/* Virtual Museum Sub-pages */}
+          <Route path="/visitor/3d-artifacts" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <VisitorVirtualMuseum />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/gallery" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Gallery />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/videos" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <VisitorVirtualMuseum />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/audio" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <VisitorVirtualMuseum />
+            </RoleBasedRoute>
+          } />
+          
+          {/* Learning Sub-pages */}
+          <Route path="/visitor/flashcards" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Flashcards />
+            </RoleBasedRoute>
+          } />
+          
+          {/* Events Sub-pages */}
+          <Route path="/visitor/exhibitions" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Exhibitions</h2>
+                  <p className="text-gray-600">Coming soon! Browse current and upcoming exhibitions.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/workshops" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Workshops</h2>
+                  <p className="text-gray-600">Coming soon! Join educational workshops and hands-on activities.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/bookings" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">My Bookings</h2>
+                  <p className="text-gray-600">View and manage your event and tour bookings.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/calendar" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Event Calendar</h2>
+                  <p className="text-gray-600">View upcoming events in calendar format.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          
+          {/* Collection Sub-pages */}
+          <Route path="/visitor/downloads" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Downloads</h2>
+                  <p className="text-gray-600">Access your downloaded content and resources.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          
+          {/* Settings Sub-pages */}
+          <Route path="/visitor/notifications" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Notification Settings</h2>
+                  <p className="text-gray-600">Manage your notification preferences.</p>
                 </div>
               </div>
             </RoleBasedRoute>

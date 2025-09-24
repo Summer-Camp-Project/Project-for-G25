@@ -114,6 +114,10 @@ const courseSchema = new mongoose.Schema({
   isSuperAdminCourse: {
     type: Boolean,
     default: false
+  },
+  featured: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

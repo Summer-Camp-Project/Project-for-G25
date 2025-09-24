@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { 
@@ -20,9 +20,34 @@ import {
   FileText,
   Users,
   PlayCircle,
-  TrendingUp
+  TrendingUp,
+  Activity,
+  Award,
+  BarChart3,
+  Bell,
+  HelpCircle,
+  Search,
+  Bookmark,
+  Clock,
+  Camera,
+  Zap,
+  Target,
+  MessageCircle,
+  Star,
+  Globe,
+  Compass,
+  Library,
+  ShoppingCart,
+  CreditCard,
+  Download,
+  Share2,
+  Headphones,
+  Monitor,
+  Smartphone
 } from 'lucide-react';
+import visitorDashboardService from '../../services/visitorDashboardService';
 import visitorLogo from '../../assets/visitor-logo.jpg';
+import { toast } from 'sonner';
 
 const VisitorSidebar = () => {
   const navigate = useNavigate();
@@ -32,16 +57,54 @@ const VisitorSidebar = () => {
     museums: false,
     events: false,
     education: false,
-    learning: false
+    learning: false,
+    personal: false,
+    analytics: false,
+    social: false,
+    tools: false
   });
+  const [userStats, setUserStats] = useState({
+    totalPoints: 0,
+    level: 1,
+    favoritesCount: 0,
+    bookingsCount: 0,
+    coursesEnrolled: 0
+  });
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Load user stats on component mount
+  useEffect(() => {
+    const loadUserStats = async () => {
+      try {
+        const statsResult = await visitorDashboardService.getQuickStats();
+        if (statsResult.success) {
+          setUserStats({
+            totalPoints: statsResult.data.totalPoints || 0,
+            level: statsResult.data.level || 1,
+            favoritesCount: statsResult.data.favoritesCount || 0,
+            bookingsCount: statsResult.data.bookingsCount || 0,
+            coursesEnrolled: statsResult.data.activitiesThisMonth || 0
+          });
+        }
+      } catch (error) {
+        console.error('Error loading user stats:', error);
+      }
+    };
+
+    if (user) {
+      loadUserStats();
+    }
+  }, [user]);
 
   const visitorMenuItems = [
     {
       id: 'dashboard',
-      label: 'Home',
+      label: 'Dashboard',
       icon: Home,
       path: '/visitor-dashboard',
-      description: 'Your personal dashboard'
+      description: 'Your personal dashboard',
+      badge: null
     },
     {
       id: 'education',
@@ -49,12 +112,13 @@ const VisitorSidebar = () => {
       icon: GraduationCap,
       path: '/visitor/education',
       description: 'Learn Ethiopian heritage',
+      badge: userStats.coursesEnrolled > 0 ? userStats.coursesEnrolled : null,
       subItems: [
-        { label: 'Browse Courses', path: '/courses', icon: BookOpen },
-        { label: 'My Learning', path: '/visitor/my-learning', icon: User },
-        { label: 'Study Guides', path: '/study-guides', icon: FileText },
-        { label: 'Certificates', path: '/visitor/certificates', icon: Trophy },
-        { label: 'Educational Tours', path: '/educational-tours', icon: MapPin }
+        { label: 'Browse Courses', path: '/courses', icon: BookOpen, description: 'Discover new courses' },
+        { label: 'My Learning', path: '/visitor/my-learning', icon: User, description: 'Your enrolled courses' },
+        { label: 'Study Guides', path: '/study-guides', icon: FileText, description: 'Download study materials' },
+        { label: 'Certificates', path: '/visitor/certificates', icon: Trophy, description: 'Your achievements' },
+        { label: 'Educational Tours', path: '/educational-tours', icon: MapPin, description: 'Guided learning experiences' }
       ]
     },
     {
@@ -64,23 +128,25 @@ const VisitorSidebar = () => {
       path: '/visitor/virtual-museum',
       description: 'Explore 3D artifacts and collections',
       subItems: [
-        { label: 'Browse All', path: '/virtual-museum', icon: Eye },
-        { label: '3D Artifacts', path: '/virtual-museum/3d-artifacts', icon: Building2 },
-        { label: 'Image Gallery', path: '/virtual-museum/gallery', icon: Video },
-        { label: 'Video Tours', path: '/virtual-museum/videos', icon: PlayCircle }
+        { label: 'Browse Museums', path: '/virtual-museum', icon: Building2, description: 'Visit virtual museums' },
+        { label: '3D Artifacts', path: '/virtual-museum/3d-artifacts', icon: Camera, description: 'Interactive 3D models' },
+        { label: 'Image Gallery', path: '/virtual-museum/gallery', icon: Video, description: 'High-resolution photos' },
+        { label: 'Video Tours', path: '/virtual-museum/videos', icon: PlayCircle, description: 'Guided video walkthroughs' },
+        { label: 'Audio Guide', path: '/virtual-museum/audio', icon: Headphones, description: 'Narrated tours' }
       ]
     },
     {
       id: 'learning',
       label: 'Interactive Learning',
-      icon: BookOpen,
+      icon: Target,
       path: '/visitor/learning',
-      description: 'Engage with content',
+      description: 'Engage with interactive content',
       subItems: [
-        { label: 'Quiz & Games', path: '/visitor/quiz', icon: Trophy },
-        { label: 'Virtual Tours', path: '/tours', icon: MapPin },
-        { label: 'Live Sessions', path: '/visitor/live-sessions', icon: Users },
-        { label: 'Progress Tracker', path: '/visitor/progress', icon: TrendingUp }
+        { label: 'Quiz & Games', path: '/visitor/quiz', icon: Trophy, description: 'Test your knowledge' },
+        { label: 'Virtual Tours', path: '/tours', icon: MapPin, description: 'Immersive experiences' },
+        { label: 'Live Sessions', path: '/visitor/live-sessions', icon: Users, description: 'Join live events' },
+        { label: 'Progress Tracker', path: '/visitor/progress', icon: TrendingUp, description: 'Monitor your learning' },
+        { label: 'Flashcards', path: '/visitor/flashcards', icon: BookOpen, description: 'Study cards' }
       ]
     },
     {
@@ -89,37 +155,83 @@ const VisitorSidebar = () => {
       icon: Calendar,
       path: '/visitor/events',
       description: 'Discover upcoming events',
+      badge: userStats.bookingsCount > 0 ? userStats.bookingsCount : null,
       subItems: [
-        { label: 'All Events', path: '/visitor/events', icon: Calendar },
-        { label: 'Exhibitions', path: '/visitor/events/exhibitions', icon: Building2 },
-        { label: 'Workshops', path: '/visitor/events/workshops', icon: Users },
-        { label: 'My Bookings', path: '/visitor/events/bookings', icon: Heart }
+        { label: 'All Events', path: '/visitor/events', icon: Calendar, description: 'Browse all events' },
+        { label: 'Exhibitions', path: '/visitor/events/exhibitions', icon: Building2, description: 'Museum exhibitions' },
+        { label: 'Workshops', path: '/visitor/events/workshops', icon: Users, description: 'Hands-on learning' },
+        { label: 'My Bookings', path: '/visitor/events/bookings', icon: CreditCard, description: 'Your reservations' },
+        { label: 'Event Calendar', path: '/visitor/events/calendar', icon: Calendar, description: 'Schedule view' }
       ]
     },
     {
-      id: 'favorites',
-      label: 'My Favorites',
+      id: 'personal',
+      label: 'My Collection',
       icon: Heart,
-      path: '/visitor/favorites',
-      description: 'Your saved items'
+      path: '/visitor/collection',
+      description: 'Your personal items',
+      badge: userStats.favoritesCount > 0 ? userStats.favoritesCount : null,
+      subItems: [
+        { label: 'Favorites', path: '/visitor/favorites', icon: Heart, description: 'Your saved items' },
+        { label: 'Recently Viewed', path: '/visitor/recent', icon: Eye, description: 'Browsing history' },
+        { label: 'Bookmarks', path: '/visitor/bookmarks', icon: Bookmark, description: 'Quick access items' },
+        { label: 'Downloads', path: '/visitor/downloads', icon: Download, description: 'Downloaded content' },
+        { label: 'Notes', path: '/visitor/notes', icon: FileText, description: 'Your personal notes' }
+      ]
     },
     {
-      id: 'recently-viewed',
-      label: 'Recently Viewed',
-      icon: Eye,
-      path: '/visitor/recent',
-      description: 'Your viewing history'
+      id: 'analytics',
+      label: 'My Progress',
+      icon: BarChart3,
+      path: '/visitor/analytics',
+      description: 'Track your learning journey',
+      subItems: [
+        { label: 'Overview', path: '/visitor/analytics', icon: BarChart3, description: 'Progress summary' },
+        { label: 'Achievements', path: '/visitor/achievements', icon: Award, description: 'Badges and rewards' },
+        { label: 'Activity Log', path: '/visitor/activity', icon: Activity, description: 'Your activity history' },
+        { label: 'Statistics', path: '/visitor/stats', icon: TrendingUp, description: 'Detailed analytics' },
+        { label: 'Goals', path: '/visitor/goals', icon: Target, description: 'Set learning goals' }
+      ]
     },
     {
-      id: 'heritage-sites',
-      label: 'Heritage Sites',
-      icon: MapPin,
-      path: '/map',
-      description: 'Explore Ethiopian heritage locations'
+      id: 'social',
+      label: 'Community',
+      icon: Users,
+      path: '/visitor/community',
+      description: 'Connect with other learners',
+      subItems: [
+        { label: 'Discussion Forums', path: '/visitor/forums', icon: MessageCircle, description: 'Join conversations' },
+        { label: 'Study Groups', path: '/visitor/groups', icon: Users, description: 'Collaborate with peers' },
+        { label: 'Leaderboard', path: '/visitor/leaderboard', icon: Trophy, description: 'See top learners' },
+        { label: 'Share Progress', path: '/visitor/share', icon: Share2, description: 'Share achievements' },
+        { label: 'Find Friends', path: '/visitor/friends', icon: Users, description: 'Connect with others' }
+      ]
+    },
+    {
+      id: 'tools',
+      label: 'Tools & Resources',
+      icon: Globe,
+      path: '/visitor/tools',
+      description: 'Helpful tools and utilities',
+      subItems: [
+        { label: 'Heritage Map', path: '/map', icon: MapPin, description: 'Explore Ethiopia locations' },
+        { label: 'Language Guide', path: '/visitor/language', icon: Globe, description: 'Learn Amharic phrases' },
+        { label: 'Cultural Calendar', path: '/visitor/cultural-calendar', icon: Calendar, description: 'Ethiopian holidays' },
+        { label: 'Converter Tools', path: '/visitor/converters', icon: Monitor, description: 'Ethiopian calendar converter' },
+        { label: 'Mobile App', path: '/visitor/mobile', icon: Smartphone, description: 'Get our mobile app' }
+      ]
     }
   ];
 
   const settingsItems = [
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      icon: Bell,
+      path: '/visitor/notifications',
+      description: 'Manage notifications',
+      badge: unreadCount > 0 ? unreadCount : null
+    },
     {
       id: 'profile',
       label: 'Profile Settings',
@@ -133,6 +245,13 @@ const VisitorSidebar = () => {
       icon: Settings,
       path: '/visitor/preferences',
       description: 'App settings and language'
+    },
+    {
+      id: 'help',
+      label: 'Help & Support',
+      icon: HelpCircle,
+      path: '/support',
+      description: 'Get help and support'
     }
   ];
 
@@ -177,17 +296,26 @@ const VisitorSidebar = () => {
               : 'text-gray-700 hover:bg-gray-50'
           }`}
         >
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-1">
             <Icon className="h-5 w-5" />
-            <div>
-              <span className="font-medium">{item.label}</span>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{item.label}</span>
+                {item.badge && (
+                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-amber-500 rounded-full min-w-[20px] h-5">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </div>
               {item.description && (
                 <p className="text-xs text-gray-500">{item.description}</p>
               )}
             </div>
           </div>
           {hasSubItems && (
-            isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+            <div className="ml-2">
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </div>
           )}
         </button>
 
@@ -255,6 +383,26 @@ const VisitorSidebar = () => {
           <nav className="space-y-1">
             {settingsItems.map(renderMenuItem)}
           </nav>
+        </div>
+      </div>
+
+      {/* User Progress Section */}
+      <div className="p-4 border-t border-gray-100">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <Zap className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-medium text-gray-800">Level {userStats.level}</span>
+            </div>
+            <span className="text-xs font-bold text-amber-600">{userStats.totalPoints} pts</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-amber-400 to-orange-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${Math.min((userStats.totalPoints % 1000) / 10, 100)}%` }}
+            ></div>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">Heritage Explorer</p>
         </div>
       </div>
 

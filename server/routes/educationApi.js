@@ -42,7 +42,7 @@ router.get('/courses', async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
     const courses = await Course.find(query)
-      .select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration featured')
+      .select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration featured tags')
       .sort({ featured: -1, averageRating: -1, enrollmentCount: -1 })
       .skip(skip)
       .limit(parseInt(limit))
@@ -53,6 +53,7 @@ router.get('/courses', async (req, res) => {
     // Transform courses to match frontend expectations
     const transformedCourses = courses.map(course => ({
       id: course._id.toString(),
+      _id: course._id.toString(), // Also include _id for backward compatibility
       title: course.title,
       description: course.description,
       category: course.category,
@@ -60,10 +61,13 @@ router.get('/courses', async (req, res) => {
       image: course.image || course.imageUrl || '/images/course-placeholder.jpg',
       instructor: course.instructor || 'Heritage Expert',
       rating: course.averageRating || 0,
+      averageRating: course.averageRating || 0, // Also include averageRating for compatibility
       enrollmentCount: course.enrollmentCount || 0,
       price: course.price || 0,
       duration: course.estimatedDuration || 240, // in minutes
-      isFeatured: course.featured || false
+      estimatedDuration: course.estimatedDuration || 240, // Also include original field name
+      isFeatured: course.featured || false,
+      tags: course.tags || [] // Include tags to prevent undefined errors
     }));
     
     res.json({
@@ -98,7 +102,7 @@ router.get('/courses/featured', async (req, res) => {
       status: 'published',
       featured: true
     })
-    .select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration')
+.select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration tags')
     .sort({ averageRating: -1, enrollmentCount: -1 })
     .limit(6)
     .lean();
@@ -110,14 +114,15 @@ router.get('/courses/featured', async (req, res) => {
         isActive: true,
         status: 'published'
       })
-      .select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration')
+.select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration tags')
       .sort({ enrollmentCount: -1, averageRating: -1 })
       .limit(6)
       .lean();
     }
     
-    const transformedCourses = coursesToReturn.map(course => ({
+const transformedCourses = coursesToReturn.map(course => ({
       id: course._id.toString(),
+      _id: course._id.toString(),
       title: course.title,
       description: course.description,
       category: course.category,
@@ -125,9 +130,12 @@ router.get('/courses/featured', async (req, res) => {
       image: course.image || course.imageUrl || '/images/course-placeholder.jpg',
       instructor: course.instructor || 'Heritage Expert',
       rating: course.averageRating || 0,
+      averageRating: course.averageRating || 0,
       enrollmentCount: course.enrollmentCount || 0,
       price: course.price || 0,
-      duration: course.estimatedDuration || 240
+      duration: course.estimatedDuration || 240,
+      estimatedDuration: course.estimatedDuration || 240,
+      tags: course.tags || []
     }));
     
     res.json({
@@ -856,6 +864,299 @@ router.get('/tours/educational', optionalAuth, async (req, res) => {
       success: false,
       tours: [],
       message: 'Error retrieving educational tours',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/platform/stats - Get platform statistics for visitor dashboard
+ * Matches: educationService.getPlatformStats()
+ */
+router.get('/platform/stats', async (req, res) => {
+  try {
+    console.log('📊 Fetching platform statistics...');
+    
+    // Get featured courses
+    const featuredCourses = await Course.find({
+      isActive: true,
+      status: 'published',
+      featured: true
+    })
+    .select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration')
+    .sort({ averageRating: -1, enrollmentCount: -1 })
+    .limit(6)
+    .lean();
+    
+    // If no featured courses, get popular ones
+    let coursesToReturn = featuredCourses;
+    if (featuredCourses.length === 0) {
+      coursesToReturn = await Course.find({
+        isActive: true,
+        status: 'published'
+      })
+      .select('title description category difficulty image instructor averageRating enrollmentCount price estimatedDuration')
+      .sort({ enrollmentCount: -1, averageRating: -1 })
+      .limit(6)
+      .lean();
+    }
+    
+    const transformedCourses = coursesToReturn.map(course => ({
+      _id: course._id.toString(),
+      title: course.title,
+      description: course.description,
+      category: course.category,
+      difficulty: course.difficulty,
+      image: course.image || course.imageUrl || '/images/course-placeholder.jpg',
+      instructor: course.instructor || 'Heritage Expert',
+      averageRating: course.averageRating || 0,
+      enrollmentCount: course.enrollmentCount || 0,
+      price: course.price || 0,
+      estimatedDuration: course.estimatedDuration || 240
+    }));
+    
+    // Get course categories with counts
+    const categories = await Course.aggregate([
+      { $match: { isActive: true, status: 'published' } },
+      { 
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+          avgRating: { $avg: '$averageRating' }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+    
+    // Predefined category info with descriptions
+    const categoryInfo = {
+      'history': {
+        name: 'History',
+        description: 'Explore Ethiopia\'s rich historical heritage',
+        coursesCount: 0
+      },
+      'art': {
+        name: 'Art & Culture', 
+        description: 'Discover traditional and contemporary art',
+        coursesCount: 0
+      },
+      'archaeology': {
+        name: 'Archaeology',
+        description: 'Uncover ancient civilizations and discoveries',
+        coursesCount: 0
+      },
+      'culture': {
+        name: 'Culture',
+        description: 'Immerse in Ethiopian cultural traditions',
+        coursesCount: 0
+      }
+    };
+    
+    // Update category counts
+    categories.forEach(cat => {
+      if (categoryInfo[cat._id]) {
+        categoryInfo[cat._id].coursesCount = cat.count;
+      }
+    });
+    
+    const transformedCategories = Object.values(categoryInfo);
+    
+    // Calculate platform statistics
+    const totalCourses = await Course.countDocuments({ isActive: true, status: 'published' });
+    const totalLearners = await LearningProgress.countDocuments({});
+    const coursesCompleted = await LearningProgress.countDocuments({
+      'courses.status': 'completed'
+    });
+    
+    const platformStats = {
+      totalCourses: totalCourses,
+      totalLearners: totalLearners,
+      coursesCompleted: coursesCompleted,
+      successRate: totalLearners > 0 ? Math.round((coursesCompleted / totalLearners) * 100) : 0
+    };
+    
+    // Generate sample testimonials (until real data is available)
+    const testimonials = [
+      {
+        id: 1,
+        name: 'Sarah Johnson',
+        role: 'History Student',
+        message: 'The Ethiopian heritage courses opened my eyes to the incredible depth of this ancient civilization.',
+        rating: 5,
+        image: 'https://picsum.photos/64/64?random=1'
+      },
+      {
+        id: 2,
+        name: 'Michael Chen',
+        role: 'Cultural Researcher',
+        message: 'Exceptional quality content with expert instructors. Highly recommended for anyone interested in African history.',
+        rating: 5,
+        image: 'https://picsum.photos/64/64?random=2'
+      },
+      {
+        id: 3,
+        name: 'Fatima Al-Hassan',
+        role: 'Archaeology Student',
+        message: 'The interactive virtual tours bring Ethiopia\'s heritage sites to life. Amazing learning experience!',
+        rating: 5,
+        image: 'https://picsum.photos/64/64?random=3'
+      }
+    ];
+    
+    // Generate quick actions
+    const quickActions = [
+      {
+        id: 1,
+        title: 'Start Learning',
+        description: 'Browse our extensive course catalog',
+        icon: 'book-open',
+        link: '/courses',
+        color: 'blue'
+      },
+      {
+        id: 2,
+        title: 'Virtual Tours',
+        description: 'Explore heritage sites virtually',
+        icon: 'map',
+        link: '/virtual-tours',
+        color: 'green'
+      },
+      {
+        id: 3,
+        title: 'Study Guides',
+        description: 'Download comprehensive study materials',
+        icon: 'file-text',
+        link: '/study-guides',
+        color: 'purple'
+      },
+      {
+        id: 4,
+        title: 'Community',
+        description: 'Join discussions and connect',
+        icon: 'users',
+        link: '/community',
+        color: 'amber'
+      }
+    ];
+    
+    // Generate featured museums (sample data)
+    const featuredMuseums = [
+      {
+        _id: 'museum1',
+        name: 'National Museum of Ethiopia',
+        description: 'Home to Lucy and other archaeological treasures',
+        location: 'Addis Ababa',
+        rating: 4.8,
+        image: 'https://picsum.photos/300/200?random=10'
+      },
+      {
+        _id: 'museum2',
+        name: 'Ethnological Museum',
+        description: 'Showcasing Ethiopia\'s diverse cultural heritage',
+        location: 'Addis Ababa University',
+        rating: 4.6,
+        image: 'https://picsum.photos/300/200?random=11'
+      },
+      {
+        _id: 'museum3',
+        name: 'Harar Cultural Center',
+        description: 'Islamic heritage and traditional architecture',
+        location: 'Harar',
+        rating: 4.7,
+        image: 'https://picsum.photos/300/200?random=12'
+      }
+    ];
+    
+    // Generate featured artifacts (sample data)
+    const featuredArtifacts = [
+      {
+        id: 'artifact1',
+        name: 'Lucy Fossil',
+        museum: 'National Museum',
+        addedAt: '2 days ago',
+        image: 'https://picsum.photos/300/200?random=20'
+      },
+      {
+        id: 'artifact2',
+        name: 'Axumite Obelisk',
+        museum: 'Axum Museum',
+        addedAt: '1 week ago',
+        image: 'https://picsum.photos/300/200?random=21'
+      },
+      {
+        id: 'artifact3',
+        name: 'Ancient Manuscripts',
+        museum: 'Holy Trinity Cathedral',
+        addedAt: '3 days ago',
+        image: 'https://picsum.photos/300/200?random=22'
+      }
+    ];
+    
+    // Generate upcoming events (sample data)
+    const upcomingEvents = [
+      {
+        id: 'event1',
+        title: 'Ethiopian Heritage Week',
+        location: 'National Museum',
+        date: 'Dec 15, 2024',
+        type: 'Cultural Event',
+        image: 'https://picsum.photos/64/64?random=30'
+      },
+      {
+        id: 'event2',
+        title: 'Lalibela Virtual Tour',
+        location: 'Online',
+        date: 'Dec 20, 2024',
+        type: 'Virtual Event',
+        image: 'https://picsum.photos/64/64?random=31'
+      },
+      {
+        id: 'event3',
+        title: 'Archaeology Workshop',
+        location: 'University Campus',
+        date: 'Jan 5, 2025',
+        type: 'Workshop',
+        image: 'https://picsum.photos/64/64?random=32'
+      }
+    ];
+    
+    const responseData = {
+      success: true,
+      featured: {
+        courses: transformedCourses,
+        museums: featuredMuseums,
+        artifacts: featuredArtifacts
+      },
+      categories: transformedCategories,
+      stats: platformStats,
+      testimonials: testimonials,
+      quickActions: quickActions,
+      upcoming: {
+        events: upcomingEvents
+      },
+      message: 'Platform statistics retrieved successfully'
+    };
+    
+    console.log('✅ Platform stats loaded successfully:', {
+      courses: transformedCourses.length,
+      categories: transformedCategories.length,
+      totalCourses: platformStats.totalCourses,
+      totalLearners: platformStats.totalLearners
+    });
+    
+    res.json(responseData);
+    
+  } catch (error) {
+    console.error('❌ Error fetching platform statistics:', error);
+    res.status(500).json({
+      success: false,
+      featured: { courses: [], museums: [], artifacts: [] },
+      categories: [],
+      stats: { totalCourses: 0, totalLearners: 0, coursesCompleted: 0, successRate: 0 },
+      testimonials: [],
+      quickActions: [],
+      upcoming: { events: [] },
+      message: 'Error retrieving platform statistics',
       error: error.message
     });
   }
