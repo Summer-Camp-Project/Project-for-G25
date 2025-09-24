@@ -71,6 +71,15 @@ Thumbs.db
 uploads/
 public/uploads/
 
+# Security and credential files (DO NOT COMMIT)
+server/seed-outputs/
+**/team-credentials-*.txt
+**/credentials-*.txt
+**/seed-output*.txt
+**/autintiation*.md
+*.credentials
+*.password
+
 # Local development files
 .local
 .cache

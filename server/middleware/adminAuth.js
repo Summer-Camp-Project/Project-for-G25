@@ -10,11 +10,14 @@ const requireAdmin = (req, res, next) => {
       });
     }
 
-    if (req.user.role !== 'admin' && req.user.role !== 'superAdmin') {
+    // Allow superAdmin, museumAdmin, and legacy 'admin' roles
+    const allowedAdminRoles = ['superAdmin', 'museumAdmin', 'admin'];
+    if (!allowedAdminRoles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Admin role required.',
-        userRole: req.user.role
+        userRole: req.user.role,
+        allowedRoles: allowedAdminRoles
       });
     }
 
@@ -80,7 +83,7 @@ const requireContentManager = (req, res, next) => {
       });
     }
 
-    const allowedRoles = ['admin', 'superAdmin', 'contentManager'];
+    const allowedRoles = ['admin', 'superAdmin', 'museumAdmin', 'contentManager'];
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
@@ -154,6 +157,17 @@ const requireResourcePermission = (resourceType) => {
           achievements: ['read', 'create', 'update'],
           certificates: ['read', 'revoke'],
           categories: ['read']
+        },
+        museumAdmin: {
+          courses: ['read', 'create', 'update', 'delete'],
+          lessons: ['read', 'create', 'update', 'delete'],
+          enrollments: ['read', 'update'],
+          achievements: ['read', 'create', 'update'],
+          certificates: ['read', 'revoke'],
+          categories: ['read', 'create', 'update'],
+          artifacts: ['read', 'create', 'update', 'delete'],
+          events: ['read', 'create', 'update', 'delete'],
+          rentals: ['read', 'update']
         },
         contentManager: {
           courses: ['read', 'create', 'update'],

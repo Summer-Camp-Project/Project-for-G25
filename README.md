@@ -261,56 +261,88 @@ REACT_APP_API_URL=http://localhost:5000/api
 REACT_APP_SOCKET_URL=http://localhost:5000
 ```
 
-### 3️⃣ **Install Dependencies**
+### 3️⃣ **Installation Methods**
 
-**Install all dependencies:**
+**🚀 Option A: Automatic Setup (Recommended)**
+```bash
+# Install all dependencies and setup environment
+npm run setup
+```
+
+**⚡ Option B: Manual Installation**
 ```bash
 # Install root dependencies
 npm install
 
-# Install server dependencies
-cd server
-npm install
+# Install all workspace dependencies
+npm run install:all
 
-# Install client dependencies
-cd ../client
-npm install
+# Or install individually
+npm run install:server
+npm run install:client
 ```
 
 ### 4️⃣ **Database Setup**
 
-**Option A: Local MongoDB**
+**🐳 Option A: Docker (Recommended for Development)**
+```bash
+# Start MongoDB with Docker Compose
+npm run db:start
+
+# Initialize database with default data
+npm run db:setup
+
+# Access MongoDB Express UI at http://localhost:8081
+```
+
+**📊 Option B: Local MongoDB**
 ```bash
 # Start MongoDB service
 sudo service mongod start  # Linux
 brew services start mongodb-community  # macOS
 
-# Initialize database with default data
+# Initialize database with secure seeding
 cd server
-npm run setup-super-admin
+npm run seed
 ```
 
-**Option B: MongoDB Atlas (Cloud)**
+**☁️ Option C: MongoDB Atlas (Production)**
 1. Create a free MongoDB Atlas cluster
 2. Get your connection string
 3. Update `MONGODB_URI` in `server/.env`
+4. Run: `npm run db:seed`
 
 ### 5️⃣ **Start the Application**
 
-**Development Mode:**
+**🔧 Development Mode:**
 ```bash
-# Terminal 1: Start Backend
-cd server
+# Start both frontend and backend concurrently
 npm run dev
 
-# Terminal 2: Start Frontend
-cd client
-npm start
+# Or start individually:
+npm run dev:server    # Backend only
+npm run dev:client    # Frontend only
 ```
 
-**Production Mode with Docker:**
+**🐳 Docker Development:**
 ```bash
-docker-compose up --build
+# Start with Docker Compose (includes hot reload)
+npm run docker:dev
+
+# View logs
+npm run docker:logs
+```
+
+**🚀 Production Mode:**
+```bash
+# Build everything
+npm run build
+
+# Start production server
+npm start
+
+# Or with Docker
+npm run docker:prod
 ```
 
 ### 6️⃣ **Access the Platform**
