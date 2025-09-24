@@ -162,7 +162,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
     activeSites: 0,
     unescoSites: 0,
     verifiedSites: 0,
-    featuredSites: 0,
     newSites: 0,
     sitesByRegion: [],
     sitesByType: [],
@@ -446,14 +445,13 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       setHeritageSitesStats(prev => ({ ...prev, loading: true, error: '' }));
       try {
         const response = await api.getHeritageSiteStatistics({ timeRange: '30d' });
+        console.log('📊 Heritage Sites Statistics Response (useEffect):', response);
         if (response.success) {
-          setHeritageSitesStats(prev => ({
-            ...prev,
+          const stats = {
             totalSites: response.data.overview?.totalSites || 0,
             activeSites: response.data.overview?.activeSites || 0,
             unescoSites: response.data.overview?.unescoSites || 0,
             verifiedSites: response.data.overview?.verifiedSites || 0,
-            featuredSites: response.data.overview?.featuredSites || 0,
             newSites: response.data.overview?.newSites || 0,
             sitesByRegion: response.data.distribution?.byRegion || [],
             sitesByType: response.data.distribution?.byType || [],
@@ -461,6 +459,11 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
             conservationStatus: response.data.distribution?.byConservationStatus || [],
             loading: false,
             error: ''
+          };
+          console.log('📊 Setting Heritage Sites Stats (useEffect):', stats);
+          setHeritageSitesStats(prev => ({
+            ...prev,
+            ...stats
           }));
         }
       } catch (error) {
@@ -878,14 +881,13 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
     setHeritageSitesStats(prev => ({ ...prev, loading: true, error: '' }));
     try {
       const response = await api.getHeritageSiteStatistics({ timeRange: '30d' });
+      console.log('📊 Heritage Sites Statistics Response:', response);
       if (response.success) {
-        setHeritageSitesStats(prev => ({
-          ...prev,
+        const stats = {
           totalSites: response.data.overview?.totalSites || 0,
           activeSites: response.data.overview?.activeSites || 0,
           unescoSites: response.data.overview?.unescoSites || 0,
           verifiedSites: response.data.overview?.verifiedSites || 0,
-          featuredSites: response.data.overview?.featuredSites || 0,
           newSites: response.data.overview?.newSites || 0,
           sitesByRegion: response.data.distribution?.byRegion || [],
           sitesByType: response.data.distribution?.byType || [],
@@ -893,6 +895,11 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
           conservationStatus: response.data.distribution?.byConservationStatus || [],
           loading: false,
           error: ''
+        };
+        console.log('📊 Setting Heritage Sites Stats:', stats);
+        setHeritageSitesStats(prev => ({
+          ...prev,
+          ...stats
         }));
       } else {
         throw new Error(response.message || 'Failed to load heritage sites statistics');
@@ -2058,7 +2065,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
             </div>
 
             {/* Heritage Sites Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
@@ -2095,17 +2102,6 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Star className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-2xl font-bold text-gray-900">{heritageSitesStats.featuredSites || 0}</p>
-                    <p className="text-sm text-gray-600">Featured Sites</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Heritage Sites Management Section */}
@@ -2143,7 +2139,9 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                     </div>
                   </div>
                 )}
-                <HeritageSiteManager />
+                <HeritageSiteManager onDataChange={() => {
+                  loadHeritageSitesStats();
+                }} />
               </div>
             </div>
           </div>

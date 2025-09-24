@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 
-const HeritageSiteManager = () => {
+const HeritageSiteManager = ({ onDataChange }) => {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -214,6 +214,8 @@ const HeritageSiteManager = () => {
       resetForm();
       setSuccessMessage('Heritage site added successfully!');
       setShowSuccessModal(true);
+      // Notify parent component of data change
+      if (onDataChange) onDataChange();
     } catch (error) {
       console.error('Failed to add heritage site:', error);
       setErrorMessage('Failed to add heritage site. Please try again.');
@@ -235,6 +237,10 @@ const HeritageSiteManager = () => {
         }
       };
 
+      console.log('🔄 UPDATE SITE - ID:', editingSite._id);
+      console.log('📋 Form data:', formData);
+      console.log('📋 Site data being sent:', siteData);
+
       const response = await api.updateHeritageSite(editingSite._id, siteData);
       setSites(prev => prev.map(site =>
         site._id === editingSite._id ? response.data : site
@@ -244,6 +250,8 @@ const HeritageSiteManager = () => {
       resetForm();
       setSuccessMessage('Heritage site updated successfully!');
       setShowSuccessModal(true);
+      // Notify parent component of data change
+      if (onDataChange) onDataChange();
     } catch (error) {
       console.error('Failed to update heritage site:', error);
       setErrorMessage('Failed to update heritage site. Please try again.');
@@ -259,6 +267,8 @@ const HeritageSiteManager = () => {
       setSiteToDelete(null);
       setSuccessMessage('Heritage site deleted successfully!');
       setShowSuccessModal(true);
+      // Notify parent component of data change
+      if (onDataChange) onDataChange();
     } catch (error) {
       console.error('Failed to delete heritage site:', error);
       setErrorMessage('Failed to delete heritage site. Please try again.');
@@ -272,6 +282,8 @@ const HeritageSiteManager = () => {
   };
 
   const openEditModal = (site) => {
+    console.log('🔍 EDIT MODAL - Site data:', site);
+    console.log('🔍 EDIT MODAL - Management data:', site.management);
     setEditingSite(site);
     setFormData({
       name: site.name,
@@ -401,15 +413,59 @@ const HeritageSiteManager = () => {
   return (
     <div className="space-y-6">
 
-      {/* Add Heritage Site Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add Heritage Site</span>
-        </button>
+      {/* Action Bar with View Toggle, Refresh, and Add Buttons */}
+      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          {/* View Toggle Buttons */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700">View:</span>
+            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('card')}
+                className={`px-3 py-2 text-sm font-medium flex items-center space-x-1 ${viewMode === 'card'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                <div className="grid grid-cols-2 gap-0.5">
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                </div>
+                <span>Cards</span>
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-2 text-sm font-medium flex items-center space-x-1 ${viewMode === 'table'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                <div className="grid grid-cols-3 gap-0.5">
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  <div className="w-1 h-1 bg-current rounded-sm"></div>
+                </div>
+                <span>Table</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Heritage Site</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -438,12 +494,94 @@ const HeritageSiteManager = () => {
         </div>
       </div>
 
-      {/* Sites Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSites.map(site => (
-          <SiteCard key={site._id} site={site} />
-        ))}
-      </div>
+      {/* Sites Display - Card or Table View */}
+      {viewMode === 'card' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredSites.map(site => (
+            <SiteCard key={site._id} site={site} />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Site Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredSites.map(site => (
+                  <tr key={site._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <MapPin className="h-5 w-5 text-blue-600" />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{site.name}</div>
+                          <div className="text-sm text-gray-500">{site.category}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {site.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {site.location?.region}, {site.location?.zone}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {site.designation || 'Not specified'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${site.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {site.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => openDetailModal(site)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(site)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Edit"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(site)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {filteredSites.length === 0 && (
         <div className="text-center py-12">
@@ -457,17 +595,19 @@ const HeritageSiteManager = () => {
       )}
 
       {/* Add/Edit Modal */}
-      {showAddModal && (
+      {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-xl font-semibold">
-                {selectedSite ? 'Edit Heritage Site' : 'Add New Heritage Site'}
+                {showEditModal ? 'Edit Heritage Site' : 'Add New Heritage Site'}
               </h2>
               <button
                 onClick={() => {
                   setShowAddModal(false);
+                  setShowEditModal(false);
                   setSelectedSite(null);
+                  setEditingSite(null);
                   resetForm();
                 }}
                 className="text-gray-400 hover:text-gray-600"
@@ -712,7 +852,9 @@ const HeritageSiteManager = () => {
               <button
                 onClick={() => {
                   setShowAddModal(false);
+                  setShowEditModal(false);
                   setSelectedSite(null);
+                  setEditingSite(null);
                   resetForm();
                 }}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
@@ -720,10 +862,10 @@ const HeritageSiteManager = () => {
                 Cancel
               </button>
               <button
-                onClick={selectedSite ? handleUpdateSite : handleAddSite}
+                onClick={showEditModal ? handleUpdateSite : handleAddSite}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                {selectedSite ? 'Update Site' : 'Add Site'}
+                {showEditModal ? 'Update Site' : 'Add Site'}
               </button>
             </div>
           </div>

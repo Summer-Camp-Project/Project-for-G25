@@ -13,7 +13,7 @@ const {
   deleteDiscussion,
   getDiscussionStats
 } = require('../controllers/discussions');
-const authenticate = require('../middleware/authenticate');
+const { auth: authenticate } = require('../middleware/auth');
 
 // Discussion management routes
 router.post('/', authenticate, createDiscussion);
