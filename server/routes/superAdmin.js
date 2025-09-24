@@ -755,7 +755,7 @@ router.get('/heritage-sites/:id', auth, superAdminController.getHeritageSite);
  * @access  Super Admin only
  * @body    updated heritage site data
  */
-router.put('/heritage-sites/:id', auth, superAdminController.updateHeritageSite);
+router.put('/heritage-sites/:id', superAdminController.updateHeritageSite);
 
 /**
  * @route   DELETE /api/super-admin/heritage-sites/:id

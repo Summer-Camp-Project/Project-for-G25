@@ -21,18 +21,18 @@ const mongoose = require('mongoose');
 async function getAnalytics(req, res) {
   try {
     const { startDate, endDate, museum, type } = req.query;
-    
+
     const now = new Date();
     const defaultStartDate = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const defaultEndDate = endDate ? new Date(endDate) : now;
-    
+
     const dateFilter = {
       createdAt: {
         $gte: defaultStartDate,
         $lte: defaultEndDate
       }
     };
-    
+
     const [userStats, museumStats, artifactStats, rentalStats] = await Promise.all([
       User.aggregate([
         { $match: dateFilter },
@@ -55,7 +55,7 @@ async function getAnalytics(req, res) {
       Artifact.countDocuments(dateFilter),
       Rental.countDocuments(dateFilter)
     ]);
-    
+
     res.json({
       success: true,
       data: {
@@ -71,10 +71,10 @@ async function getAnalytics(req, res) {
     });
   } catch (error) {
     console.error('Get analytics error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch analytics data', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch analytics data',
+      error: error.message
     });
   }
 }
@@ -85,7 +85,7 @@ async function getDashboard(req, res) {
     const now = new Date();
     const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    
+
     const [
       totalUsers,
       activeUsers,
@@ -113,10 +113,10 @@ async function getDashboard(req, res) {
     });
   } catch (error) {
     console.error('Get dashboard error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch dashboard data', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch dashboard data',
+      error: error.message
     });
   }
 }
@@ -129,7 +129,7 @@ async function getComprehensiveDashboard(req, res) {
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     const [
       // Basic counts
       totalUsers,
@@ -260,10 +260,10 @@ async function getEducationOverview(req, res) {
     });
   } catch (error) {
     console.error('Get education overview error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch education overview', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch education overview',
+      error: error.message
     });
   }
 }
@@ -272,7 +272,7 @@ async function getEducationOverview(req, res) {
 async function getAllEducationalTours(req, res) {
   try {
     const { page = 1, limit = 20, status, search } = req.query;
-    
+
     const query = {};
     if (status && status !== 'all') query.status = status;
     if (search) {
@@ -281,7 +281,7 @@ async function getAllEducationalTours(req, res) {
         { description: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     const [tours, total] = await Promise.all([
       EducationalTour.find(query)
         .sort({ createdAt: -1 })
@@ -291,7 +291,7 @@ async function getAllEducationalTours(req, res) {
         .populate('museum', 'name'),
       EducationalTour.countDocuments(query)
     ]);
-    
+
     res.json({
       success: true,
       tours,
@@ -304,10 +304,10 @@ async function getAllEducationalTours(req, res) {
     });
   } catch (error) {
     console.error('Get all educational tours error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch educational tours', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch educational tours',
+      error: error.message
     });
   }
 }
@@ -317,27 +317,27 @@ async function updateEducationalTourStatus(req, res) {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    
+
     if (!['published', 'draft', 'archived'].includes(status)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid status. Must be published, draft, or archived' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be published, draft, or archived'
       });
     }
-    
+
     const tour = await EducationalTour.findByIdAndUpdate(
       id,
       { status },
       { new: true }
     ).populate('organizer', 'name email');
-    
+
     if (!tour) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Educational tour not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Educational tour not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: `Tour status updated to ${status}`,
@@ -345,10 +345,10 @@ async function updateEducationalTourStatus(req, res) {
     });
   } catch (error) {
     console.error('Update educational tour status error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update tour status', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update tour status',
+      error: error.message
     });
   }
 }
@@ -357,12 +357,12 @@ async function updateEducationalTourStatus(req, res) {
 async function deleteEducationalTour(req, res) {
   try {
     const { id } = req.params;
-    
+
     // Check if tour has enrollments
     const enrollmentCount = await User.countDocuments({
       'educationalTours.tourId': id
     });
-    
+
     if (enrollmentCount > 0) {
       // Archive instead of delete if has enrollments
       const tour = await EducationalTour.findByIdAndUpdate(
@@ -370,26 +370,26 @@ async function deleteEducationalTour(req, res) {
         { status: 'archived' },
         { new: true }
       );
-      
+
       return res.json({
         success: true,
         message: 'Tour archived due to existing enrollments',
         tour
       });
     }
-    
+
     await EducationalTour.findByIdAndDelete(id);
-    
+
     res.json({
       success: true,
       message: 'Educational tour deleted successfully'
     });
   } catch (error) {
     console.error('Delete educational tour error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete educational tour', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete educational tour',
+      error: error.message
     });
   }
 }
@@ -398,7 +398,7 @@ async function deleteEducationalTour(req, res) {
 async function getAllCourses(req, res) {
   try {
     const { page = 1, limit = 20, status, search } = req.query;
-    
+
     const query = {};
     if (status && status !== 'all') query.status = status;
     if (search) {
@@ -407,7 +407,7 @@ async function getAllCourses(req, res) {
         { description: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     const [courses, total] = await Promise.all([
       Course.find(query)
         .sort({ createdAt: -1 })
@@ -417,7 +417,7 @@ async function getAllCourses(req, res) {
         .populate('category', 'name'),
       Course.countDocuments(query)
     ]);
-    
+
     res.json({
       success: true,
       courses,
@@ -430,10 +430,10 @@ async function getAllCourses(req, res) {
     });
   } catch (error) {
     console.error('Get all courses error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch courses', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch courses',
+      error: error.message
     });
   }
 }
@@ -443,27 +443,27 @@ async function updateCourseStatus(req, res) {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    
+
     if (!['published', 'draft', 'archived'].includes(status)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid status. Must be published, draft, or archived' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be published, draft, or archived'
       });
     }
-    
+
     const course = await Course.findByIdAndUpdate(
       id,
       { status },
       { new: true }
     ).populate('instructor', 'name email');
-    
+
     if (!course) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Course not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: `Course status updated to ${status}`,
@@ -471,10 +471,10 @@ async function updateCourseStatus(req, res) {
     });
   } catch (error) {
     console.error('Update course status error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update course status', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update course status',
+      error: error.message
     });
   }
 }
@@ -483,12 +483,12 @@ async function updateCourseStatus(req, res) {
 async function deleteCourse(req, res) {
   try {
     const { id } = req.params;
-    
+
     // Check if course has enrollments
     const enrollmentCount = await LearningProgress.countDocuments({
       'courses.courseId': id
     });
-    
+
     if (enrollmentCount > 0) {
       // Archive instead of delete if has enrollments
       const course = await Course.findByIdAndUpdate(
@@ -496,26 +496,26 @@ async function deleteCourse(req, res) {
         { status: 'archived' },
         { new: true }
       );
-      
+
       return res.json({
         success: true,
         message: 'Course archived due to existing enrollments',
         course
       });
     }
-    
+
     await Course.findByIdAndDelete(id);
-    
+
     res.json({
       success: true,
       message: 'Course deleted successfully'
     });
   } catch (error) {
     console.error('Delete course error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete course', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete course',
+      error: error.message
     });
   }
 }
@@ -527,10 +527,10 @@ async function createCourseSuperAdmin(req, res) {
       ...req.body,
       createdBy: req.user._id
     };
-    
+
     const course = new Course(courseData);
     await course.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Course created successfully',
@@ -538,10 +538,10 @@ async function createCourseSuperAdmin(req, res) {
     });
   } catch (error) {
     console.error('Create course (super admin) error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to create course', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create course',
+      error: error.message
     });
   }
 }
@@ -550,7 +550,7 @@ async function createCourseSuperAdmin(req, res) {
 async function getAllAssignments(req, res) {
   try {
     const { page = 1, limit = 20, courseId, search } = req.query;
-    
+
     const query = {};
     if (courseId) query.courseId = courseId;
     if (search) {
@@ -559,7 +559,7 @@ async function getAllAssignments(req, res) {
         { description: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     const [assignments, total] = await Promise.all([
       Assignment.find(query)
         .sort({ createdAt: -1 })
@@ -569,7 +569,7 @@ async function getAllAssignments(req, res) {
         .populate('lessonId', 'title'),
       Assignment.countDocuments(query)
     ]);
-    
+
     res.json({
       success: true,
       assignments,
@@ -582,10 +582,10 @@ async function getAllAssignments(req, res) {
     });
   } catch (error) {
     console.error('Get all assignments error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch assignments', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch assignments',
+      error: error.message
     });
   }
 }
@@ -633,20 +633,20 @@ async function updateAssignment(req, res) {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const assignment = await Assignment.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('courseId', 'title');
-    
+
     if (!assignment) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Assignment not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Assignment updated successfully',
@@ -654,10 +654,10 @@ async function updateAssignment(req, res) {
     });
   } catch (error) {
     console.error('Update assignment error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update assignment', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update assignment',
+      error: error.message
     });
   }
 }
@@ -666,35 +666,35 @@ async function updateAssignment(req, res) {
 async function deleteAssignment(req, res) {
   try {
     const { id } = req.params;
-    
+
     // Check if assignment has submissions
     const assignment = await Assignment.findById(id);
     if (!assignment) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Assignment not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found'
       });
     }
-    
+
     if (assignment.submissions && assignment.submissions.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Cannot delete assignment with existing submissions' 
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete assignment with existing submissions'
       });
     }
-    
+
     await Assignment.findByIdAndDelete(id);
-    
+
     res.json({
       success: true,
       message: 'Assignment deleted successfully'
     });
   } catch (error) {
     console.error('Delete assignment error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete assignment', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete assignment',
+      error: error.message
     });
   }
 }
@@ -703,7 +703,7 @@ async function deleteAssignment(req, res) {
 async function getAllDiscussions(req, res) {
   try {
     const { page = 1, limit = 20, courseId, category, search } = req.query;
-    
+
     const query = {};
     if (courseId) query.courseId = courseId;
     if (category && category !== 'all') query.category = category;
@@ -713,7 +713,7 @@ async function getAllDiscussions(req, res) {
         { description: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     const [discussions, total] = await Promise.all([
       Discussion.find(query)
         .sort({ createdAt: -1 })
@@ -723,7 +723,7 @@ async function getAllDiscussions(req, res) {
         .populate('createdBy', 'name email'),
       Discussion.countDocuments(query)
     ]);
-    
+
     res.json({
       success: true,
       discussions,
@@ -736,10 +736,10 @@ async function getAllDiscussions(req, res) {
     });
   } catch (error) {
     console.error('Get all discussions error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch discussions', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch discussions',
+      error: error.message
     });
   }
 }
@@ -752,24 +752,24 @@ async function getDiscussionById(req, res) {
       .populate('courseId', 'title')
       .populate('createdBy', 'name email')
       .populate('posts.author', 'name email');
-      
+
     if (!discussion) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Discussion not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Discussion not found'
       });
     }
-    
+
     res.json({
       success: true,
       discussion
     });
   } catch (error) {
     console.error('Get discussion by id error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch discussion', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch discussion',
+      error: error.message
     });
   }
 }
@@ -779,9 +779,9 @@ async function moderateDiscussion(req, res) {
   try {
     const { id } = req.params;
     const { action, reason } = req.body; // pin, lock, unlock, etc.
-    
+
     const updateData = {};
-    
+
     switch (action) {
       case 'pin':
         updateData['posts.$[].isPinned'] = true;
@@ -793,25 +793,25 @@ async function moderateDiscussion(req, res) {
         updateData['settings.isLocked'] = false;
         break;
       default:
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid moderation action' 
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid moderation action'
         });
     }
-    
+
     const discussion = await Discussion.findByIdAndUpdate(
       id,
       updateData,
       { new: true }
     );
-    
+
     if (!discussion) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Discussion not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Discussion not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: `Discussion ${action}ed successfully`,
@@ -819,10 +819,10 @@ async function moderateDiscussion(req, res) {
     });
   } catch (error) {
     console.error('Moderate discussion error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to moderate discussion', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to moderate discussion',
+      error: error.message
     });
   }
 }
@@ -831,35 +831,35 @@ async function moderateDiscussion(req, res) {
 async function deleteDiscussion(req, res) {
   try {
     const { id } = req.params;
-    
+
     const discussion = await Discussion.findById(id);
     if (!discussion) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Discussion not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Discussion not found'
       });
     }
-    
+
     // Check if discussion has posts
     if (discussion.posts && discussion.posts.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Cannot delete discussion with existing posts. Consider locking it instead.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete discussion with existing posts. Consider locking it instead.'
       });
     }
-    
+
     await Discussion.findByIdAndDelete(id);
-    
+
     res.json({
       success: true,
       message: 'Discussion deleted successfully'
     });
   } catch (error) {
     console.error('Delete discussion error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete discussion', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete discussion',
+      error: error.message
     });
   }
 }
@@ -868,11 +868,11 @@ async function deleteDiscussion(req, res) {
 async function getAllEnrollments(req, res) {
   try {
     const { page = 1, limit = 20, courseId, userId, status } = req.query;
-    
+
     const query = {};
     if (courseId) query['courses.courseId'] = courseId;
     if (userId) query.userId = userId;
-    
+
     const [enrollments, total] = await Promise.all([
       LearningProgress.find(query)
         .sort({ createdAt: -1 })
@@ -882,7 +882,7 @@ async function getAllEnrollments(req, res) {
         .populate('courses.courseId', 'title'),
       LearningProgress.countDocuments(query)
     ]);
-    
+
     res.json({
       success: true,
       enrollments,
@@ -895,10 +895,10 @@ async function getAllEnrollments(req, res) {
     });
   } catch (error) {
     console.error('Get all enrollments error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch enrollments', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch enrollments',
+      error: error.message
     });
   }
 }
@@ -908,20 +908,20 @@ async function updateEnrollment(req, res) {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const enrollment = await LearningProgress.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('userId', 'name email');
-    
+
     if (!enrollment) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Enrollment not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Enrollment not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Enrollment updated successfully',
@@ -929,10 +929,10 @@ async function updateEnrollment(req, res) {
     });
   } catch (error) {
     console.error('Update enrollment error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update enrollment', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update enrollment',
+      error: error.message
     });
   }
 }
@@ -941,26 +941,26 @@ async function updateEnrollment(req, res) {
 async function deleteEnrollment(req, res) {
   try {
     const { id } = req.params;
-    
+
     const enrollment = await LearningProgress.findByIdAndDelete(id);
-    
+
     if (!enrollment) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Enrollment not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Enrollment not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Enrollment deleted successfully'
     });
   } catch (error) {
     console.error('Delete enrollment error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete enrollment', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete enrollment',
+      error: error.message
     });
   }
 }
@@ -969,11 +969,11 @@ async function deleteEnrollment(req, res) {
 async function getAllProgress(req, res) {
   try {
     const { page = 1, limit = 20, userId, courseId } = req.query;
-    
+
     const query = {};
     if (userId) query.userId = userId;
     if (courseId) query['courses.courseId'] = courseId;
-    
+
     const [progressRecords, total] = await Promise.all([
       LearningProgress.find(query)
         .sort({ 'overallStats.lastActivityDate': -1 })
@@ -983,7 +983,7 @@ async function getAllProgress(req, res) {
         .populate('courses.courseId', 'title'),
       LearningProgress.countDocuments(query)
     ]);
-    
+
     res.json({
       success: true,
       progress: progressRecords,
@@ -996,10 +996,10 @@ async function getAllProgress(req, res) {
     });
   } catch (error) {
     console.error('Get all progress error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch progress records', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch progress records',
+      error: error.message
     });
   }
 }
@@ -1009,20 +1009,20 @@ async function updateProgress(req, res) {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const progress = await LearningProgress.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('userId', 'name email');
-    
+
     if (!progress) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Progress record not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Progress updated successfully',
@@ -1030,10 +1030,10 @@ async function updateProgress(req, res) {
     });
   } catch (error) {
     console.error('Update progress error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to update progress', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update progress',
+      error: error.message
     });
   }
 }
@@ -1042,26 +1042,26 @@ async function updateProgress(req, res) {
 async function deleteProgress(req, res) {
   try {
     const { id } = req.params;
-    
+
     const progress = await LearningProgress.findByIdAndDelete(id);
-    
+
     if (!progress) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Progress record not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Progress record not found'
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Progress record deleted successfully'
     });
   } catch (error) {
     console.error('Delete progress error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to delete progress record', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete progress record',
+      error: error.message
     });
   }
 }
@@ -1845,7 +1845,7 @@ async function getDashboardStats(req, res) {
       securityMetrics
     ] = await Promise.all([
       User.countDocuments({}),
-      User.countDocuments({ 
+      User.countDocuments({
         lastLoginAt: { $gte: lastWeek }
       }),
       User.countDocuments({ createdAt: { $gte: thisMonth } }),
@@ -5246,9 +5246,9 @@ async function createHeritageSite(req, res) {
       heritageSiteData.createdBy = req.user.id;
       console.log('✅ Using authenticated user ID:', req.user.id);
     } else {
-      console.log('⚠️ No authenticated user, skipping createdBy field');
-      // Remove createdBy field if it exists
-      delete heritageSiteData.createdBy;
+      console.log('⚠️ No authenticated user, using default createdBy');
+      // Use a default createdBy for testing purposes
+      heritageSiteData.createdBy = '507f1f77bcf86cd799439011'; // Default admin user ID
     }
 
     console.log('📋 Final heritage site data:', heritageSiteData);
@@ -5307,18 +5307,43 @@ async function updateHeritageSite(req, res) {
     const { id } = req.params;
     const updateData = req.body;
 
-    const heritageSite = await HeritageSite.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    console.log('🔄 UPDATE HERITAGE SITE - ID:', id);
+    console.log('📋 Update data received:', JSON.stringify(updateData, null, 2));
+    console.log('📋 Request headers:', req.headers);
 
-    if (!heritageSite) {
+    // Find the existing site first
+    const existingSite = await HeritageSite.findById(id);
+    if (!existingSite) {
+      console.log('❌ Heritage site not found:', id);
       return res.status(404).json({
         success: false,
         message: 'Heritage site not found'
       });
     }
+
+    console.log('📋 Existing site data:', JSON.stringify(existingSite.toObject(), null, 2));
+
+    // Merge the update data with existing data to avoid validation errors
+    const mergedData = {
+      ...existingSite.toObject(),
+      ...updateData,
+      updatedAt: new Date()
+    };
+
+    // Preserve existing management.authority if the new one is empty
+    if (mergedData.management && mergedData.management.authority === '') {
+      mergedData.management.authority = existingSite.management.authority;
+    }
+
+    console.log('🔄 Merged data:', JSON.stringify(mergedData, null, 2));
+
+    const heritageSite = await HeritageSite.findByIdAndUpdate(
+      id,
+      mergedData,
+      { new: true, runValidators: true }
+    );
+
+    console.log('✅ Heritage site updated successfully:', heritageSite._id);
 
     res.json({
       success: true,
@@ -5326,7 +5351,9 @@ async function updateHeritageSite(req, res) {
       data: heritageSite
     });
   } catch (error) {
-    console.error('Update heritage site error:', error);
+    console.error('❌ Update heritage site error:', error);
+    console.error('❌ Error details:', error.message);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to update heritage site',

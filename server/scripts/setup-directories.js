@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 
 /**
+<<<<<<< HEAD
  * Setup Directories Script
+=======
+ * Setup directories script
+>>>>>>> 3e43144725eb806210cd8ae0a88274b3bf0b129b
  * Creates necessary directories for the application
  */
 
 const fs = require('fs');
 const path = require('path');
 
+<<<<<<< HEAD
 const REQUIRED_DIRECTORIES = [
     'logs',
     'uploads',
@@ -61,3 +66,37 @@ if (require.main === module) {
 }
 
 module.exports = setupDirectories;
+=======
+console.log('📁 Setting up application directories...\n');
+
+const directories = [
+  'uploads',
+  'uploads/artifacts',
+  'uploads/courses',
+  'uploads/events',
+  'uploads/events/images',
+  'uploads/lessons',
+  'uploads/museums',
+  'uploads/staff',
+  'logs',
+  'temp'
+];
+
+directories.forEach(dir => {
+  const dirPath = path.join(__dirname, '..', dir);
+  
+  if (!fs.existsSync(dirPath)) {
+    try {
+      fs.mkdirSync(dirPath, { recursive: true });
+      console.log(`✅ Created directory: ${dir}`);
+    } catch (error) {
+      console.error(`❌ Failed to create directory ${dir}:`, error.message);
+    }
+  } else {
+    console.log(`📁 Directory already exists: ${dir}`);
+  }
+});
+
+console.log('\n✅ Directory setup completed!');
+
+>>>>>>> 3e43144725eb806210cd8ae0a88274b3bf0b129b
