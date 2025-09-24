@@ -629,4 +629,1199 @@ router.get('/courses/:courseId/enrollment/:userId', async (req, res) => {
   }
 });
 
+// ===== DASHBOARD & SUMMARY ROUTES =====
+
+// Get education dashboard summary for homepage/top bar
+router.get('/dashboard/summary', async (req, res) => {
+  try {
+    const { userId, role } = req.query;
+    
+    const Course = require('../models/Course');
+    const Assignment = require('../models/Assignment');
+    const LearningProgress = require('../models/LearningProgress');
+    const Discussion = require('../models/Discussion');
+    const Feedback = require('../models/Feedback');
+    
+    let summary = {};
+    
+    if (role === 'organizer' || role === 'admin' || role === 'super-admin') {
+      // Instructor/Admin Dashboard Summary
+      const totalCourses = await Course.countDocuments({
+        ...(role === 'organizer' && userId ? { organizerId: userId } : {}),
+        isActive: true
+      });
+      
+      const activeCourses = await Course.countDocuments({
+        ...(role === 'organizer' && userId ? { organizerId: userId } : {}),
+        isActive: true,
+        status: 'published'
+      });
+      
+      const totalAssignments = await Assignment.countDocuments({
+        ...(role === 'organizer' && userId ? { organizerId: userId } : {}),
+        isActive: true
+      });
+      
+      // Get total enrolled students across all courses
+      const courseIds = userId && role === 'organizer' 
+        ? (await Course.find({ organizerId: userId, isActive: true }).select('_id')).map(c => c._id)
+        : (await Course.find({ isActive: true }).select('_id')).map(c => c._id);
+      
+      const enrolledStudents = await LearningProgress.countDocuments({
+        'courses.courseId': { $in: courseIds }
+      });
+      
+      const pendingFeedback = await Feedback.countDocuments({
+        status: 'pending',
+        ...(userId && role === 'organizer' ? { 
+          courseId: { $in: courseIds } 
+        } : {})
+      });
+      
+      const activeDiscussions = await Discussion.countDocuments({
+        ...(userId && role === 'organizer' ? { organizerId: userId } : {}),
+        isActive: true,
+        'stats.lastActivity': { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+      });
+      
+      // Recent activities
+      const recentEnrollments = await LearningProgress.find({
+        'courses.courseId': { $in: courseIds },
+        'courses.enrolledAt': { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      })
+      .populate('userId', 'firstName lastName')
+      .populate('courses.courseId', 'title')
+      .limit(5)
+      .sort({ 'courses.enrolledAt': -1 });
+      
+      summary = {
+        role: role,
+        totals: {
+          courses: totalCourses,
+          activeCourses: activeCourses,
+          enrolledStudents: enrolledStudents,
+          assignments: totalAssignments,
+          pendingFeedback: pendingFeedback,
+          activeDiscussions: activeDiscussions
+        },
+        recentActivity: {
+          enrollments: recentEnrollments.map(progress => {
+            const recentCourse = progress.courses.find(c => 
+              c.enrolledAt >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            );
+            return {
+              studentName: `${progress.userId.firstName} ${progress.userId.lastName}`,
+              courseName: recentCourse?.courseId?.title || 'Unknown Course',
+              enrolledAt: recentCourse?.enrolledAt
+            };
+          }).filter(item => item.courseName !== 'Unknown Course')
+        },
+        quickStats: {
+          avgCourseCompletion: activeCourses > 0 ? 
+            Math.round((enrolledStudents / activeCourses) * 100) / 100 : 0,
+          totalHoursContent: totalCourses * 4, // Rough estimate
+          thisWeekEnrollments: recentEnrollments.length
+        }
+      };
+      
+    } else {
+      // Student Dashboard Summary
+      const studentId = userId;
+      
+      if (!studentId) {
+        return res.status(400).json({ success: false, message: 'User ID required for student dashboard' });
+      }
+      
+      const learningProgress = await LearningProgress.findOne({ userId: studentId })
+        .populate('courses.courseId', 'title category')
+        .lean();
+      
+      if (!learningProgress) {
+        summary = {
+          role: 'student',
+          totals: {
+            enrolledCourses: 0,
+            completedCourses: 0,
+            inProgressCourses: 0,
+            totalLessonsCompleted: 0,
+            totalTimeSpent: 0,
+            currentStreak: 0,
+            averageScore: 0
+          },
+          recentActivity: { courses: [], achievements: [] },
+          quickStats: { completionRate: 0, hoursThisWeek: 0 }
+        };
+      } else {
+        const enrolledCourses = learningProgress.courses.length;
+        const completedCourses = learningProgress.courses.filter(c => c.status === 'completed').length;
+        const inProgressCourses = learningProgress.courses.filter(c => c.status === 'in_progress').length;
+        
+        const recentCourses = learningProgress.courses
+          .filter(c => c.enrolledAt >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+          .slice(0, 5)
+          .map(course => ({
+            id: course.courseId._id,
+            name: course.courseId.title,
+            category: course.courseId.category,
+            progress: course.progressPercentage,
+            status: course.status,
+            enrolledAt: course.enrolledAt
+          }));
+        
+        summary = {
+          role: 'student',
+          totals: {
+            enrolledCourses: enrolledCourses,
+            completedCourses: completedCourses,
+            inProgressCourses: inProgressCourses,
+            totalLessonsCompleted: learningProgress.overallStats.totalLessonsCompleted || 0,
+            totalTimeSpent: learningProgress.overallStats.totalTimeSpent || 0,
+            currentStreak: learningProgress.overallStats.currentStreak || 0,
+            averageScore: learningProgress.overallStats.averageScore || 0
+          },
+          recentActivity: {
+            courses: recentCourses,
+            achievements: learningProgress.achievements.slice(-5).reverse()
+          },
+          quickStats: {
+            completionRate: enrolledCourses > 0 ? 
+              Math.round((completedCourses / enrolledCourses) * 100) : 0,
+            hoursThisWeek: Math.round((learningProgress.overallStats.totalTimeSpent || 0) / 60),
+            favoriteCategory: learningProgress.preferences.preferredCategories[0] || 'history'
+          }
+        };
+      }
+    }
+    
+    res.json({ success: true, data: summary });
+  } catch (error) {
+    console.error('Get education dashboard summary error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get education quick stats for homepage widgets
+router.get('/stats/quick', async (req, res) => {
+  try {
+    const Course = require('../models/Course');
+    const LearningProgress = require('../models/LearningProgress');
+    
+    const [totalCourses, totalStudents, totalCompletions] = await Promise.all([
+      Course.countDocuments({ isActive: true, status: 'published' }),
+      LearningProgress.countDocuments({}),
+      LearningProgress.countDocuments({ 'courses.status': 'completed' })
+    ]);
+    
+    const popularCategories = await Course.aggregate([
+      { $match: { isActive: true, status: 'published' } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 3 }
+    ]);
+    
+    const recentCourses = await Course.find({ 
+      isActive: true, 
+      status: 'published' 
+    })
+    .sort({ createdAt: -1 })
+    .limit(6)
+    .select('title category image enrollmentCount averageRating')
+    .lean();
+    
+    res.json({
+      success: true,
+      data: {
+        totals: {
+          courses: totalCourses,
+          students: totalStudents,
+          completions: totalCompletions
+        },
+        popularCategories: popularCategories.map(cat => ({
+          name: cat._id,
+          count: cat.count
+        })),
+        recentCourses: recentCourses.map(course => ({
+          id: course._id,
+          title: course.title,
+          category: course.category,
+          image: course.image || '/images/course-placeholder.jpg',
+          students: course.enrollmentCount || 0,
+          rating: course.averageRating || 0
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Get education quick stats error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ===== LESSON MANAGEMENT ROUTES =====
+
+// Get all lessons for a course
+router.get('/courses/:courseId/lessons', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    
+    const Lesson = require('../models/Lesson');
+    const Course = require('../models/Course');
+    
+    // Verify course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    const lessons = await Lesson.find({ courseId, isActive: true })
+      .sort({ order: 1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate('createdBy', 'firstName lastName')
+      .lean();
+    
+    const total = await Lesson.countDocuments({ courseId, isActive: true });
+    
+    const lessonsWithStats = lessons.map(lesson => ({
+      id: lesson._id.toString(),
+      title: lesson.title,
+      description: lesson.description,
+      order: lesson.order,
+      estimatedDuration: lesson.estimatedDuration,
+      contentTypes: lesson.content.map(c => c.type),
+      totalContent: lesson.content.length,
+      hasQuiz: lesson.quiz && lesson.quiz.questions && lesson.quiz.questions.length > 0,
+      objectives: lesson.objectives || [],
+      resources: lesson.resources || [],
+      image: lesson.image,
+      thumbnail: lesson.thumbnail,
+      createdBy: lesson.createdBy ? `${lesson.createdBy.firstName} ${lesson.createdBy.lastName}` : 'Unknown',
+      createdAt: lesson.createdAt,
+      updatedAt: lesson.updatedAt
+    }));
+    
+    res.json({
+      success: true,
+      data: lessonsWithStats,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: lessonsWithStats.length,
+        totalCount: total
+      }
+    });
+  } catch (error) {
+    console.error('Get course lessons error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get specific lesson with full content
+router.get('/lessons/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const Lesson = require('../models/Lesson');
+    const lesson = await Lesson.findById(id)
+      .populate('courseId', 'title')
+      .populate('createdBy', 'firstName lastName')
+      .lean();
+    
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    const transformedLesson = {
+      id: lesson._id.toString(),
+      title: lesson.title,
+      description: lesson.description,
+      courseId: lesson.courseId._id,
+      courseTitle: lesson.courseId.title,
+      order: lesson.order,
+      estimatedDuration: lesson.estimatedDuration,
+      content: lesson.content,
+      objectives: lesson.objectives || [],
+      resources: lesson.resources || [],
+      quiz: lesson.quiz || { questions: [], passingScore: 70 },
+      prerequisites: lesson.prerequisites || [],
+      image: lesson.image,
+      thumbnail: lesson.thumbnail,
+      createdBy: lesson.createdBy ? `${lesson.createdBy.firstName} ${lesson.createdBy.lastName}` : 'Unknown',
+      createdAt: lesson.createdAt,
+      updatedAt: lesson.updatedAt
+    };
+    
+    res.json({ success: true, data: transformedLesson });
+  } catch (error) {
+    console.error('Get lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Create new lesson with media upload support
+router.post('/courses/:courseId/lessons', upload.fields([
+  { name: 'lessonImage', maxCount: 1 },
+  { name: 'lessonVideo', maxCount: 5 },
+  { name: 'lessonAudio', maxCount: 5 },
+  { name: 'materials', maxCount: 10 }
+]), async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const lessonData = req.body;
+    const creatorId = req.user?.id || req.body.creatorId;
+    
+    if (!creatorId) {
+      return res.status(400).json({ success: false, message: 'Creator ID required' });
+    }
+    
+    const Course = require('../models/Course');
+    const Lesson = require('../models/Lesson');
+    
+    // Verify course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    // Handle file uploads
+    let imageUrl = lessonData.image || 'https://picsum.photos/400/300';
+    if (req.files && req.files.lessonImage && req.files.lessonImage[0]) {
+      imageUrl = `/uploads/lessons/images/${req.files.lessonImage[0].filename}`;
+    }
+    
+    // Process lesson content with uploaded media
+    let content = [];
+    if (lessonData.content) {
+      try {
+        content = Array.isArray(lessonData.content) ? lessonData.content : JSON.parse(lessonData.content);
+      } catch (e) {
+        content = [];
+      }
+    }
+    
+    // Add uploaded videos to content
+    if (req.files && req.files.lessonVideo) {
+      req.files.lessonVideo.forEach((file, index) => {
+        content.push({
+          type: 'video',
+          title: `Video ${index + 1}`,
+          content: `/uploads/lessons/video/${file.filename}`,
+          duration: 0,
+          order: content.length + 1
+        });
+      });
+    }
+    
+    // Add uploaded audios to content
+    if (req.files && req.files.lessonAudio) {
+      req.files.lessonAudio.forEach((file, index) => {
+        content.push({
+          type: 'audio',
+          title: `Audio ${index + 1}`,
+          content: `/uploads/lessons/audio/${file.filename}`,
+          duration: 0,
+          order: content.length + 1
+        });
+      });
+    }
+    
+    // Determine next order number
+    const lastLesson = await Lesson.findOne({ courseId }).sort({ order: -1 });
+    const nextOrder = lastLesson ? lastLesson.order + 1 : 1;
+    
+    const newLesson = new Lesson({
+      ...lessonData,
+      courseId: courseId,
+      createdBy: creatorId,
+      order: lessonData.order || nextOrder,
+      content: content,
+      image: imageUrl,
+      thumbnail: imageUrl,
+      objectives: lessonData.objectives ? 
+        (Array.isArray(lessonData.objectives) ? lessonData.objectives : JSON.parse(lessonData.objectives)) : [],
+      resources: lessonData.resources ?
+        (Array.isArray(lessonData.resources) ? lessonData.resources : JSON.parse(lessonData.resources)) : [],
+      quiz: lessonData.quiz ? 
+        (typeof lessonData.quiz === 'object' ? lessonData.quiz : JSON.parse(lessonData.quiz)) : { questions: [], passingScore: 70 }
+    });
+    
+    await newLesson.save();
+    
+    // Add lesson to course
+    await Course.findByIdAndUpdate(courseId, {
+      $addToSet: { lessons: newLesson._id }
+    });
+    
+    const transformedLesson = {
+      id: newLesson._id.toString(),
+      title: newLesson.title,
+      description: newLesson.description,
+      order: newLesson.order,
+      estimatedDuration: newLesson.estimatedDuration,
+      contentTypes: newLesson.content.map(c => c.type),
+      totalContent: newLesson.content.length,
+      hasQuiz: newLesson.quiz && newLesson.quiz.questions && newLesson.quiz.questions.length > 0,
+      objectives: newLesson.objectives || [],
+      resources: newLesson.resources || [],
+      createdAt: newLesson.createdAt
+    };
+    
+    res.status(201).json({ success: true, data: transformedLesson, message: 'Lesson created successfully' });
+  } catch (error) {
+    console.error('Create lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Update lesson with media upload support
+router.put('/lessons/:id', upload.fields([
+  { name: 'lessonImage', maxCount: 1 },
+  { name: 'lessonVideo', maxCount: 5 },
+  { name: 'lessonAudio', maxCount: 5 },
+  { name: 'materials', maxCount: 10 }
+]), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updatedAt: new Date() };
+    
+    const Lesson = require('../models/Lesson');
+    const lesson = await Lesson.findById(id);
+    
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    // Handle file uploads
+    if (req.files && req.files.lessonImage && req.files.lessonImage[0]) {
+      updateData.image = `/uploads/lessons/images/${req.files.lessonImage[0].filename}`;
+      updateData.thumbnail = updateData.image;
+    }
+    
+    // Process updated content
+    if (updateData.content) {
+      try {
+        updateData.content = Array.isArray(updateData.content) ? updateData.content : JSON.parse(updateData.content);
+      } catch (e) {
+        // Keep existing content if parsing fails
+        delete updateData.content;
+      }
+    }
+    
+    // Add new uploaded videos to existing content
+    if (req.files && req.files.lessonVideo && updateData.content) {
+      req.files.lessonVideo.forEach((file, index) => {
+        updateData.content.push({
+          type: 'video',
+          title: `New Video ${index + 1}`,
+          content: `/uploads/lessons/video/${file.filename}`,
+          duration: 0,
+          order: updateData.content.length + 1
+        });
+      });
+    }
+    
+    // Add new uploaded audios to existing content
+    if (req.files && req.files.lessonAudio && updateData.content) {
+      req.files.lessonAudio.forEach((file, index) => {
+        updateData.content.push({
+          type: 'audio',
+          title: `New Audio ${index + 1}`,
+          content: `/uploads/lessons/audio/${file.filename}`,
+          duration: 0,
+          order: updateData.content.length + 1
+        });
+      });
+    }
+    
+    // Parse other fields if they're strings
+    if (updateData.objectives && typeof updateData.objectives === 'string') {
+      try {
+        updateData.objectives = JSON.parse(updateData.objectives);
+      } catch (e) {
+        delete updateData.objectives;
+      }
+    }
+    
+    if (updateData.resources && typeof updateData.resources === 'string') {
+      try {
+        updateData.resources = JSON.parse(updateData.resources);
+      } catch (e) {
+        delete updateData.resources;
+      }
+    }
+    
+    if (updateData.quiz && typeof updateData.quiz === 'string') {
+      try {
+        updateData.quiz = JSON.parse(updateData.quiz);
+      } catch (e) {
+        delete updateData.quiz;
+      }
+    }
+    
+    // Remove fields that shouldn't be updated
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.createdAt;
+    delete updateData.courseId;
+    
+    const updatedLesson = await Lesson.findByIdAndUpdate(id, updateData, { new: true });
+    
+    res.json({ success: true, data: updatedLesson, message: 'Lesson updated successfully' });
+  } catch (error) {
+    console.error('Update lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Delete lesson (soft delete)
+router.delete('/lessons/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const Lesson = require('../models/Lesson');
+    const Course = require('../models/Course');
+    
+    const lesson = await Lesson.findById(id);
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    // Soft delete lesson
+    await Lesson.findByIdAndUpdate(id, { isActive: false, updatedAt: new Date() });
+    
+    // Remove from course lessons array
+    await Course.findByIdAndUpdate(lesson.courseId, {
+      $pull: { lessons: id }
+    });
+    
+    res.json({ success: true, message: 'Lesson deleted successfully' });
+  } catch (error) {
+    console.error('Delete lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Reorder lessons within a course
+router.put('/courses/:courseId/lessons/reorder', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { lessonOrders } = req.body; // Array of { lessonId, order }
+    
+    if (!lessonOrders || !Array.isArray(lessonOrders)) {
+      return res.status(400).json({ success: false, message: 'Lesson orders array is required' });
+    }
+    
+    const Lesson = require('../models/Lesson');
+    
+    // Update each lesson's order
+    const updatePromises = lessonOrders.map(({ lessonId, order }) => 
+      Lesson.findByIdAndUpdate(lessonId, { order, updatedAt: new Date() })
+    );
+    
+    await Promise.all(updatePromises);
+    
+    res.json({ success: true, message: 'Lessons reordered successfully' });
+  } catch (error) {
+    console.error('Reorder lessons error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Duplicate lesson
+router.post('/lessons/:id/duplicate', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newTitle } = req.body;
+    
+    const Lesson = require('../models/Lesson');
+    const originalLesson = await Lesson.findById(id);
+    
+    if (!originalLesson) {
+      return res.status(404).json({ success: false, message: 'Original lesson not found' });
+    }
+    
+    // Find next order number
+    const lastLesson = await Lesson.findOne({ courseId: originalLesson.courseId }).sort({ order: -1 });
+    const nextOrder = lastLesson ? lastLesson.order + 1 : 1;
+    
+    // Create duplicate
+    const duplicateLesson = new Lesson({
+      ...originalLesson.toObject(),
+      _id: undefined,
+      title: newTitle || `${originalLesson.title} (Copy)`,
+      order: nextOrder,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    await duplicateLesson.save();
+    
+    // Add to course
+    const Course = require('../models/Course');
+    await Course.findByIdAndUpdate(originalLesson.courseId, {
+      $addToSet: { lessons: duplicateLesson._id }
+    });
+    
+    res.status(201).json({ success: true, data: duplicateLesson, message: 'Lesson duplicated successfully' });
+  } catch (error) {
+    console.error('Duplicate lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ===== PROGRESS TRACKING ROUTES =====
+
+// Get student progress for a specific course
+router.get('/courses/:courseId/progress/:userId', async (req, res) => {
+  try {
+    const { courseId, userId } = req.params;
+    
+    const LearningProgress = require('../models/LearningProgress');
+    const Course = require('../models/Course');
+    const Lesson = require('../models/Lesson');
+    
+    // Get course info
+    const course = await Course.findById(courseId).populate('lessons').lean();
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    // Get student progress
+    const progress = await LearningProgress.findOne({ userId });
+    const courseProgress = progress?.courses.find(c => c.courseId.toString() === courseId);
+    
+    if (!courseProgress) {
+      return res.json({
+        success: true,
+        data: {
+          courseId: courseId,
+          userId: userId,
+          status: 'not_enrolled',
+          progressPercentage: 0,
+          completedLessons: 0,
+          totalLessons: course.lessons.length,
+          lessons: [],
+          enrolledAt: null,
+          lastActivity: null
+        }
+      });
+    }
+    
+    // Get lesson progress details
+    const lessons = await Lesson.find({ courseId, isActive: true }).sort({ order: 1 }).lean();
+    const lessonProgress = lessons.map(lesson => {
+      const lessonProg = courseProgress.lessons.find(l => l.lessonId.toString() === lesson._id.toString());
+      return {
+        lessonId: lesson._id,
+        title: lesson.title,
+        order: lesson.order,
+        estimatedDuration: lesson.estimatedDuration,
+        status: lessonProg?.status || 'not_started',
+        startedAt: lessonProg?.startedAt || null,
+        completedAt: lessonProg?.completedAt || null,
+        timeSpent: lessonProg?.timeSpent || 0,
+        score: lessonProg?.score || null,
+        attempts: lessonProg?.attempts || 0,
+        lastAccessedAt: lessonProg?.lastAccessedAt || null
+      };
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        courseId: courseId,
+        userId: userId,
+        status: courseProgress.status,
+        progressPercentage: courseProgress.progressPercentage,
+        completedLessons: courseProgress.lessons.filter(l => l.status === 'completed').length,
+        totalLessons: lessons.length,
+        lessons: lessonProgress,
+        enrolledAt: courseProgress.enrolledAt,
+        startedAt: courseProgress.startedAt,
+        completedAt: courseProgress.completedAt,
+        lastActivity: progress.overallStats.lastActivityDate
+      }
+    });
+  } catch (error) {
+    console.error('Get course progress error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Mark lesson as started
+router.post('/lessons/:lessonId/start', async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID required' });
+    }
+    
+    const Lesson = require('../models/Lesson');
+    const LearningProgress = require('../models/LearningProgress');
+    
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    // Find or create learning progress
+    let progress = await LearningProgress.findOne({ userId });
+    if (!progress) {
+      progress = new LearningProgress({ userId, courses: [] });
+    }
+    
+    // Find course progress
+    let courseProgress = progress.courses.find(c => c.courseId.toString() === lesson.courseId.toString());
+    if (!courseProgress) {
+      courseProgress = {
+        courseId: lesson.courseId,
+        status: 'in_progress',
+        enrolledAt: new Date(),
+        startedAt: new Date(),
+        progressPercentage: 0,
+        lessons: []
+      };
+      progress.courses.push(courseProgress);
+    }
+    
+    // Find or create lesson progress
+    let lessonProgress = courseProgress.lessons.find(l => l.lessonId.toString() === lessonId);
+    if (!lessonProgress) {
+      lessonProgress = {
+        lessonId: lessonId,
+        status: 'in_progress',
+        startedAt: new Date(),
+        timeSpent: 0,
+        attempts: 1,
+        lastAccessedAt: new Date()
+      };
+      courseProgress.lessons.push(lessonProgress);
+    } else if (lessonProgress.status === 'not_started') {
+      lessonProgress.status = 'in_progress';
+      lessonProgress.startedAt = new Date();
+      lessonProgress.lastAccessedAt = new Date();
+      lessonProgress.attempts += 1;
+    } else {
+      lessonProgress.lastAccessedAt = new Date();
+    }
+    
+    // Update course status
+    if (courseProgress.status === 'not_started' || courseProgress.status === 'enrolled') {
+      courseProgress.status = 'in_progress';
+      courseProgress.startedAt = new Date();
+    }
+    
+    // Update overall stats
+    progress.updateStreak();
+    
+    await progress.save();
+    
+    res.json({ success: true, message: 'Lesson started', lessonProgress });
+  } catch (error) {
+    console.error('Start lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Mark lesson as completed
+router.post('/lessons/:lessonId/complete', async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const { userId, timeSpent = 0, quizScore = null } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID required' });
+    }
+    
+    const Lesson = require('../models/Lesson');
+    const LearningProgress = require('../models/LearningProgress');
+    
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    // Find learning progress
+    let progress = await LearningProgress.findOne({ userId });
+    if (!progress) {
+      return res.status(404).json({ success: false, message: 'Learning progress not found' });
+    }
+    
+    // Find course progress
+    const courseProgress = progress.courses.find(c => c.courseId.toString() === lesson.courseId.toString());
+    if (!courseProgress) {
+      return res.status(404).json({ success: false, message: 'Course progress not found' });
+    }
+    
+    // Find lesson progress
+    let lessonProgress = courseProgress.lessons.find(l => l.lessonId.toString() === lessonId);
+    if (!lessonProgress) {
+      lessonProgress = {
+        lessonId: lessonId,
+        status: 'completed',
+        startedAt: new Date(),
+        completedAt: new Date(),
+        timeSpent: timeSpent,
+        score: quizScore,
+        attempts: 1,
+        lastAccessedAt: new Date()
+      };
+      courseProgress.lessons.push(lessonProgress);
+    } else {
+      lessonProgress.status = 'completed';
+      lessonProgress.completedAt = new Date();
+      lessonProgress.timeSpent += timeSpent;
+      if (quizScore !== null) {
+        lessonProgress.score = quizScore;
+      }
+      lessonProgress.lastAccessedAt = new Date();
+    }
+    
+    // Update course progress
+    progress.updateCourseProgress(lesson.courseId);
+    
+    // Update overall stats
+    progress.overallStats.totalLessonsCompleted = (progress.overallStats.totalLessonsCompleted || 0) + 1;
+    progress.overallStats.totalTimeSpent = (progress.overallStats.totalTimeSpent || 0) + timeSpent;
+    
+    // Update streak
+    progress.updateStreak();
+    
+    // Check for achievements
+    if (lessonProgress.score && lessonProgress.score >= 90) {
+      progress.achievements.push({
+        achievementId: `high_score_${lessonId}`,
+        type: 'score',
+        earnedAt: new Date()
+      });
+    }
+    
+    // Check if course is completed
+    if (courseProgress.status === 'completed') {
+      progress.achievements.push({
+        achievementId: `course_complete_${lesson.courseId}`,
+        type: 'course_complete',
+        earnedAt: new Date()
+      });
+    }
+    
+    await progress.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Lesson completed', 
+      lessonProgress,
+      courseProgress: {
+        progressPercentage: courseProgress.progressPercentage,
+        status: courseProgress.status,
+        completedLessons: courseProgress.lessons.filter(l => l.status === 'completed').length
+      }
+    });
+  } catch (error) {
+    console.error('Complete lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Update lesson progress (time spent, score, etc.)
+router.put('/lessons/:lessonId/progress', async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const { userId, timeSpent = 0, score = null, status = null } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID required' });
+    }
+    
+    const Lesson = require('../models/Lesson');
+    const LearningProgress = require('../models/LearningProgress');
+    
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    let progress = await LearningProgress.findOne({ userId });
+    if (!progress) {
+      return res.status(404).json({ success: false, message: 'Learning progress not found' });
+    }
+    
+    const courseProgress = progress.courses.find(c => c.courseId.toString() === lesson.courseId.toString());
+    if (!courseProgress) {
+      return res.status(404).json({ success: false, message: 'Course progress not found' });
+    }
+    
+    let lessonProgress = courseProgress.lessons.find(l => l.lessonId.toString() === lessonId);
+    if (!lessonProgress) {
+      lessonProgress = {
+        lessonId: lessonId,
+        status: status || 'in_progress',
+        startedAt: new Date(),
+        timeSpent: timeSpent,
+        score: score,
+        attempts: 1,
+        lastAccessedAt: new Date()
+      };
+      courseProgress.lessons.push(lessonProgress);
+    } else {
+      if (timeSpent > 0) {
+        lessonProgress.timeSpent += timeSpent;
+      }
+      if (score !== null) {
+        lessonProgress.score = score;
+      }
+      if (status) {
+        lessonProgress.status = status;
+        if (status === 'completed' && !lessonProgress.completedAt) {
+          lessonProgress.completedAt = new Date();
+        }
+      }
+      lessonProgress.lastAccessedAt = new Date();
+    }
+    
+    // Update course progress
+    progress.updateCourseProgress(lesson.courseId);
+    
+    // Update overall stats
+    if (timeSpent > 0) {
+      progress.overallStats.totalTimeSpent = (progress.overallStats.totalTimeSpent || 0) + timeSpent;
+      progress.updateStreak();
+    }
+    
+    await progress.save();
+    
+    res.json({ success: true, message: 'Progress updated', lessonProgress });
+  } catch (error) {
+    console.error('Update lesson progress error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get overall student progress across all courses
+router.get('/students/:userId/progress/overall', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const LearningProgress = require('../models/LearningProgress');
+    
+    const progress = await LearningProgress.findOne({ userId })
+      .populate('courses.courseId', 'title category image')
+      .lean();
+    
+    if (!progress) {
+      return res.json({
+        success: true,
+        data: {
+          userId: userId,
+          totalCourses: 0,
+          completedCourses: 0,
+          inProgressCourses: 0,
+          totalLessonsCompleted: 0,
+          totalTimeSpent: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          averageScore: 0,
+          courses: [],
+          achievements: []
+        }
+      });
+    }
+    
+    const coursesWithProgress = progress.courses.map(course => ({
+      courseId: course.courseId._id,
+      title: course.courseId.title,
+      category: course.courseId.category,
+      image: course.courseId.image,
+      status: course.status,
+      progressPercentage: course.progressPercentage,
+      enrolledAt: course.enrolledAt,
+      startedAt: course.startedAt,
+      completedAt: course.completedAt,
+      completedLessons: course.lessons.filter(l => l.status === 'completed').length,
+      totalLessons: course.lessons.length
+    }));
+    
+    res.json({
+      success: true,
+      data: {
+        userId: userId,
+        totalCourses: progress.courses.length,
+        completedCourses: progress.courses.filter(c => c.status === 'completed').length,
+        inProgressCourses: progress.courses.filter(c => c.status === 'in_progress').length,
+        totalLessonsCompleted: progress.overallStats.totalLessonsCompleted || 0,
+        totalTimeSpent: progress.overallStats.totalTimeSpent || 0,
+        currentStreak: progress.overallStats.currentStreak || 0,
+        longestStreak: progress.overallStats.longestStreak || 0,
+        averageScore: progress.overallStats.averageScore || 0,
+        lastActivity: progress.overallStats.lastActivityDate,
+        courses: coursesWithProgress,
+        achievements: progress.achievements.slice(-10).reverse(),
+        preferences: progress.preferences
+      }
+    });
+  } catch (error) {
+    console.error('Get overall progress error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Reset lesson progress (for retaking)
+router.post('/lessons/:lessonId/reset', async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID required' });
+    }
+    
+    const Lesson = require('../models/Lesson');
+    const LearningProgress = require('../models/LearningProgress');
+    
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+    
+    const progress = await LearningProgress.findOne({ userId });
+    if (!progress) {
+      return res.status(404).json({ success: false, message: 'Learning progress not found' });
+    }
+    
+    const courseProgress = progress.courses.find(c => c.courseId.toString() === lesson.courseId.toString());
+    if (!courseProgress) {
+      return res.status(404).json({ success: false, message: 'Course progress not found' });
+    }
+    
+    const lessonProgressIndex = courseProgress.lessons.findIndex(l => l.lessonId.toString() === lessonId);
+    if (lessonProgressIndex !== -1) {
+      // Reset lesson progress but keep attempts count
+      const attempts = courseProgress.lessons[lessonProgressIndex].attempts || 0;
+      courseProgress.lessons[lessonProgressIndex] = {
+        lessonId: lessonId,
+        status: 'not_started',
+        startedAt: null,
+        completedAt: null,
+        timeSpent: 0,
+        score: null,
+        attempts: attempts + 1,
+        lastAccessedAt: new Date()
+      };
+    }
+    
+    // Recalculate course progress
+    progress.updateCourseProgress(lesson.courseId);
+    
+    await progress.save();
+    
+    res.json({ success: true, message: 'Lesson progress reset successfully' });
+  } catch (error) {
+    console.error('Reset lesson progress error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get progress analytics for instructor/admin
+router.get('/courses/:courseId/analytics/progress', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    
+    const Course = require('../models/Course');
+    const LearningProgress = require('../models/LearningProgress');
+    const Lesson = require('../models/Lesson');
+    
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    
+    const lessons = await Lesson.find({ courseId, isActive: true }).sort({ order: 1 }).lean();
+    
+    // Get all students enrolled in this course
+    const enrolledStudents = await LearningProgress.find({
+      'courses.courseId': courseId
+    }).populate('userId', 'firstName lastName email').lean();
+    
+    const progressAnalytics = {
+      totalEnrolled: enrolledStudents.length,
+      completedCount: 0,
+      inProgressCount: 0,
+      notStartedCount: 0,
+      averageProgress: 0,
+      averageTimeSpent: 0,
+      lessonCompletionRates: {},
+      studentProgress: []
+    };
+    
+    let totalProgress = 0;
+    let totalTimeSpent = 0;
+    
+    enrolledStudents.forEach(student => {
+      const courseProgress = student.courses.find(c => c.courseId.toString() === courseId);
+      if (courseProgress) {
+        // Count status
+        if (courseProgress.status === 'completed') progressAnalytics.completedCount++;
+        else if (courseProgress.status === 'in_progress') progressAnalytics.inProgressCount++;
+        else progressAnalytics.notStartedCount++;
+        
+        totalProgress += courseProgress.progressPercentage;
+        
+        const studentTimeSpent = courseProgress.lessons.reduce((sum, lesson) => sum + (lesson.timeSpent || 0), 0);
+        totalTimeSpent += studentTimeSpent;
+        
+        // Track lesson completion rates
+        courseProgress.lessons.forEach(lessonProg => {
+          const lessonId = lessonProg.lessonId.toString();
+          if (!progressAnalytics.lessonCompletionRates[lessonId]) {
+            progressAnalytics.lessonCompletionRates[lessonId] = { completed: 0, total: 0 };
+          }
+          progressAnalytics.lessonCompletionRates[lessonId].total++;
+          if (lessonProg.status === 'completed') {
+            progressAnalytics.lessonCompletionRates[lessonId].completed++;
+          }
+        });
+        
+        progressAnalytics.studentProgress.push({
+          studentId: student.userId._id,
+          studentName: `${student.userId.firstName} ${student.userId.lastName}`,
+          studentEmail: student.userId.email,
+          status: courseProgress.status,
+          progressPercentage: courseProgress.progressPercentage,
+          completedLessons: courseProgress.lessons.filter(l => l.status === 'completed').length,
+          totalLessons: lessons.length,
+          timeSpent: studentTimeSpent,
+          enrolledAt: courseProgress.enrolledAt,
+          lastActivity: courseProgress.lessons.reduce((latest, lesson) => {
+            return lesson.lastAccessedAt > latest ? lesson.lastAccessedAt : latest;
+          }, courseProgress.enrolledAt)
+        });
+      }
+    });
+    
+    progressAnalytics.averageProgress = enrolledStudents.length > 0 ? 
+      Math.round(totalProgress / enrolledStudents.length) : 0;
+    progressAnalytics.averageTimeSpent = enrolledStudents.length > 0 ? 
+      Math.round(totalTimeSpent / enrolledStudents.length) : 0;
+    
+    // Convert lesson completion rates to percentages
+    Object.keys(progressAnalytics.lessonCompletionRates).forEach(lessonId => {
+      const data = progressAnalytics.lessonCompletionRates[lessonId];
+      const lesson = lessons.find(l => l._id.toString() === lessonId);
+      progressAnalytics.lessonCompletionRates[lessonId] = {
+        lessonTitle: lesson?.title || 'Unknown Lesson',
+        completionRate: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
+        completed: data.completed,
+        total: data.total
+      };
+    });
+    
+    res.json({ success: true, data: progressAnalytics });
+  } catch (error) {
+    console.error('Get progress analytics error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

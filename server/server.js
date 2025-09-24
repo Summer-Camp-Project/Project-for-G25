@@ -21,8 +21,9 @@ const artifactRoutes = require('./routes/artifacts'); // Added artifact manageme
 const staffRoutes = require('./routes/staff'); // Added staff management routes
 const eventRoutes = require('./routes/event'); // Added event management routes
 const organizerRoutes = require('./routes/organizer');
+const studentDashboardRoutes = require('./routes/studentDashboard'); // Added student dashboard routes
 const educationalTourRoutes = require('./routes/educationalTourRoutes');
-// const visitorRoutes = require('./routes/visitor');
+const visitorRoutes = require('./routes/visitor');
 // const toursRoutes = require('./routes/tours');
 const tourPackageRoutes = require('./routes/TourPackage');
 const bookingRoutes = require('./routes/Booking');
@@ -36,9 +37,9 @@ const courseManagementRoutes = require('./routes/courseManagement');
 const enrollmentManagementRoutes = require('./routes/enrollmentManagement');
 const educationalContentManagementRoutes = require('./routes/educationalContentManagement');
 const educationRoutes = require('./routes/education'); // Added comprehensive education routes
+const educationApiRoutes = require('./routes/educationApi'); // Added education API routes matching frontend service
 // const usersRoutes = require('./routes/users');
-// const userRoutes = require('./routes/User');
-// const visitorRoutes = require('./routes/visitor');
+const userRoutes = require('./routes/User');
 const rentalsRoutes = require('./routes/rentals');
 
 // Import middleware
@@ -140,8 +141,8 @@ app.set('notificationService', notificationSocketService);
 app.use('/api/auth', authRoutes);
 // Additional routes can be enabled as needed
 // app.use('/api/users', usersRoutes);
-// app.use('/api/user', userRoutes);
-// app.use('/api/visitor', visitorRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/visitor', visitorRoutes);
 app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/super-admin', superAdminRoutes);
@@ -168,6 +169,8 @@ app.use('/api/educational-tours', educationalTourRoutes);
 app.use('/api/assignments', require('./routes/assignments'));
 app.use('/api/discussions', require('./routes/discussions'));
 app.use('/api/education', educationRoutes); // Added comprehensive education management API
+app.use('/api/student', studentDashboardRoutes); // Added student dashboard API
+app.use('/api', educationApiRoutes); // Added education API routes matching frontend service
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -244,6 +247,7 @@ app.get('/', (req, res) => {
       map: '/api/map',
       chat: '/api/chat',
       learning: '/api/learning',
+      student: '/api/student', // Added student dashboard API
       health: '/api/health'
     },
     setup: {

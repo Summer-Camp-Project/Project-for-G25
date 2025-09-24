@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import bookingService from '../services/bookingService';
 import { toast } from 'sonner';
 import { io } from 'socket.io-client';
+import educationService from '../services/educationService';
 
 // Import actual images
 import museumImg from '../assets/museum.jpg';
@@ -38,6 +39,12 @@ const VisitorDashboard = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [achievements, setAchievements] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [platformStats, setPlatformStats] = useState({});
+  const [testimonials, setTestimonials] = useState([]);
+  const [quickActions, setQuickActions] = useState([]);
 
   // Enhanced user features state
   const [userStats, setUserStats] = useState({
@@ -144,15 +151,62 @@ const VisitorDashboard = () => {
     toast.success('Booking data refreshed');
   };
 
+  // Load visitor dashboard data from API
+  const loadVisitorDashboardData = async () => {
+    try {
+      console.log('🔄 Loading visitor dashboard educational content...');
+      
+      // Use education service to get platform data
+      const platformData = await educationService.getPlatformStats();
+      
+      if (platformData.success) {
+        console.log('✅ Platform data loaded:', platformData);
+        
+        // Set educational data
+        setDashboardData(platformData);
+        setFeaturedCourses(platformData.featured?.courses || []);
+        setCategories(platformData.categories || []);
+        setPlatformStats(platformData.stats || {});
+        setTestimonials(platformData.testimonials || []);
+        setQuickActions(platformData.quickActions || []);
+        
+        // Update featured museums from API data
+        setFeaturedMuseums(platformData.featured?.museums || []);
+        
+        // Update artifacts from API data
+        setNewArtifacts(platformData.featured?.artifacts || []);
+        
+        // Update upcoming events from API data
+        setUpcomingEvents(platformData.upcoming?.events || []);
+        
+        if (platformData.featured?.courses?.length > 0) {
+          toast.success(`Dashboard loaded with ${platformData.featured.courses.length} educational courses!`);
+        }
+      } else {
+        console.error('❌ Failed to load platform data:', platformData.error);
+        toast.error('Failed to load educational content');
+        
+        // Set empty states on error
+        setFeaturedCourses([]);
+        setCategories([]);
+        setPlatformStats({});
+      }
+    } catch (error) {
+      console.error('❌ Error loading visitor dashboard data:', error);
+      toast.error('Failed to load dashboard content');
+      
+      // Set empty states on error
+      setFeaturedCourses([]);
+      setCategories([]);
+      setPlatformStats({});
+    }
+  };
+
   // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
-      // Load static data (mocked for now)
-      setFavoriteArtifacts([]);
-      setRecentViews([]);
-      setFeaturedMuseums([]);
-      setNewArtifacts([]);
-      setUpcomingEvents([]);
+      // Load educational content from API
+      await loadVisitorDashboardData();
       
       // Load real booking data
       await loadBookingData();
@@ -247,7 +301,32 @@ const VisitorDashboard = () => {
             <p className="text-gray-600 mt-1">Discover Ethiopia's rich heritage and cultural treasures</p>
           </div>
 
-          {/* Stats Cards */}
+          {/* Educational Platform Stats */}
+          {platformStats && Object.keys(platformStats).length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6 text-center">📚 Educational Platform Statistics</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-amber-600">{platformStats.totalCourses || 0}</div>
+                  <div className="text-sm text-gray-600">Available Courses</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-blue-600">{(platformStats.totalLearners || 0).toLocaleString()}</div>
+                  <div className="text-sm text-gray-600">Total Learners</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-green-600">{(platformStats.coursesCompleted || 0).toLocaleString()}</div>
+                  <div className="text-sm text-gray-600">Courses Completed</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                  <div className="text-3xl font-bold text-purple-600">{platformStats.successRate || 0}%</div>
+                  <div className="text-sm text-gray-600">Success Rate</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Personal Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
               title="Favorites"
@@ -272,12 +351,94 @@ const VisitorDashboard = () => {
             />
             <StatCard
               title="Museums Visited"
-              value={0}
+              value={featuredMuseums.length}
               icon={MapPin}
               description="Virtual explorations"
               color="purple"
             />
           </div>
+
+          {/* Featured Educational Courses - NEW SECTION */}
+          {featuredCourses.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
+                  🎓 Featured Educational Courses
+                </h2>
+                <button 
+                  onClick={() => navigate('/courses')} 
+                  className="text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  View All Courses
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredCourses.map((course, index) => (
+                  <div key={course._id || index} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                      <BookOpen className="h-12 w-12 text-blue-600" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 mb-2">{course.title}</h3>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.description}</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">{course.category}</span>
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">{course.difficulty}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                          <span className="text-gray-700">{course.averageRating || 0}/5</span>
+                        </div>
+                        <span className="text-gray-500">👥 {course.enrollmentCount || 0} enrolled</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Learning Categories - NEW SECTION */}
+          {categories.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
+                  📖 Explore Learning Categories
+                </h2>
+                <button 
+                  onClick={() => navigate('/courses')} 
+                  className="text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  Browse All
+                </button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {categories.map((category, index) => {
+                  const getIcon = (name) => {
+                    const icons = {
+                      'History': '🏛️',
+                      'Art & Culture': '🎨',
+                      'Archaeology': '🏺',
+                      'Architecture': '🏢'
+                    };
+                    return icons[name] || '📚';
+                  };
+                  
+                  return (
+                    <div key={index} className="text-center p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer hover:border-amber-300">
+                      <div className="text-4xl mb-3">{getIcon(category.name)}</div>
+                      <h3 className="font-semibold text-gray-900 mb-2">{category.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{category.description}</p>
+                      <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                        {category.coursesCount} course{category.coursesCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Featured Museums */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
@@ -285,24 +446,34 @@ const VisitorDashboard = () => {
               <h2 className="text-2xl font-semibold text-gray-900">Featured Museums</h2>
               <button className="text-amber-600 hover:text-amber-700 font-medium">View All</button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {featuredMuseums.map(museum => (
-                <div key={museum.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                  <img src={museum.image} alt={museum.name} className="w-full h-32 object-cover" />
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-1">{museum.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{museum.type}</p>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">{museum.artifacts} artifacts</span>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="text-gray-700">{museum.rating}</span>
+            {featuredMuseums.length === 0 ? (
+              <div className="text-center py-8">
+                <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">No featured museums available yet.</p>
+                <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+                  Explore Virtual Museums
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredMuseums.map(museum => (
+                  <div key={museum.id || museum._id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                    <img src={museum.image || `https://picsum.photos/300/200?random=${museum._id || Math.random()}`} alt={museum.name} className="w-full h-32 object-cover" />
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 mb-1">{museum.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{museum.description || 'Museum description'}</p>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500">{museum.location || 'Ethiopia'}</span>
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                          <span className="text-gray-700">{museum.rating || '4.5'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* New Artifacts */}

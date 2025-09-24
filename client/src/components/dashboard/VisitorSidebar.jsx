@@ -12,7 +12,15 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  MapPin
+  MapPin,
+  BookOpen,
+  GraduationCap,
+  Video,
+  Trophy,
+  FileText,
+  Users,
+  PlayCircle,
+  TrendingUp
 } from 'lucide-react';
 import visitorLogo from '../../assets/visitor-logo.jpg';
 
@@ -22,7 +30,9 @@ const VisitorSidebar = () => {
   const { user, logout } = useAuth();
   const [expandedSections, setExpandedSections] = useState({
     museums: false,
-    events: false
+    events: false,
+    education: false,
+    learning: false
   });
 
   const visitorMenuItems = [
@@ -34,16 +44,43 @@ const VisitorSidebar = () => {
       description: 'Your personal dashboard'
     },
     {
+      id: 'education',
+      label: 'Education Hub',
+      icon: GraduationCap,
+      path: '/visitor/education',
+      description: 'Learn Ethiopian heritage',
+      subItems: [
+        { label: 'Browse Courses', path: '/courses', icon: BookOpen },
+        { label: 'My Learning', path: '/visitor/my-learning', icon: User },
+        { label: 'Study Guides', path: '/study-guides', icon: FileText },
+        { label: 'Certificates', path: '/visitor/certificates', icon: Trophy },
+        { label: 'Educational Tours', path: '/educational-tours', icon: MapPin }
+      ]
+    },
+    {
       id: 'virtual-museum',
       label: 'Virtual Museum',
       icon: Building2,
       path: '/visitor/virtual-museum',
       description: 'Explore 3D artifacts and collections',
       subItems: [
-        { label: 'Browse All', path: '/virtual-museum' },
-        { label: '3D Artifacts', path: '/virtual-museum/3d-artifacts' },
-        { label: 'Image Gallery', path: '/virtual-museum/gallery' },
-        { label: 'Video Tours', path: '/virtual-museum/videos' }
+        { label: 'Browse All', path: '/virtual-museum', icon: Eye },
+        { label: '3D Artifacts', path: '/virtual-museum/3d-artifacts', icon: Building2 },
+        { label: 'Image Gallery', path: '/virtual-museum/gallery', icon: Video },
+        { label: 'Video Tours', path: '/virtual-museum/videos', icon: PlayCircle }
+      ]
+    },
+    {
+      id: 'learning',
+      label: 'Interactive Learning',
+      icon: BookOpen,
+      path: '/visitor/learning',
+      description: 'Engage with content',
+      subItems: [
+        { label: 'Quiz & Games', path: '/visitor/quiz', icon: Trophy },
+        { label: 'Virtual Tours', path: '/tours', icon: MapPin },
+        { label: 'Live Sessions', path: '/visitor/live-sessions', icon: Users },
+        { label: 'Progress Tracker', path: '/visitor/progress', icon: TrendingUp }
       ]
     },
     {
@@ -53,10 +90,10 @@ const VisitorSidebar = () => {
       path: '/visitor/events',
       description: 'Discover upcoming events',
       subItems: [
-        { label: 'All Events', path: '/visitor/events' },
-        { label: 'Exhibitions', path: '/visitor/events/exhibitions' },
-        { label: 'Workshops', path: '/visitor/events/workshops' },
-        { label: 'My Bookings', path: '/visitor/events/bookings' }
+        { label: 'All Events', path: '/visitor/events', icon: Calendar },
+        { label: 'Exhibitions', path: '/visitor/events/exhibitions', icon: Building2 },
+        { label: 'Workshops', path: '/visitor/events/workshops', icon: Users },
+        { label: 'My Bookings', path: '/visitor/events/bookings', icon: Heart }
       ]
     },
     {
@@ -156,19 +193,23 @@ const VisitorSidebar = () => {
 
         {hasSubItems && isExpanded && (
           <div className="ml-8 mt-1 space-y-1">
-            {item.subItems.map(subItem => (
-              <button
-                key={subItem.path}
-                onClick={() => handleNavigation(subItem.path)}
-                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                  isActive(subItem.path)
-                    ? 'bg-amber-50 text-amber-700'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {subItem.label}
-              </button>
-            ))}
+            {item.subItems.map(subItem => {
+              const SubIcon = subItem.icon;
+              return (
+                <button
+                  key={subItem.path}
+                  onClick={() => handleNavigation(subItem.path)}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-2 ${
+                    isActive(subItem.path)
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {SubIcon && <SubIcon className="h-4 w-4" />}
+                  <span>{subItem.label}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

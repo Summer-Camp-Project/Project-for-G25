@@ -16,7 +16,7 @@ import {
   ChevronDown,
   X
 } from 'lucide-react';
-import { api } from '../utils/api';
+import educationService from '../services/educationService';
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -64,10 +64,11 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      console.log('🎓 Courses Page: Fetching courses with filters:', {
+      console.log('🎓 Courses Page: Fetching courses from education service with filters:', {
         selectedCategory,
         selectedDifficulty,
-        sortBy
+        sortBy,
+        searchQuery
       });
       
       // Build filter object
@@ -76,18 +77,14 @@ const Courses = () => {
       if (selectedDifficulty) filters.difficulty = selectedDifficulty;
       if (searchQuery) filters.search = searchQuery;
       
-      // Use API service which includes mock fallback
-      const data = await api.getCourses(filters);
-      console.log('🎓 Courses Page: API response:', data);
+      // Use education service
+      const data = await educationService.getCourses(filters);
+      console.log('✅ Courses loaded from education service:', data);
       
-      if (data.success || data.courses || data.data) {
-        // Handle different response structures
-        let coursesData = data.courses || data.data || [];
-        let sortedCourses = [...coursesData];
+      if (data.success && data.courses) {
+        let sortedCourses = [...data.courses];
         
-        console.log('🎓 Courses Page: Raw courses data:', sortedCourses);
-        
-        // Sort courses
+        // Sort courses based on selected option
         switch (sortBy) {
           case 'newest':
             sortedCourses.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -96,24 +93,31 @@ const Courses = () => {
             sortedCourses.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
             break;
           case 'duration-short':
-            sortedCourses.sort((a, b) => (a.estimatedDuration || 0) - (b.estimatedDuration || 0));
+            sortedCourses.sort((a, b) => (a.estimatedHours || 0) - (b.estimatedHours || 0));
             break;
           case 'duration-long':
-            sortedCourses.sort((a, b) => (b.estimatedDuration || 0) - (a.estimatedDuration || 0));
+            sortedCourses.sort((a, b) => (b.estimatedHours || 0) - (a.estimatedHours || 0));
             break;
           case 'name':
             sortedCourses.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
             break;
+          default:
+            // Keep original order
+            break;
         }
         
-        console.log('🎓 Courses Page: Sorted courses:', sortedCourses);
+        console.log(`✅ ${sortedCourses.length} courses loaded and sorted by ${sortBy}`);
         setCourses(sortedCourses);
+        
+        if (sortedCourses.length === 0 && (selectedCategory || selectedDifficulty || searchQuery)) {
+          console.log('🔍 No courses match the current filters');
+        }
       } else {
-        console.warn('🎓 Courses Page: No courses data in response:', data);
+        console.warn('⚠️ No courses data in response:', data.error || 'Unknown error');
         setCourses([]);
       }
     } catch (error) {
-      console.error('🎓 Courses Page: Error fetching courses:', error);
+      console.error('❌ Error fetching courses:', error);
       setCourses([]);
     } finally {
       setLoading(false);

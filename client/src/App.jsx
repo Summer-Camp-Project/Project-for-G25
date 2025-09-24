@@ -24,7 +24,9 @@ import Support from './pages/Support';
 import StudyGuides from './pages/StudyGuides'
 // Visitor specific pages
 import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
-import ProfileSettings from './pages/visitor/ProfileSettings'
+import ProfileSettings from './pages/visitor/ProfileSettings';
+import MyLearning from './pages/visitor/MyLearning';
+import Certificates from './pages/visitor/Certificates';
 // Museum Admin components
 import MuseumProfile from './components/museum/MuseumProfile'
 import ArtifactManagement from './components/museum/ArtifactManagement'
@@ -284,6 +286,61 @@ function App() {
           <Route path="/visitor/preferences" element={
             <RoleBasedRoute allowedRoles={['user']}>
               <ProfileSettings />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/my-learning" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <MyLearning />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/certificates" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Certificates />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/education" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <MyLearning />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/learning" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Interactive Learning Hub</h2>
+                  <p className="text-gray-600">Coming soon! Interactive quizzes, games, and live learning sessions.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/quiz" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Quiz & Games</h2>
+                  <p className="text-gray-600">Test your knowledge with interactive quizzes and educational games!</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/live-sessions" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Live Learning Sessions</h2>
+                  <p className="text-gray-600">Join live educational sessions with expert instructors.</p>
+                </div>
+              </div>
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/progress" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold mb-4">Progress Tracker</h2>
+                  <p className="text-gray-600">Track your learning progress and achievements.</p>
+                </div>
+              </div>
             </RoleBasedRoute>
           } />
           <Route path="/visitor/events" element={
