@@ -6,7 +6,7 @@
 set -e
 
 # Default values
-REACT_APP_API_URL=${REACT_APP_API_URL:-"http://localhost:5000/api"}
+REACT_APP_API_URL=${REACT_APP_API_URL:-"http://localhost:5001/api"}
 REACT_APP_ENV=${REACT_APP_ENV:-"production"}
 
 echo "🚀 Starting EthioHeritage360 Frontend..."

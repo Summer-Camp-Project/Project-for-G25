@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { 
-  FaChartBar, 
-  FaTrophy, 
-  FaCalendar, 
-  FaTargetArrow,
-  FaTrendingUp,
+import {
+  FaChartBar,
+  FaTrophy,
+  FaCalendar,
+  FaBullseye,
+  FaChartLine,
   FaEye,
   FaBookmark,
   FaGraduationCap,
@@ -195,7 +195,7 @@ const Analytics = () => {
                 <p className="text-gray-600 text-sm">Average Score</p>
                 <p className="text-2xl font-bold text-purple-600">{stats.averageScore}%</p>
               </div>
-              <FaTargetArrow className="h-8 w-8 text-purple-500" />
+              <FaBullseye className="h-8 w-8 text-purple-500" />
             </div>
           </div>
         </div>
@@ -205,7 +205,7 @@ const Analytics = () => {
           {/* Learning Progress Chart */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaTrendingUp className="text-blue-500" />
+              <FaChartLine className="text-blue-500" />
               Learning Progress
             </h3>
             <div className="h-64">

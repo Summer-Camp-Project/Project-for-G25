@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { FaTarget, FaPlus, FaEdit, FaTrash, FaCheck, FaCalendar, FaTrendingUp } from 'react-icons/fa';
+import { FaBullseye, FaPlus, FaEdit, FaTrash, FaCheck, FaCalendar, FaChartLine } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 const Goals = () => {
@@ -47,7 +47,7 @@ const Goals = () => {
     } catch (error) {
       console.error('Error fetching goals:', error);
       toast.error('Failed to load goals');
-      
+
       // Mock data fallback
       setGoals([
         {
@@ -237,7 +237,7 @@ const Goals = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <FaTarget className="text-orange-600" />
+                <FaBullseye className="text-orange-600" />
                 Learning Goals
               </h1>
               <p className="text-gray-600 mt-2">Set and track your learning objectives</p>
@@ -258,13 +258,12 @@ const Goals = () => {
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === status
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === status
                     ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)} 
+                {status.charAt(0).toUpperCase() + status.slice(1)}
                 {status !== 'all' && ` (${goals.filter(g => g.status === status).length})`}
                 {status === 'all' && ` (${goals.length})`}
               </button>
@@ -275,7 +274,7 @@ const Goals = () => {
         {/* Goals Grid */}
         {goals.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <FaTarget className="mx-auto text-6xl text-gray-300 mb-4" />
+            <FaBullseye className="mx-auto text-6xl text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No goals set</h3>
             <p className="text-gray-500">Create your first learning goal to get started!</p>
           </div>
@@ -287,7 +286,7 @@ const Goals = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-gray-800 mb-2">{goal.title}</h3>
                     <p className="text-gray-600 text-sm mb-3">{goal.description}</p>
-                    
+
                     <div className="flex items-center gap-2 mb-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(goal.priority)}`}>
                         {goal.priority}
@@ -336,7 +335,7 @@ const Goals = () => {
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                     <FaCalendar className="h-4 w-4" />
                     <span>
-                      {getDaysRemaining(goal.targetDate) > 0 
+                      {getDaysRemaining(goal.targetDate) > 0
                         ? `${getDaysRemaining(goal.targetDate)} days left`
                         : 'Overdue'
                       }
@@ -350,7 +349,7 @@ const Goals = () => {
                     onClick={() => updateProgress(goal._id)}
                     className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                   >
-                    <FaTrendingUp /> Update Progress
+                    <FaChartLine /> Update Progress
                   </button>
                 )}
               </div>
@@ -365,7 +364,7 @@ const Goals = () => {
               <h2 className="text-xl font-bold mb-4">
                 {editingGoal ? 'Edit Goal' : 'Create New Goal'}
               </h2>
-              
+
               <div className="space-y-4">
                 <input
                   type="text"
@@ -374,7 +373,7 @@ const Goals = () => {
                   onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
-                
+
                 <textarea
                   placeholder="Description"
                   value={newGoal.description}
@@ -382,7 +381,7 @@ const Goals = () => {
                   rows="3"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <select
                     value={newGoal.category}
@@ -396,7 +395,7 @@ const Goals = () => {
                     <option value="exploration">Exploration</option>
                     <option value="social">Social</option>
                   </select>
-                  
+
                   <select
                     value={newGoal.priority}
                     onChange={(e) => setNewGoal({ ...newGoal, priority: e.target.value })}
@@ -408,7 +407,7 @@ const Goals = () => {
                     <option value="urgent">Urgent</option>
                   </select>
                 </div>
-                
+
                 <div className="grid grid-cols-3 gap-3">
                   <input
                     type="number"
@@ -418,7 +417,7 @@ const Goals = () => {
                     onChange={(e) => setNewGoal({ ...newGoal, target: parseInt(e.target.value) || 1 })}
                     className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
-                  
+
                   <select
                     value={newGoal.unit}
                     onChange={(e) => setNewGoal({ ...newGoal, unit: e.target.value })}
@@ -431,7 +430,7 @@ const Goals = () => {
                     <option value="artifacts-viewed">Artifacts</option>
                     <option value="items">Items</option>
                   </select>
-                  
+
                   <select
                     value={newGoal.type}
                     onChange={(e) => setNewGoal({ ...newGoal, type: e.target.value })}
@@ -443,7 +442,7 @@ const Goals = () => {
                     <option value="yearly">Yearly</option>
                   </select>
                 </div>
-                
+
                 <input
                   type="date"
                   value={newGoal.targetDate}
@@ -451,7 +450,7 @@ const Goals = () => {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {

@@ -1,4 +1,4 @@
-import { api } from '../utils/api.js';
+import api from '../utils/api.js';
 import imageMapper from './imageMapperService.js';
 
 class LearningService {
@@ -14,7 +14,7 @@ class LearningService {
    */
   async getCourses() {
     const cacheKey = 'learning_courses';
-    
+
     if (this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < this.cacheExpiry) {
@@ -26,12 +26,12 @@ class LearningService {
       // Use the new public courses API endpoint
       const response = await api.request('/education/public/courses');
       const courses = response.courses || response.data || response;
-      
+
       this.cache.set(cacheKey, {
         data: courses,
         timestamp: Date.now()
       });
-      
+
       return courses;
     } catch (error) {
       console.error('Get courses error:', error);
@@ -95,10 +95,10 @@ class LearningService {
       const response = await api.request(`/learning/lessons/${lessonId}/start`, {
         method: 'POST'
       });
-      
+
       // Update local progress
       this.updateLocalProgress(lessonId, 'started');
-      
+
       return response;
     } catch (error) {
       console.error('Start lesson error:', error);
@@ -119,10 +119,10 @@ class LearningService {
         method: 'POST',
         body: completionData
       });
-      
+
       // Update local progress
       this.updateLocalProgress(lessonId, 'completed', completionData);
-      
+
       return response;
     } catch (error) {
       console.error('Complete lesson error:', error);
@@ -139,7 +139,7 @@ class LearningService {
     try {
       const response = await api.request('/learning/progress');
       const serverProgress = response.progress || response.data || response;
-      
+
       // Merge with local progress
       const localProgress = this.getLocalProgress();
       return this.mergeProgress(serverProgress, localProgress);
@@ -191,7 +191,7 @@ class LearningService {
         method: 'POST',
         body: { answers }
       });
-      
+
       return response;
     } catch (error) {
       console.error('Take quiz error:', error);
@@ -216,14 +216,14 @@ class LearningService {
       const response = await api.request(`/learning/courses/${courseId}/enroll`, {
         method: 'POST'
       });
-      
+
       // Update local cache if enrollment successful
       if (response.success) {
         // Clear courses cache to force refresh
         this.cache.delete('enrolled_courses');
         this.cache.delete('learning_progress');
       }
-      
+
       return response;
     } catch (error) {
       console.error('Enroll in course error:', error);
@@ -241,7 +241,7 @@ class LearningService {
    */
   async getEnrolledCourses() {
     const cacheKey = 'enrolled_courses';
-    
+
     if (this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey);
       if (Date.now() - cached.timestamp < this.cacheExpiry) {
@@ -252,12 +252,12 @@ class LearningService {
     try {
       const response = await api.request('/learning/enrollments');
       const enrollmentData = response.data || response;
-      
+
       this.cache.set(cacheKey, {
         data: enrollmentData,
         timestamp: Date.now()
       });
-      
+
       return enrollmentData;
     } catch (error) {
       console.error('Get enrolled courses error:', error);
@@ -290,14 +290,14 @@ class LearningService {
       const response = await api.request(`/learning/courses/${courseId}/unenroll`, {
         method: 'DELETE'
       });
-      
+
       // Update local cache if unenrollment successful
       if (response.success) {
         // Clear courses cache to force refresh
         this.cache.delete('enrolled_courses');
         this.cache.delete('learning_progress');
       }
-      
+
       return response;
     } catch (error) {
       console.error('Unenroll from course error:', error);
@@ -317,7 +317,7 @@ class LearningService {
     try {
       const enrollments = await this.getEnrolledCourses();
       if (enrollments.success && enrollments.enrollments) {
-        return enrollments.enrollments.some(enrollment => 
+        return enrollments.enrollments.some(enrollment =>
           enrollment.course._id.toString() === courseId.toString()
         );
       }
@@ -440,23 +440,23 @@ class LearningService {
   updateLocalProgress(lessonId, status, data = {}) {
     try {
       const progress = this.getLocalProgress() || this.getDefaultProgress();
-      
+
       if (!progress.lessons[lessonId]) {
         progress.lessons[lessonId] = {};
       }
-      
+
       progress.lessons[lessonId].status = status;
       progress.lessons[lessonId].updatedAt = new Date().toISOString();
-      
+
       if (data.score) {
         progress.lessons[lessonId].score = data.score;
       }
-      
+
       if (status === 'completed') {
         progress.completedLessons++;
         progress.totalTimeSpent += data.timeSpent || 0;
       }
-      
+
       // Update streak
       if (status === 'completed') {
         const today = new Date().toDateString();
@@ -465,17 +465,17 @@ class LearningService {
           const todayDate = new Date(today);
           const diffTime = todayDate - lastDate;
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
+
           if (diffDays === 1) {
             progress.currentStreak++;
           } else if (diffDays > 1) {
             progress.currentStreak = 1;
           }
-          
+
           progress.lastActivityDate = today;
         }
       }
-      
+
       this.saveLocalProgress(progress);
     } catch (error) {
       console.error('Update local progress error:', error);
@@ -538,20 +538,20 @@ class LearningService {
   mergeProgress(serverProgress, localProgress) {
     if (!serverProgress) return localProgress || this.getDefaultProgress();
     if (!localProgress) return serverProgress;
-    
+
     // Use server data as base, overlay local changes
     const merged = { ...serverProgress };
-    
+
     // Merge lesson progress
     Object.keys(localProgress.lessons || {}).forEach(lessonId => {
       const localLesson = localProgress.lessons[lessonId];
       const serverLesson = merged.lessons[lessonId];
-      
+
       if (!serverLesson || new Date(localLesson.updatedAt) > new Date(serverLesson.updatedAt || 0)) {
         merged.lessons[lessonId] = localLesson;
       }
     });
-    
+
     return merged;
   }
 
@@ -998,7 +998,7 @@ class LearningService {
     try {
       const bookmarks = this.getLocalBookmarks();
       const bookmarkKey = `${contentType}_${contentId}`;
-      
+
       if (action === 'add') {
         bookmarks[bookmarkKey] = {
           contentType,
@@ -1008,7 +1008,7 @@ class LearningService {
       } else if (action === 'remove') {
         delete bookmarks[bookmarkKey];
       }
-      
+
       localStorage.setItem('ethio_heritage_bookmarks', JSON.stringify(bookmarks));
     } catch (error) {
       console.error('Update local bookmarks error:', error);

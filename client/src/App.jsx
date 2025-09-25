@@ -13,6 +13,7 @@ import ArtifactDetail from './pages/ArtifactDetail'
 import AdminDashboard from './pages/AdminDashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import MuseumDashboard from './pages/MuseumDashboard'
+import RentalManagement from './components/museum/RentalManagement'
 import OrganizerDashboard from './pages/OrganizerDashboard'
 import VisitorDashboard from './pages/VisitorDashboard'
 import UserTourPage from './pages/UserTourPage'
@@ -49,7 +50,6 @@ import ArtifactManagement from './components/museum/ArtifactManagement'
 import VirtualMuseumManagement from './components/museum/VirtualMuseumManagement'
 import StaffManagement from './components/museum/StaffManagement'
 import EventManagement from './components/museum/EventManagement'
-import RentalManagement from './components/museum/RentalManagement'
 import MuseumAnalytics from './components/museum/MuseumAnalytics'
 import MuseumNotifications from './components/museum/MuseumNotifications'
 import MuseumCommunications from './components/museum/MuseumCommunications'
@@ -58,7 +58,7 @@ import RoleBasedRoute from './components/auth/RoleBasedRoute'
 import { useAuth } from './hooks/useAuth'
 import EnhancedChatbot from './components/chat/EnhancedChatbot'
 import './styles/global.css'
-import {DashboardProvider } from './context/DashboardContext'
+import { DashboardProvider } from './context/DashboardContext'
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
@@ -89,13 +89,13 @@ function App() {
     if (!user) {
       return <Navigate to="/auth" replace />
     }
-    
+
     if (allowedRoles) {
       // Check if user role is allowed (support both backend and frontend role names)
       const hasAccess = allowedRoles.some(allowedRole => {
         // Direct match
         if (allowedRole === user.role) return true;
-        
+
         // Handle backend to frontend role mapping
         const roleMap = {
           'superAdmin': ['super_admin', 'superAdmin'],
@@ -107,11 +107,11 @@ function App() {
           'museum': ['museumAdmin', 'museum_admin', 'museum'],
           'visitor': ['user', 'visitor']
         };
-        
+
         const mappedRoles = roleMap[allowedRole] || [];
         return mappedRoles.includes(user.role);
       });
-      
+
       if (!hasAccess) {
         // Redirect to appropriate dashboard based on user role (using backend role names)
         const redirectRoutes = {
@@ -121,20 +121,20 @@ function App() {
           organizer: '/organizer-dashboard',
           user: '/visitor-dashboard'        // Backend uses 'user' for visitors
         }
-        
+
         const redirectTo = redirectRoutes[user.role] || '/'
         return <Navigate to={redirectTo} replace />
       }
     }
-    
+
     return children
   }
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-            <DashboardProvider>
+      <DashboardProvider>
 
-      <Routes>
+        <Routes>
           <Route path="/" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -161,7 +161,7 @@ function App() {
           <Route path="/tours" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-             <UserTourPage />
+              <UserTourPage />
               <Footer />
             </>
           } />
@@ -203,7 +203,7 @@ function App() {
               <Footer />
             </>
           } />
-          
+
           {/* Protected Routes */}
           <Route path="/admin" element={
             <ProtectedRoute allowedRoles={['admin']}>
@@ -220,7 +220,7 @@ function App() {
               <MuseumDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             </ProtectedRoute>
           } />
-          
+
           {/* Museum Admin Routes */}
           <Route path="/museum-dashboard/profile/*" element={
             <ProtectedRoute allowedRoles={['museumAdmin']}>
@@ -282,7 +282,7 @@ function App() {
               <VisitorDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             </ProtectedRoute>
           } />
-          
+
           {/* Visitor-specific routes */}
           <Route path="/visitor/virtual-museum" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -399,7 +399,7 @@ function App() {
               </div>
             </RoleBasedRoute>
           } />
-          
+
           {/* Visitor Dashboard Enhanced Features */}
           <Route path="/visitor/bookmarks" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -416,7 +416,7 @@ function App() {
               <Social />
             </RoleBasedRoute>
           } />
-          
+
           {/* Main Sidebar Section Routes */}
           <Route path="/visitor/community" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -438,7 +438,7 @@ function App() {
               <Navigate to="/visitor/bookmarks" replace />
             </RoleBasedRoute>
           } />
-          
+
           {/* Analytics Sub-pages */}
           <Route path="/visitor/achievements" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -460,7 +460,7 @@ function App() {
               <Goals />
             </RoleBasedRoute>
           } />
-          
+
           {/* Community Sub-pages */}
           <Route path="/visitor/forums" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -487,7 +487,7 @@ function App() {
               <Social />
             </RoleBasedRoute>
           } />
-          
+
           {/* Virtual Museum Sub-pages */}
           <Route path="/visitor/3d-artifacts" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -509,14 +509,14 @@ function App() {
               <VisitorVirtualMuseum />
             </RoleBasedRoute>
           } />
-          
+
           {/* Learning Sub-pages */}
           <Route path="/visitor/flashcards" element={
             <RoleBasedRoute allowedRoles={['user']}>
               <Flashcards />
             </RoleBasedRoute>
           } />
-          
+
           {/* Events Sub-pages */}
           <Route path="/visitor/exhibitions" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -558,7 +558,7 @@ function App() {
               </div>
             </RoleBasedRoute>
           } />
-          
+
           {/* Collection Sub-pages */}
           <Route path="/visitor/downloads" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -570,7 +570,7 @@ function App() {
               </div>
             </RoleBasedRoute>
           } />
-          
+
           {/* Settings Sub-pages */}
           <Route path="/visitor/notifications" element={
             <RoleBasedRoute allowedRoles={['user']}>
@@ -582,7 +582,7 @@ function App() {
               </div>
             </RoleBasedRoute>
           } />
-          
+
           {/* New Educational Routes */}
           <Route path="/support" element={
             <Support darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -595,7 +595,7 @@ function App() {
               <AdminSupport darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             </ProtectedRoute>
           } />
-          
+
           <Route path="/profile" element={
             <ProtectedRoute>
               <>
@@ -605,11 +605,11 @@ function App() {
               </>
             </ProtectedRoute>
           } />
-      </Routes>
-      
-      {/* Global Enhanced Chatbot - Available on all pages */}
-      <EnhancedChatbot />
-      
+        </Routes>
+
+        {/* Global Enhanced Chatbot - Available on all pages */}
+        <EnhancedChatbot />
+
       </DashboardProvider>
     </div>
   )

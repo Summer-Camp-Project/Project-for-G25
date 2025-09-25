@@ -1,5 +1,5 @@
 // API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 class ApiService {
   constructor() {
@@ -16,12 +16,12 @@ class ApiService {
     const headers = {
       'Content-Type': 'application/json',
     };
-    
+
     const token = this.getAuthToken();
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return headers;
   }
 
@@ -35,7 +35,7 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -76,7 +76,7 @@ class ApiService {
       search: params.search || '',
       ...params
     }).toString();
-    
+
     return this.request(`/tour-packages/organizer/${organizerId}?${queryString}`);
   }
 
@@ -118,7 +118,7 @@ class ApiService {
       sortOrder: params.sortOrder || 'desc',
       ...params
     }).toString();
-    
+
     return this.request(`/bookings/organizer/${organizerId}?${queryString}`);
   }
 
@@ -163,7 +163,7 @@ class ApiService {
       sortOrder: params.sortOrder || 'desc',
       ...params
     }).toString();
-    
+
     return this.request(`/messages/organizer/${organizerId}?${queryString}`);
   }
 

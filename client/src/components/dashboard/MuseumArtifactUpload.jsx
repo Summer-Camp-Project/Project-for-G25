@@ -14,7 +14,7 @@ import {
   Error as ErrorIcon, Info as InfoIcon, Delete as DeleteIcon, Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { api } from '../../utils/api.js';
+import api from '../../utils/api.js';
 
 const MuseumArtifactUpload = () => {
   const theme = useTheme();

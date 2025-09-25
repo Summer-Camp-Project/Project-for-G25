@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 // Create axios instance with authentication
 const apiClient = axios.create({
@@ -109,7 +109,7 @@ class VisitorDashboardService {
   async getFavorites(options = {}) {
     try {
       const params = new URLSearchParams();
-      
+
       Object.entries(options).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           params.append(key, value);
@@ -186,7 +186,7 @@ class VisitorDashboardService {
   async getActivity(options = {}) {
     try {
       const params = new URLSearchParams();
-      
+
       Object.entries(options).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           params.append(key, value);

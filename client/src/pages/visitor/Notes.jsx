@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { FaStickyNote, FaTrash, FaEdit, FaPlus, FaSearch, FaPin, FaTags } from 'react-icons/fa';
+import { FaStickyNote, FaTrash, FaEdit, FaPlus, FaSearch, FaThumbtack, FaTags } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 const Notes = () => {
@@ -240,9 +240,8 @@ const Notes = () => {
             {notes.map(note => (
               <div
                 key={note._id}
-                className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${
-                  note.pinned ? 'ring-2 ring-yellow-400' : ''
-                }`}
+                className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${note.pinned ? 'ring-2 ring-yellow-400' : ''
+                  }`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-semibold text-lg text-gray-800 flex-1">
@@ -251,13 +250,12 @@ const Notes = () => {
                   <div className="flex gap-2 ml-2">
                     <button
                       onClick={() => togglePin(note._id, note.pinned)}
-                      className={`transition-colors ${
-                        note.pinned
+                      className={`transition-colors ${note.pinned
                           ? 'text-yellow-500 hover:text-yellow-600'
                           : 'text-gray-400 hover:text-yellow-500'
-                      }`}
+                        }`}
                     >
-                      <FaPin />
+                      <FaThumbtack />
                     </button>
                     <button
                       onClick={() => startEdit(note)}
@@ -316,7 +314,7 @@ const Notes = () => {
               <h2 className="text-xl font-bold mb-4">
                 {editingNote ? 'Edit Note' : 'Add New Note'}
               </h2>
-              
+
               <div className="space-y-4">
                 <input
                   type="text"
@@ -325,7 +323,7 @@ const Notes = () => {
                   onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <textarea
                   placeholder="Write your note here..."
                   value={newNote.content}
@@ -333,7 +331,7 @@ const Notes = () => {
                   rows="6"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <input
                   type="text"
                   placeholder="Category"
@@ -341,7 +339,7 @@ const Notes = () => {
                   onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <input
                   type="text"
                   placeholder="Tags (comma separated)"
@@ -349,7 +347,7 @@ const Notes = () => {
                   onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -360,7 +358,7 @@ const Notes = () => {
                   <span className="text-sm text-gray-700">Private note</span>
                 </label>
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {

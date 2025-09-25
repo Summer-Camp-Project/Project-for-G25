@@ -46,7 +46,7 @@ const MuseumDashboard = () => {
 
         // Load dashboard data with individual error handling
         const promises = [
-          api.getMuseumDashboardStats().catch(error => {
+          api.getMuseumDashboard().catch(error => {
             console.warn('Dashboard stats failed, using default values:', error);
             return {
               data: {

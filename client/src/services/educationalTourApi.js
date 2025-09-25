@@ -1,7 +1,7 @@
 // Educational Tours API Service
 // Frontend service to interact with educational tours backend endpoints
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
@@ -29,7 +29,7 @@ export const publicEducationalToursApi = {
       status: 'published',
       ...filters
     });
-    
+
     const response = await fetch(`${API_BASE_URL}/educational-tours?${queryParams}`);
     return handleResponse(response);
   },
@@ -53,7 +53,7 @@ export const publicEducationalToursApi = {
       status: 'published',
       ...filters
     });
-    
+
     const response = await fetch(`${API_BASE_URL}/educational-tours/search?${queryParams}`);
     return handleResponse(response);
   },

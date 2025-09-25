@@ -2011,7 +2011,7 @@ class MockApiClient {
   // Course-specific methods
   async getCourses(endpoint, options = {}) {
     await delay(300);
-    
+
     // Parse query parameters from endpoint if present
     const url = new URL(endpoint, 'http://localhost');
     const category = url.searchParams.get('category');
@@ -2066,9 +2066,9 @@ class MockApiClient {
 
   async getCourseById(courseId) {
     await delay(300);
-    
+
     const course = MOCK_COURSES.find(c => c._id === courseId || c.id === courseId);
-    
+
     if (!course) {
       throw new Error('Course not found');
     }
@@ -2123,9 +2123,9 @@ class MockApiClient {
 
   async getCourseLessons(courseId) {
     await delay(300);
-    
+
     const course = MOCK_COURSES.find(c => c._id === courseId || c.id === courseId);
-    
+
     if (!course) {
       throw new Error('Course not found');
     }
@@ -2136,7 +2136,7 @@ class MockApiClient {
       return Array.from({ length: lessonsPerTopic }, (_, lessonIndex) => {
         const globalIndex = topicIndex * lessonsPerTopic + lessonIndex;
         if (globalIndex >= course.lessons) return null;
-        
+
         return {
           id: `lesson-${globalIndex + 1}`,
           courseId: course._id,
@@ -2178,7 +2178,7 @@ class MockApiClient {
   // Course enrollment and progress tracking
   async enrollInCourse(courseId) {
     await delay(500);
-    
+
     const course = MOCK_COURSES.find(c => c._id === courseId || c.id === courseId);
     if (!course) {
       throw new Error('Course not found');
@@ -2198,7 +2198,7 @@ class MockApiClient {
 
   async getCourseProgress(courseId) {
     await delay(200);
-    
+
     return {
       success: true,
       progress: {
@@ -2214,7 +2214,7 @@ class MockApiClient {
 
   async updateLessonProgress(courseId, lessonId, completed = true) {
     await delay(300);
-    
+
     return {
       success: true,
       message: 'Lesson progress updated',
@@ -2229,7 +2229,7 @@ class MockApiClient {
   // Course management for educators
   async createCourse(courseData) {
     await delay(1000);
-    
+
     const newCourse = {
       ...courseData,
       _id: `course-${MOCK_COURSES.length + 1}`,
@@ -2253,7 +2253,7 @@ class MockApiClient {
 
   async updateCourse(courseId, courseData) {
     await delay(500);
-    
+
     const courseIndex = MOCK_COURSES.findIndex(c => c._id === courseId || c.id === courseId);
     if (courseIndex === -1) {
       throw new Error('Course not found');
@@ -2275,7 +2275,7 @@ class MockApiClient {
 
   async deleteCourse(courseId) {
     await delay(500);
-    
+
     const courseIndex = MOCK_COURSES.findIndex(c => c._id === courseId || c.id === courseId);
     if (courseIndex === -1) {
       throw new Error('Course not found');
@@ -2287,6 +2287,311 @@ class MockApiClient {
       success: true,
       message: 'Course deleted successfully',
       course: deletedCourse
+    };
+  }
+
+  // Rental Request Functions
+  async getAllRentalRequests(params = {}) {
+    console.log('🔍 Mock API: getAllRentalRequests called with params:', params);
+
+    // Mock rental requests data
+    const mockRentalRequests = [
+      {
+        _id: 'rental_001',
+        requestId: 'REQ-2024-001',
+        requestType: 'museum_to_super',
+        status: 'pending',
+        artifact: {
+          _id: 'artifact_001',
+          name: 'Ancient Ethiopian Cross',
+          category: 'Religious Artifacts',
+          images: ['cross1.jpg']
+        },
+        museum: {
+          _id: 'museum_001',
+          name: 'National Museum of Ethiopia',
+          location: { city: 'Addis Ababa', country: 'Ethiopia' }
+        },
+        requestedBy: {
+          _id: 'user_001',
+          name: 'Museum Admin',
+          email: 'admin@museum.com',
+          role: 'museum_admin'
+        },
+        rentalDetails: {
+          duration: 30,
+          startDate: '2024-10-01',
+          endDate: '2024-10-31',
+          rentalFee: 50000,
+          currency: 'ETB'
+        },
+        description: 'Request for temporary display of ancient cross',
+        specialRequirements: 'Climate controlled environment required',
+        createdAt: '2024-09-25T10:00:00Z',
+        approvals: []
+      },
+      {
+        _id: 'rental_002',
+        requestId: 'REQ-2024-002',
+        requestType: 'super_to_museum',
+        status: 'approved',
+        artifact: {
+          _id: 'artifact_002',
+          name: 'Lalibela Rock Church Model',
+          category: 'Architectural Models',
+          images: ['lalibela1.jpg']
+        },
+        museum: {
+          _id: 'museum_002',
+          name: 'Lalibela Heritage Museum',
+          location: { city: 'Lalibela', country: 'Ethiopia' }
+        },
+        requestedBy: {
+          _id: 'user_002',
+          name: 'Super Admin',
+          email: 'super@admin.com',
+          role: 'super_admin'
+        },
+        rentalDetails: {
+          duration: 60,
+          startDate: '2024-11-01',
+          endDate: '2024-12-31',
+          rentalFee: 75000,
+          currency: 'ETB'
+        },
+        description: 'Request for educational display',
+        specialRequirements: 'Educational materials included',
+        createdAt: '2024-09-20T14:30:00Z',
+        approvals: [
+          {
+            approver: 'user_003',
+            role: 'museum_admin',
+            status: 'approved',
+            comments: 'Approved for educational purposes',
+            approvedAt: '2024-09-22T09:15:00Z'
+          }
+        ]
+      }
+    ];
+
+    // Apply filters
+    let filteredRequests = [...mockRentalRequests];
+
+    if (params.status && params.status !== 'all' && params.status !== 'undefined') {
+      filteredRequests = filteredRequests.filter(req => req.status === params.status);
+    }
+
+    if (params.requestType && params.requestType !== 'all' && params.requestType !== 'undefined') {
+      filteredRequests = filteredRequests.filter(req => req.requestType === params.requestType);
+    }
+
+    if (params.search && params.search.trim()) {
+      const searchTerm = params.search.toLowerCase();
+      filteredRequests = filteredRequests.filter(req =>
+        req.requestId.toLowerCase().includes(searchTerm) ||
+        req.description.toLowerCase().includes(searchTerm) ||
+        req.artifact.name.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    console.log('📋 Mock API: Returning', filteredRequests.length, 'rental requests');
+    return {
+      success: true,
+      data: filteredRequests,
+      total: filteredRequests.length
+    };
+  }
+
+  async getRentalRequestById(id) {
+    console.log('🔍 Mock API: getRentalRequestById called with id:', id);
+
+    const mockRequest = {
+      _id: id,
+      requestId: 'REQ-2024-001',
+      requestType: 'museum_to_super',
+      status: 'pending',
+      artifact: {
+        _id: 'artifact_001',
+        name: 'Ancient Ethiopian Cross',
+        category: 'Religious Artifacts',
+        images: ['cross1.jpg']
+      },
+      museum: {
+        _id: 'museum_001',
+        name: 'National Museum of Ethiopia',
+        location: { city: 'Addis Ababa', country: 'Ethiopia' }
+      },
+      requestedBy: {
+        _id: 'user_001',
+        name: 'Museum Admin',
+        email: 'admin@museum.com',
+        role: 'museum_admin'
+      },
+      rentalDetails: {
+        duration: 30,
+        startDate: '2024-10-01',
+        endDate: '2024-10-31',
+        rentalFee: 50000,
+        currency: 'ETB'
+      },
+      description: 'Request for temporary display of ancient cross',
+      specialRequirements: 'Climate controlled environment required',
+      createdAt: '2024-09-25T10:00:00Z',
+      approvals: []
+    };
+
+    return {
+      success: true,
+      data: mockRequest
+    };
+  }
+
+  async createRentalRequest(requestData) {
+    console.log('🔍 Mock API: createRentalRequest called with data:', requestData);
+
+    const newRequest = {
+      _id: 'rental_' + Date.now(),
+      requestId: 'REQ-2024-' + Math.floor(Math.random() * 1000),
+      ...requestData,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      approvals: []
+    };
+
+    return {
+      success: true,
+      data: newRequest,
+      message: 'Rental request created successfully'
+    };
+  }
+
+  async updateRentalRequestStatus(id, statusData) {
+    console.log('🔍 Mock API: updateRentalRequestStatus called with id:', id, 'data:', statusData);
+
+    return {
+      success: true,
+      data: {
+        _id: id,
+        status: statusData.status,
+        ...statusData
+      },
+      message: `Rental request ${statusData.status} successfully`
+    };
+  }
+
+  async getRentalStatistics() {
+    console.log('🔍 Mock API: getRentalStatistics called');
+
+    return {
+      success: true,
+      data: {
+        totalRequests: 15,
+        pendingRequests: 5,
+        approvedRequests: 8,
+        rejectedRequests: 2,
+        totalRevenue: 450000,
+        revenueByMonth: [
+          { month: 'September', revenue: 150000 },
+          { month: 'October', revenue: 200000 },
+          { month: 'November', revenue: 100000 }
+        ],
+        requestsByStatus: {
+          pending: 5,
+          approved: 8,
+          rejected: 2,
+          completed: 0
+        }
+      }
+    };
+  }
+
+  // Rental Artifacts Functions
+  async getRentalArtifacts() {
+    console.log('🔍 Mock API: getRentalArtifacts called');
+
+    // Mock artifacts available for rental
+    const mockRentalArtifacts = [
+      {
+        _id: 'artifact_001',
+        name: 'Ancient Ethiopian Cross',
+        description: 'A beautifully crafted cross from the 12th century',
+        category: 'Religious Artifacts',
+        images: ['cross1.jpg', 'cross2.jpg'],
+        status: 'available',
+        museum: {
+          _id: 'museum_001',
+          name: 'National Museum of Ethiopia',
+          location: { city: 'Addis Ababa', country: 'Ethiopia' }
+        },
+        rentalPrice: 50000,
+        isAvailableForRental: true
+      },
+      {
+        _id: 'artifact_002',
+        name: 'Lalibela Rock Church Model',
+        description: 'Detailed model of the famous rock-hewn churches',
+        category: 'Architectural Models',
+        images: ['lalibela1.jpg', 'lalibela2.jpg'],
+        status: 'available',
+        museum: {
+          _id: 'museum_002',
+          name: 'Lalibela Heritage Museum',
+          location: { city: 'Lalibela', country: 'Ethiopia' }
+        },
+        rentalPrice: 75000,
+        isAvailableForRental: true
+      },
+      {
+        _id: 'artifact_003',
+        name: 'Aksum Obelisk Replica',
+        description: 'Replica of the famous Aksumite obelisk',
+        category: 'Monuments',
+        images: ['obelisk1.jpg', 'obelisk2.jpg'],
+        status: 'available',
+        museum: {
+          _id: 'museum_003',
+          name: 'Aksum Museum',
+          location: { city: 'Aksum', country: 'Ethiopia' }
+        },
+        rentalPrice: 60000,
+        isAvailableForRental: true
+      },
+      {
+        _id: 'artifact_004',
+        name: 'Ethiopian Manuscript',
+        description: 'Ancient Ge\'ez manuscript from the 14th century',
+        category: 'Manuscripts',
+        images: ['manuscript1.jpg', 'manuscript2.jpg'],
+        status: 'available',
+        museum: {
+          _id: 'museum_001',
+          name: 'National Museum of Ethiopia',
+          location: { city: 'Addis Ababa', country: 'Ethiopia' }
+        },
+        rentalPrice: 40000,
+        isAvailableForRental: true
+      },
+      {
+        _id: 'artifact_005',
+        name: 'Traditional Ethiopian Pottery',
+        description: 'Collection of traditional pottery from different regions',
+        category: 'Pottery',
+        images: ['pottery1.jpg', 'pottery2.jpg'],
+        status: 'available',
+        museum: {
+          _id: 'museum_004',
+          name: 'Ethnographic Museum',
+          location: { city: 'Addis Ababa', country: 'Ethiopia' }
+        },
+        rentalPrice: 30000,
+        isAvailableForRental: true
+      }
+    ];
+
+    console.log('📋 Mock API: Returning', mockRentalArtifacts.length, 'rental artifacts');
+    return {
+      success: true,
+      data: mockRentalArtifacts
     };
   }
 }
