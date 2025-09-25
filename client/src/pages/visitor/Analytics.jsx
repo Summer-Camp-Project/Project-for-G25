@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'sonner';
 import { 
   FaChartBar, 
   FaTrophy, 
   FaCalendar, 
-  FaTargetArrow,
-  FaTrendingUp,
+  FaBullseye,
+  FaArrowUp,
   FaEye,
   FaBookmark,
   FaGraduationCap,
@@ -44,40 +45,107 @@ const Analytics = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('month'); // week, month, year
-  const [stats, setStats] = useState({
-    totalPoints: 2450,
-    level: 8,
-    completedCourses: 12,
-    activitiesThisMonth: 45,
-    studyTimeMinutes: 890,
-    streakDays: 15,
-    averageScore: 88,
-    favoritesCount: 23
-  });
+  const [stats, setStats] = useState({});
+  const [progressData, setProgressData] = useState({});
+  const [detailedStats, setDetailedStats] = useState({});
 
   useEffect(() => {
-    // Simulate loading analytics data
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    fetchAnalyticsData();
+  }, [timeframe]);
 
-    return () => clearTimeout(timer);
-  }, []);
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch overview stats
+      const overviewResponse = await fetch(`/api/progress/overview?timeframe=${timeframe}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (overviewResponse.ok) {
+        const overviewData = await overviewResponse.json();
+        setStats(overviewData);
+      }
+
+      // Fetch detailed stats
+      const detailedResponse = await fetch(`/api/progress/detailed-stats?timeframe=${timeframe}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (detailedResponse.ok) {
+        const detailed = await detailedResponse.json();
+        setDetailedStats(detailed);
+        setProgressData(detailed.progressData || {});
+      }
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      toast.error('Failed to load analytics data');
+      
+      // Fallback mock data
+      setStats({
+        totalPoints: 2450,
+        level: 8,
+        completedCourses: 12,
+        activitiesThisMonth: 45,
+        studyTimeMinutes: 890,
+        streakDays: 15,
+        averageScore: 88,
+        favoritesCount: 23
+      });
+      
+      setProgressData({
+        weeklyProgress: [120, 190, 300, 250],
+        weeklyStudyTime: [5, 8, 12, 10],
+        activityDistribution: [35, 20, 15, 18, 12],
+        subjectPerformance: [92, 88, 75, 85, 90]
+      });
+      
+      setDetailedStats({
+        achievements: [
+          { name: 'Heritage Expert', description: 'Complete 10 courses', earned: true },
+          { name: 'Quiz Master', description: 'Score 90%+ on 5 quizzes', earned: true },
+          { name: 'Social Learner', description: 'Join 3 study groups', earned: false },
+          { name: 'Streak Hero', description: '30-day study streak', earned: false }
+        ],
+        rank: 47,
+        bestStudyDay: '2h 45m'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Chart data
+  const getTimeLabels = () => {
+    switch (timeframe) {
+      case 'week':
+        return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      case 'month':
+        return ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      case 'year':
+        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      default:
+        return ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+    }
+  };
+
   const learningProgressData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    labels: getTimeLabels(),
     datasets: [
       {
         label: 'Points Earned',
-        data: [120, 190, 300, 250],
+        data: progressData.weeklyProgress || [120, 190, 300, 250],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4
       },
       {
         label: 'Study Time (hours)',
-        data: [5, 8, 12, 10],
+        data: progressData.weeklyStudyTime || [5, 8, 12, 10],
         borderColor: 'rgb(16, 185, 129)',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         tension: 0.4
@@ -89,7 +157,7 @@ const Analytics = () => {
     labels: ['Course Study', 'Virtual Tours', 'Quizzes', 'Discussions', 'Reading'],
     datasets: [
       {
-        data: [35, 20, 15, 18, 12],
+        data: progressData.activityDistribution || [35, 20, 15, 18, 12],
         backgroundColor: [
           '#3B82F6',
           '#10B981',
@@ -106,7 +174,7 @@ const Analytics = () => {
     datasets: [
       {
         label: 'Score (%)',
-        data: [92, 88, 75, 85, 90],
+        data: progressData.subjectPerformance || [92, 88, 75, 85, 90],
         backgroundColor: 'rgba(59, 130, 246, 0.8)'
       }
     ]
@@ -163,7 +231,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Total Points</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.totalPoints.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-blue-600">{(stats.totalPoints || 0).toLocaleString()}</p>
               </div>
               <FaTrophy className="h-8 w-8 text-yellow-500" />
             </div>
@@ -173,7 +241,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Current Level</p>
-                <p className="text-2xl font-bold text-green-600">{stats.level}</p>
+                <p className="text-2xl font-bold text-green-600">{stats.level || 0}</p>
               </div>
               <FaStar className="h-8 w-8 text-green-500" />
             </div>
@@ -183,7 +251,7 @@ const Analytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Study Streak</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.streakDays} days</p>
+                <p className="text-2xl font-bold text-orange-600">{stats.streakDays || 0} days</p>
               </div>
               <FaFire className="h-8 w-8 text-orange-500" />
             </div>
@@ -193,9 +261,9 @@ const Analytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Average Score</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.averageScore}%</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.averageScore || 0}%</p>
               </div>
-              <FaTargetArrow className="h-8 w-8 text-purple-500" />
+              <FaBullseye className="h-8 w-8 text-purple-500" />
             </div>
           </div>
         </div>
@@ -205,7 +273,7 @@ const Analytics = () => {
           {/* Learning Progress Chart */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaTrendingUp className="text-blue-500" />
+              <FaArrowUp className="text-blue-500" />
               Learning Progress
             </h3>
             <div className="h-64">
@@ -247,15 +315,15 @@ const Analytics = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">This Month</span>
-                <span className="font-semibold">{Math.floor(stats.studyTimeMinutes / 60)}h {stats.studyTimeMinutes % 60}m</span>
+                <span className="font-semibold">{Math.floor((stats.studyTimeMinutes || 0) / 60)}h {(stats.studyTimeMinutes || 0) % 60}m</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Daily Average</span>
-                <span className="font-semibold">{Math.floor(stats.studyTimeMinutes / 30 / 60)}h {Math.floor((stats.studyTimeMinutes / 30) % 60)}m</span>
+                <span className="font-semibold">{Math.floor((stats.studyTimeMinutes || 0) / 30 / 60)}h {Math.floor(((stats.studyTimeMinutes || 0) / 30) % 60)}m</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Best Day</span>
-                <span className="font-semibold text-green-600">2h 45m</span>
+                <span className="font-semibold text-green-600">{detailedStats.bestStudyDay || '2h 45m'}</span>
               </div>
             </div>
           </div>
@@ -267,12 +335,12 @@ const Analytics = () => {
               Recent Achievements
             </h3>
             <div className="space-y-3">
-              {[
+              {(detailedStats.achievements || [
                 { name: 'Heritage Expert', description: 'Complete 10 courses', earned: true },
                 { name: 'Quiz Master', description: 'Score 90%+ on 5 quizzes', earned: true },
                 { name: 'Social Learner', description: 'Join 3 study groups', earned: false },
                 { name: 'Streak Hero', description: '30-day study streak', earned: false }
-              ].map((achievement, index) => (
+              ]).map((achievement, index) => (
                 <div key={index} className={`flex items-center gap-3 p-2 rounded-lg ${achievement.earned ? 'bg-yellow-50' : 'bg-gray-50'}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${achievement.earned ? 'bg-yellow-500' : 'bg-gray-300'}`}>
                     <FaTrophy className={`h-4 w-4 ${achievement.earned ? 'text-white' : 'text-gray-600'}`} />
@@ -297,19 +365,19 @@ const Analytics = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Completed Courses</span>
-                <span className="font-semibold">{stats.completedCourses}</span>
+                <span className="font-semibold">{stats.completedCourses || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Favorites</span>
-                <span className="font-semibold">{stats.favoritesCount}</span>
+                <span className="font-semibold">{stats.favoritesCount || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Activities This Month</span>
-                <span className="font-semibold">{stats.activitiesThisMonth}</span>
+                <span className="font-semibold">{stats.activitiesThisMonth || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Rank</span>
-                <span className="font-semibold text-blue-600">#47</span>
+                <span className="font-semibold text-blue-600">#{detailedStats.rank || 47}</span>
               </div>
             </div>
           </div>

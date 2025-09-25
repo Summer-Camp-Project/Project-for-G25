@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import VisitorLayout from '../components/layout/VisitorLayout';
 import { 
   Search, 
   Filter, 
@@ -14,17 +16,24 @@ import {
   Grid,
   List,
   ChevronDown,
-  X
+  X,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  User
 } from 'lucide-react';
 import educationService from '../services/educationService';
+import { toast } from 'sonner';
 
 const Courses = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // State
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState({});
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
@@ -147,6 +156,39 @@ const Courses = () => {
     setSearchParams({});
   };
 
+  const handleEnroll = async (courseId) => {
+    if (!user) {
+      toast.error('Please login to enroll in courses');
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setEnrolling(prev => ({ ...prev, [courseId]: true }));
+      console.log('📝 Enrolling in course:', courseId);
+
+      const response = await educationService.enrollInCourse(courseId);
+      console.log('✅ Enrollment response:', response);
+
+      if (response.success) {
+        toast.success('Successfully enrolled in course!');
+        // Update course data to reflect enrollment
+        setCourses(prev => prev.map(course => 
+          (course.id === courseId || course._id === courseId)
+            ? { ...course, isEnrolled: true, enrolledStudents: (course.enrolledStudents || 0) + 1 }
+            : course
+        ));
+      } else {
+        toast.error(response.error || 'Failed to enroll in course');
+      }
+    } catch (error) {
+      console.error('❌ Error enrolling in course:', error);
+      toast.error('Failed to enroll in course');
+    } finally {
+      setEnrolling(prev => ({ ...prev, [courseId]: false }));
+    }
+  };
+
   const getDurationText = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -221,30 +263,61 @@ const Courses = () => {
             </span>
           )}
         </div>
-        <button 
-          onClick={() => alert(`Course: ${course.title}\n\nDescription: ${course.description}\n\nInstructor: ${course.instructor}\n\nDifficulty: ${course.difficulty}\n\nCourse functionality coming soon!`)}
-          className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center group"
-        >
-          View Course Info
-          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-        </button>
+        <div className="space-y-3">
+          <button 
+            onClick={() => handleEnroll(course.id || course._id)}
+            disabled={enrolling[course.id || course._id] || course.isEnrolled}
+            className={`w-full py-3 rounded-xl font-semibold transition-colors flex items-center justify-center ${
+              course.isEnrolled
+                ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed'
+            }`}
+          >
+            {enrolling[course.id || course._id] ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <span>Enrolling...</span>
+              </div>
+            ) : course.isEnrolled ? (
+              <div className="flex items-center space-x-2">
+                <Award className="h-4 w-4" />
+                <span>Enrolled</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Play className="h-4 w-4" />
+                <span>Enroll Now</span>
+              </div>
+            )}
+          </button>
+          
+          <button
+            onClick={() => navigate(`/courses/${course.id || course._id}`)}
+            className="w-full py-2 border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
+          >
+            View Details
+          </button>
+        </div>
       </div>
     </div>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading courses...</p>
+      <VisitorLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading courses...</p>
+          </div>
         </div>
-      </div>
+      </VisitorLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <VisitorLayout>
+      <div className="p-8">
       {/* Header */}
       <section className="py-16 bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -432,7 +505,8 @@ const Courses = () => {
           )}
         </div>
       </section>
-    </div>
+      </div>
+    </VisitorLayout>
   );
 };
 

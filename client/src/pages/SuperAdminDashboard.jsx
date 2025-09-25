@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../utils/api';
 import LogoutButton from '../components/common/LogoutButton';
@@ -46,9 +47,11 @@ import RentalRequestManager from '../components/RentalRequestManager';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import PerformanceAnalytics from '../components/PerformanceAnalytics';
 import PerformanceMetricsDashboard from '../components/PerformanceMetricsDashboard';
+import SuperAdminProgressManagement from '../components/admin/SuperAdminProgressManagement';
 
 const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [expandedSections, setExpandedSections] = useState({
     'Platform Overview': true,
@@ -264,7 +267,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
         { id: 'education-overview', label: 'Education Overview', icon: GraduationCap, description: 'Educational content statistics and management' },
         { id: 'course-management', label: 'Course Management', icon: BookOpen, description: 'Manage educational courses across the platform' },
         { id: 'assignment-management', label: 'Assignment Management', icon: FileText, description: 'Oversee assignments and grading system' },
-        { id: 'student-management', label: 'Student Management', icon: Users2, description: 'Manage student enrollments and progress' },
+        { id: 'student-management', label: 'Student Management', icon: Users2, description: 'Manage student enrollments and progress', link: '/super-admin/student-management' },
         { id: 'educational-tours', label: 'Educational Tours', icon: Presentation, description: 'Manage educational tour programs' }
       ]
     },
@@ -2242,18 +2245,7 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
 
       case 'student-management':
         return (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Student Management</h3>
-              <p className="text-sm text-gray-600">Manage student enrollments and progress</p>
-            </div>
-            <div className="p-6">
-              <div className="text-center py-12">
-                <Users2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Student management interface will be implemented here</p>
-              </div>
-            </div>
-          </div>
+          <SuperAdminProgressManagement />
         );
 
       case 'educational-tours':
@@ -2643,7 +2635,13 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
                     return (
                       <button
                         key={item.id}
-                        onClick={() => setActiveSection(item.id)}
+                        onClick={() => {
+                          if (item.link) {
+                            navigate(item.link);
+                          } else {
+                            setActiveSection(item.id);
+                          }
+                        }}
                         className={`w-full flex items-center space-x-3 px-3 py-2 text-left rounded-lg transition-colors ${activeSection === item.id
                           ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                           : 'text-gray-700 hover:bg-gray-50'

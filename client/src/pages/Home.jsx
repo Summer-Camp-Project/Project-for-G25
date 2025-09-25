@@ -13,7 +13,7 @@ import museum from '../assets/museum.jpg';
 import virtualTour from '../assets/virtual-tour.jpg';
 import VirtualMuseumButton from '../components/virtual-museum/VirtualMuseumButton';
 import learningService from '../services/learningService';
-import api from '../services/api';
+import api from '../utils/api';
 import io from 'socket.io-client';
 
 const Home = () => {

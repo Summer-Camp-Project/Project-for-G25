@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { FaTarget, FaPlus, FaEdit, FaTrash, FaCheck, FaCalendar, FaTrendingUp } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { FaBullseye, FaPlus, FaEdit, FaTrash, FaCheck, FaCalendar, FaArrowUp } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 const Goals = () => {
   const { user } = useAuth();
@@ -237,7 +237,7 @@ const Goals = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <FaTarget className="text-orange-600" />
+                <FaBullseye className="text-orange-600" />
                 Learning Goals
               </h1>
               <p className="text-gray-600 mt-2">Set and track your learning objectives</p>
@@ -275,7 +275,7 @@ const Goals = () => {
         {/* Goals Grid */}
         {goals.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <FaTarget className="mx-auto text-6xl text-gray-300 mb-4" />
+            <FaBullseye className="mx-auto text-6xl text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No goals set</h3>
             <p className="text-gray-500">Create your first learning goal to get started!</p>
           </div>
@@ -350,7 +350,7 @@ const Goals = () => {
                     onClick={() => updateProgress(goal._id)}
                     className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                   >
-                    <FaTrendingUp /> Update Progress
+                    <FaArrowUp /> Update Progress
                   </button>
                 )}
               </div>

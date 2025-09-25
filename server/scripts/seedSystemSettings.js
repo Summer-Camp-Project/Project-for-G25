@@ -304,6 +304,116 @@ const defaultSettings = [
     isPublic: false
   },
 
+  // Visitor Dashboard Features
+  {
+    category: 'features',
+    key: 'visitor_sidebar_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable visitor dashboard sidebar',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_notes_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable notes feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_goals_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable goals feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_flashcards_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable flashcards feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_analytics_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable analytics feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_achievements_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable achievements feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_activity_log_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable activity log feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_bookmarks_enabled',
+    value: true,
+    dataType: 'boolean',
+    description: 'Enable bookmarks feature in visitor dashboard',
+    isPublic: true
+  },
+  {
+    category: 'features',
+    key: 'visitor_sidebar_config',
+    value: {
+      notes: {
+        enabled: true,
+        icon: 'FaStickyNote',
+        order: 1
+      },
+      goals: {
+        enabled: true,
+        icon: 'FaBullseye',
+        order: 2
+      },
+      flashcards: {
+        enabled: true,
+        icon: 'FaGraduationCap',
+        order: 3
+      },
+      analytics: {
+        enabled: true,
+        icon: 'FaChartLine',
+        order: 4
+      },
+      achievements: {
+        enabled: true,
+        icon: 'FaTrophy',
+        order: 5
+      },
+      activity: {
+        enabled: true,
+        icon: 'FaHistory',
+        order: 6
+      },
+      bookmarks: {
+        enabled: true,
+        icon: 'FaBookmark',
+        order: 7
+      }
+    },
+    dataType: 'object',
+    description: 'Configuration object for visitor sidebar features and their display order',
+    isPublic: true
+  },
+
   // Maintenance Settings
   {
     category: 'maintenance',

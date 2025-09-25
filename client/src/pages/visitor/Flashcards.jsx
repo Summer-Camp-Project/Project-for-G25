@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { FaPlay, FaPause, FaForward, FaBackward, FaRandom, FaEye, FaEyeSlash, FaCheck, FaTimes, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const Flashcards = () => {
   const { user } = useAuth();
@@ -18,13 +18,6 @@ const Flashcards = () => {
     incorrect: 0,
     total: 0
   });
-  const [showCreateCard, setShowCreateCard] = useState(false);
-  const [newCard, setNewCard] = useState({
-    question: '',
-    answer: '',
-    category: '',
-    difficulty: 'medium'
-  });
 
   useEffect(() => {
     fetchFlashcards();
@@ -34,9 +27,9 @@ const Flashcards = () => {
   const fetchFlashcards = async () => {
     try {
       const params = new URLSearchParams();
-      if (selectedDeck !== 'all') params.append('deck', selectedDeck);
+      if (selectedDeck !== 'all') params.append('category', selectedDeck);
       
-      const response = await fetch(`/api/visitor/flashcards?${params.toString()}`, {
+      const response = await fetch(`/api/flashcards/published?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -47,7 +40,7 @@ const Flashcards = () => {
       }
 
       const data = await response.json();
-      setFlashcards(data.flashcards || []);
+      setFlashcards(data || []);
     } catch (error) {
       console.error('Error fetching flashcards:', error);
       toast.error('Failed to load flashcards');
@@ -117,7 +110,7 @@ const Flashcards = () => {
 
   const fetchDecks = async () => {
     try {
-      const response = await fetch('/api/visitor/flashcards/decks', {
+      const response = await fetch('/api/flashcards/categories', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -125,7 +118,11 @@ const Flashcards = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setDecks(data.decks || []);
+        setDecks(data.map(category => ({
+          _id: category.name.toLowerCase(),
+          name: category.name,
+          cardCount: category.count
+        })) || []);
       }
     } catch (error) {
       console.error('Error fetching decks:', error);
@@ -176,7 +173,7 @@ const Flashcards = () => {
     const card = flashcards[currentCard];
     
     try {
-      await fetch(`/api/visitor/flashcards/${card._id}/review`, {
+      await fetch(`/api/flashcards/${card._id}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,30 +203,6 @@ const Flashcards = () => {
     toast.success(`Study session completed! ${sessionStats.correct}/${sessionStats.total + 1} correct`);
   };
 
-  const createFlashcard = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const response = await fetch('/api/visitor/flashcards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(newCard)
-      });
-
-      if (response.ok) {
-        toast.success('Flashcard created successfully!');
-        setShowCreateCard(false);
-        setNewCard({ question: '', answer: '', category: '', difficulty: 'medium' });
-        fetchFlashcards();
-      }
-    } catch (error) {
-      console.error('Error creating flashcard:', error);
-      toast.error('Failed to create flashcard');
-    }
-  };
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
@@ -256,15 +229,8 @@ const Flashcards = () => {
             <div className="text-6xl mb-4">📚</div>
             <h3 className="text-2xl font-semibold text-gray-600 mb-4">No Flashcards Yet</h3>
             <p className="text-gray-500 mb-8">
-              Create your first flashcard to start learning with spaced repetition.
+              No flashcards are currently available for study. Check back later!
             </p>
-            <button
-              onClick={() => setShowCreateCard(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 mx-auto"
-            >
-              <FaPlus />
-              Create Your First Flashcard
-            </button>
           </div>
         </div>
       </div>
@@ -283,13 +249,6 @@ const Flashcards = () => {
               </h1>
               <p className="text-gray-600 mt-2">Learn Ethiopian heritage with spaced repetition</p>
             </div>
-            <button
-              onClick={() => setShowCreateCard(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-            >
-              <FaPlus />
-              Add Card
-            </button>
           </div>
         </div>
 
@@ -500,101 +459,6 @@ const Flashcards = () => {
         )}
       </div>
 
-      {/* Create Card Modal */}
-      {showCreateCard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <form onSubmit={createFlashcard} className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Create New Flashcard</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateCard(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Question *
-                  </label>
-                  <textarea
-                    value={newCard.question}
-                    onChange={(e) => setNewCard(prev => ({ ...prev, question: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    rows={3}
-                    required
-                    placeholder="Enter your question..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Answer *
-                  </label>
-                  <textarea
-                    value={newCard.answer}
-                    onChange={(e) => setNewCard(prev => ({ ...prev, answer: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    rows={4}
-                    required
-                    placeholder="Enter the answer..."
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Category
-                    </label>
-                    <input
-                      type="text"
-                      value={newCard.category}
-                      onChange={(e) => setNewCard(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                      placeholder="e.g., History, Culture"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Difficulty
-                    </label>
-                    <select
-                      value={newCard.difficulty}
-                      onChange={(e) => setNewCard(prev => ({ ...prev, difficulty: e.target.value }))}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    >
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateCard(false)}
-                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Create Card
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

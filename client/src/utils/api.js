@@ -1,6 +1,6 @@
 import mockApi from './mockApi.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
 
 class ApiClient {
@@ -1518,6 +1518,672 @@ class ApiClient {
     }
 
     return response.json()
+  }
+
+  // ======================
+  // EDUCATIONAL PLATFORM API
+  // ======================
+
+  // QUIZZES - Super Admin creates, Visitors consume
+  async createQuiz(quizData) {
+    if (this.useMockAPI) {
+      return mockApi.createQuiz(quizData)
+    }
+    return this.request('/super-admin/quizzes', {
+      method: 'POST',
+      body: quizData
+    })
+  }
+
+  async getAdminQuizzes(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminQuizzes(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/quizzes?${queryParams}`)
+  }
+
+  async updateQuiz(quizId, quizData) {
+    if (this.useMockAPI) {
+      return mockApi.updateQuiz(quizId, quizData)
+    }
+    return this.request(`/super-admin/quizzes/${quizId}`, {
+      method: 'PUT',
+      body: quizData
+    })
+  }
+
+  async deleteQuiz(quizId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteQuiz(quizId)
+    }
+    return this.request(`/super-admin/quizzes/${quizId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async publishQuiz(quizId) {
+    if (this.useMockAPI) {
+      return mockApi.publishQuiz(quizId)
+    }
+    return this.request(`/super-admin/quizzes/${quizId}/publish`, {
+      method: 'POST'
+    })
+  }
+
+  // Visitor Quiz Access
+  async getAvailableQuizzes(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAvailableQuizzes(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/quizzes?${queryParams}`)
+  }
+
+  async getQuizById(quizId) {
+    if (this.useMockAPI) {
+      return mockApi.getQuizById(quizId)
+    }
+    return this.request(`/visitor/quizzes/${quizId}`)
+  }
+
+  async submitQuizAttempt(quizId, attemptData) {
+    if (this.useMockAPI) {
+      return mockApi.submitQuizAttempt(quizId, attemptData)
+    }
+    return this.request(`/visitor/quizzes/${quizId}/attempt`, {
+      method: 'POST',
+      body: attemptData
+    })
+  }
+
+  async getQuizAttempts(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getQuizAttempts(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/quiz-attempts?${queryParams}`)
+  }
+
+  // GAMES - Super Admin creates, Visitors play
+  async createGame(gameData) {
+    if (this.useMockAPI) {
+      return mockApi.createGame(gameData)
+    }
+    return this.request('/super-admin/games', {
+      method: 'POST',
+      body: gameData
+    })
+  }
+
+  async getAdminGames(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminGames(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/games?${queryParams}`)
+  }
+
+  async updateGame(gameId, gameData) {
+    if (this.useMockAPI) {
+      return mockApi.updateGame(gameId, gameData)
+    }
+    return this.request(`/super-admin/games/${gameId}`, {
+      method: 'PUT',
+      body: gameData
+    })
+  }
+
+  async deleteGame(gameId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteGame(gameId)
+    }
+    return this.request(`/super-admin/games/${gameId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async publishGame(gameId) {
+    if (this.useMockAPI) {
+      return mockApi.publishGame(gameId)
+    }
+    return this.request(`/super-admin/games/${gameId}/publish`, {
+      method: 'POST'
+    })
+  }
+
+  // Visitor Game Access
+  async getAvailableGames(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAvailableGames(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/games?${queryParams}`)
+  }
+
+  async getGameById(gameId) {
+    if (this.useMockAPI) {
+      return mockApi.getGameById(gameId)
+    }
+    return this.request(`/visitor/games/${gameId}`)
+  }
+
+  async submitGameScore(gameId, scoreData) {
+    if (this.useMockAPI) {
+      return mockApi.submitGameScore(gameId, scoreData)
+    }
+    return this.request(`/visitor/games/${gameId}/score`, {
+      method: 'POST',
+      body: scoreData
+    })
+  }
+
+  async getGameScores(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getGameScores(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/game-scores?${queryParams}`)
+  }
+
+  // LIVE SESSIONS - Super Admin creates, Visitors attend
+  async createLiveSession(sessionData) {
+    if (this.useMockAPI) {
+      return mockApi.createLiveSession(sessionData)
+    }
+    return this.request('/super-admin/live-sessions', {
+      method: 'POST',
+      body: sessionData
+    })
+  }
+
+  async getAdminLiveSessions(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminLiveSessions(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/live-sessions?${queryParams}`)
+  }
+
+  async updateLiveSession(sessionId, sessionData) {
+    if (this.useMockAPI) {
+      return mockApi.updateLiveSession(sessionId, sessionData)
+    }
+    return this.request(`/super-admin/live-sessions/${sessionId}`, {
+      method: 'PUT',
+      body: sessionData
+    })
+  }
+
+  async deleteLiveSession(sessionId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteLiveSession(sessionId)
+    }
+    return this.request(`/super-admin/live-sessions/${sessionId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async startLiveSession(sessionId) {
+    if (this.useMockAPI) {
+      return mockApi.startLiveSession(sessionId)
+    }
+    return this.request(`/super-admin/live-sessions/${sessionId}/start`, {
+      method: 'POST'
+    })
+  }
+
+  async endLiveSession(sessionId) {
+    if (this.useMockAPI) {
+      return mockApi.endLiveSession(sessionId)
+    }
+    return this.request(`/super-admin/live-sessions/${sessionId}/end`, {
+      method: 'POST'
+    })
+  }
+
+  // Visitor Live Session Access
+  async getUpcomingLiveSessions(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getUpcomingLiveSessions(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/live-sessions?${queryParams}`)
+  }
+
+  async joinLiveSession(sessionId) {
+    if (this.useMockAPI) {
+      return mockApi.joinLiveSession(sessionId)
+    }
+    return this.request(`/visitor/live-sessions/${sessionId}/join`, {
+      method: 'POST'
+    })
+  }
+
+  async getLiveSessionDetails(sessionId) {
+    if (this.useMockAPI) {
+      return mockApi.getLiveSessionDetails(sessionId)
+    }
+    return this.request(`/visitor/live-sessions/${sessionId}`)
+  }
+
+  // FLASHCARDS - Super Admin creates, Visitors study
+  async createFlashcardSet(flashcardData) {
+    if (this.useMockAPI) {
+      return mockApi.createFlashcardSet(flashcardData)
+    }
+    return this.request('/super-admin/flashcards', {
+      method: 'POST',
+      body: flashcardData
+    })
+  }
+
+  async getAdminFlashcardSets(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminFlashcardSets(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/flashcards?${queryParams}`)
+  }
+
+  async updateFlashcardSet(setId, flashcardData) {
+    if (this.useMockAPI) {
+      return mockApi.updateFlashcardSet(setId, flashcardData)
+    }
+    return this.request(`/super-admin/flashcards/${setId}`, {
+      method: 'PUT',
+      body: flashcardData
+    })
+  }
+
+  async deleteFlashcardSet(setId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteFlashcardSet(setId)
+    }
+    return this.request(`/super-admin/flashcards/${setId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async publishFlashcardSet(setId) {
+    if (this.useMockAPI) {
+      return mockApi.publishFlashcardSet(setId)
+    }
+    return this.request(`/super-admin/flashcards/${setId}/publish`, {
+      method: 'POST'
+    })
+  }
+
+  // Visitor Flashcard Access
+  async getAvailableFlashcardSets(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAvailableFlashcardSets(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/flashcards?${queryParams}`)
+  }
+
+  async getFlashcardSetById(setId) {
+    if (this.useMockAPI) {
+      return mockApi.getFlashcardSetById(setId)
+    }
+    return this.request(`/visitor/flashcards/${setId}`)
+  }
+
+  async saveFlashcardProgress(setId, progressData) {
+    if (this.useMockAPI) {
+      return mockApi.saveFlashcardProgress(setId, progressData)
+    }
+    return this.request(`/visitor/flashcards/${setId}/progress`, {
+      method: 'POST',
+      body: progressData
+    })
+  }
+
+  // PROGRESS TRACKING - Super Admin manages, Visitors view
+  async createAssignment(assignmentData) {
+    if (this.useMockAPI) {
+      return mockApi.createAssignment(assignmentData)
+    }
+    return this.request('/super-admin/assignments', {
+      method: 'POST',
+      body: assignmentData
+    })
+  }
+
+  async getAdminAssignments(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminAssignments(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/assignments?${queryParams}`)
+  }
+
+  async updateAssignment(assignmentId, assignmentData) {
+    if (this.useMockAPI) {
+      return mockApi.updateAssignment(assignmentId, assignmentData)
+    }
+    return this.request(`/super-admin/assignments/${assignmentId}`, {
+      method: 'PUT',
+      body: assignmentData
+    })
+  }
+
+  async gradeAssignment(assignmentId, submissionId, gradeData) {
+    if (this.useMockAPI) {
+      return mockApi.gradeAssignment(assignmentId, submissionId, gradeData)
+    }
+    return this.request(`/super-admin/assignments/${assignmentId}/submissions/${submissionId}/grade`, {
+      method: 'POST',
+      body: gradeData
+    })
+  }
+
+  async addComment(targetType, targetId, commentData) {
+    if (this.useMockAPI) {
+      return mockApi.addComment(targetType, targetId, commentData)
+    }
+    return this.request(`/super-admin/comments`, {
+      method: 'POST',
+      body: { targetType, targetId, ...commentData }
+    })
+  }
+
+  // Visitor Progress Access
+  async getMyAssignments(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getMyAssignments(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/assignments?${queryParams}`)
+  }
+
+  async submitAssignment(assignmentId, submissionData) {
+    if (this.useMockAPI) {
+      return mockApi.submitAssignment(assignmentId, submissionData)
+    }
+    return this.request(`/visitor/assignments/${assignmentId}/submit`, {
+      method: 'POST',
+      body: submissionData
+    })
+  }
+
+  async getMyProgress(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getMyProgress(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/progress?${queryParams}`)
+  }
+
+  async getMyComments(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getMyComments(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/comments?${queryParams}`)
+  }
+
+  // MY COLLECTIONS - Visitor managed
+  async getMyCollections(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getMyCollections(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/collections?${queryParams}`)
+  }
+
+  async createCollection(collectionData) {
+    if (this.useMockAPI) {
+      return mockApi.createCollection(collectionData)
+    }
+    return this.request('/visitor/collections', {
+      method: 'POST',
+      body: collectionData
+    })
+  }
+
+  async updateCollection(collectionId, collectionData) {
+    if (this.useMockAPI) {
+      return mockApi.updateCollection(collectionId, collectionData)
+    }
+    return this.request(`/visitor/collections/${collectionId}`, {
+      method: 'PUT',
+      body: collectionData
+    })
+  }
+
+  async deleteCollection(collectionId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteCollection(collectionId)
+    }
+    return this.request(`/visitor/collections/${collectionId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async addToCollection(collectionId, itemData) {
+    if (this.useMockAPI) {
+      return mockApi.addToCollection(collectionId, itemData)
+    }
+    return this.request(`/visitor/collections/${collectionId}/items`, {
+      method: 'POST',
+      body: itemData
+    })
+  }
+
+  async removeFromCollection(collectionId, itemId) {
+    if (this.useMockAPI) {
+      return mockApi.removeFromCollection(collectionId, itemId)
+    }
+    return this.request(`/visitor/collections/${collectionId}/items/${itemId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async getCollectionItems(collectionId, params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getCollectionItems(collectionId, params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/collections/${collectionId}/items?${queryParams}`)
+  }
+
+  // COMMUNITY LEADERBOARD - Visitor view, Admin analytics
+  async getLeaderboard(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getLeaderboard(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/leaderboard?${queryParams}`)
+  }
+
+  async getMyRanking(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getMyRanking(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/leaderboard/ranking?${queryParams}`)
+  }
+
+  // Admin Leaderboard Analytics
+  async getLeaderboardAnalytics(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getLeaderboardAnalytics(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/leaderboard/analytics?${queryParams}`)
+  }
+
+  async getLeaderboardStats(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getLeaderboardStats(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/leaderboard/stats?${queryParams}`)
+  }
+
+  // TOOLS & RESOURCES - Super Admin manages, Visitors access
+  async createTool(toolData) {
+    if (this.useMockAPI) {
+      return mockApi.createTool(toolData)
+    }
+    return this.request('/super-admin/tools', {
+      method: 'POST',
+      body: toolData
+    })
+  }
+
+  async getAdminTools(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminTools(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/tools?${queryParams}`)
+  }
+
+  async updateTool(toolId, toolData) {
+    if (this.useMockAPI) {
+      return mockApi.updateTool(toolId, toolData)
+    }
+    return this.request(`/super-admin/tools/${toolId}`, {
+      method: 'PUT',
+      body: toolData
+    })
+  }
+
+  async deleteTool(toolId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteTool(toolId)
+    }
+    return this.request(`/super-admin/tools/${toolId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async publishTool(toolId) {
+    if (this.useMockAPI) {
+      return mockApi.publishTool(toolId)
+    }
+    return this.request(`/super-admin/tools/${toolId}/publish`, {
+      method: 'POST'
+    })
+  }
+
+  // Visitor Tools Access
+  async getAvailableTools(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAvailableTools(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/tools?${queryParams}`)
+  }
+
+  async getToolById(toolId) {
+    if (this.useMockAPI) {
+      return mockApi.getToolById(toolId)
+    }
+    return this.request(`/visitor/tools/${toolId}`)
+  }
+
+  async logToolUsage(toolId, usageData) {
+    if (this.useMockAPI) {
+      return mockApi.logToolUsage(toolId, usageData)
+    }
+    return this.request(`/visitor/tools/${toolId}/usage`, {
+      method: 'POST',
+      body: usageData
+    })
+  }
+
+  async getMyToolUsage(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getMyToolUsage(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/tools/usage?${queryParams}`)
+  }
+
+  // RESOURCES
+  async createResource(resourceData) {
+    if (this.useMockAPI) {
+      return mockApi.createResource(resourceData)
+    }
+    return this.request('/super-admin/resources', {
+      method: 'POST',
+      body: resourceData
+    })
+  }
+
+  async getAdminResources(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAdminResources(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/super-admin/resources?${queryParams}`)
+  }
+
+  async updateResource(resourceId, resourceData) {
+    if (this.useMockAPI) {
+      return mockApi.updateResource(resourceId, resourceData)
+    }
+    return this.request(`/super-admin/resources/${resourceId}`, {
+      method: 'PUT',
+      body: resourceData
+    })
+  }
+
+  async deleteResource(resourceId) {
+    if (this.useMockAPI) {
+      return mockApi.deleteResource(resourceId)
+    }
+    return this.request(`/super-admin/resources/${resourceId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async publishResource(resourceId) {
+    if (this.useMockAPI) {
+      return mockApi.publishResource(resourceId)
+    }
+    return this.request(`/super-admin/resources/${resourceId}/publish`, {
+      method: 'POST'
+    })
+  }
+
+  // Visitor Resources Access
+  async getAvailableResources(params = {}) {
+    if (this.useMockAPI) {
+      return mockApi.getAvailableResources(params)
+    }
+    const queryParams = new URLSearchParams(params).toString()
+    return this.request(`/visitor/resources?${queryParams}`)
+  }
+
+  async getResourceById(resourceId) {
+    if (this.useMockAPI) {
+      return mockApi.getResourceById(resourceId)
+    }
+    return this.request(`/visitor/resources/${resourceId}`)
+  }
+
+  async downloadResource(resourceId) {
+    if (this.useMockAPI) {
+      return mockApi.downloadResource(resourceId)
+    }
+    return this.request(`/visitor/resources/${resourceId}/download`, {
+      method: 'POST'
+    })
+  }
+
+  async logResourceAccess(resourceId, accessData) {
+    if (this.useMockAPI) {
+      return mockApi.logResourceAccess(resourceId, accessData)
+    }
+    return this.request(`/visitor/resources/${resourceId}/access`, {
+      method: 'POST',
+      body: accessData
+    })
   }
 }
 

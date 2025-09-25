@@ -42,12 +42,21 @@ const visitorDashboardRoutes = require('./routes/visitorDashboard'); // Added vi
 // const usersRoutes = require('./routes/users');
 const userRoutes = require('./routes/User');
 const rentalsRoutes = require('./routes/rentals');
+const liveSessionsRoutes = require('./routes/liveSessionsRoutes'); // Add live sessions routes
 
 // New comprehensive routes
 const educationHubRoutes = require('./routes/educationRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
 const communityRoutes = require('./routes/communityRoutes');
 const progressRoutes = require('./routes/progressRoutes');
+
+// Enhanced Feature routes
+const gamesRoutes = require('./routes/gamesRoutes');
+const collectionsRoutes = require('./routes/collectionsRoutes');
+const toolsAndResourcesRoutes = require('./routes/toolsAndResourcesRoutes');
+const enhancedProgressRoutes = require('./routes/enhancedProgressRoutes');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
+const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 
 // Import middleware
 const { errorHandler } = require('./utils/errorHandler');
@@ -190,6 +199,20 @@ app.use('/api/progress', progressRoutes); // Progress tracking: goals, achieveme
 app.use('/api/bookmarks', require('./routes/bookmarkRoutes')); // Bookmarks management
 app.use('/api/notes', require('./routes/noteRoutes')); // Notes management
 app.use('/api/social', require('./routes/socialRoutes')); // Social features
+app.use('/api/system-settings', require('./routes/systemSettings')); // System settings management
+app.use('/api/flashcards', require('./routes/flashcards')); // Flashcards management
+app.use('/api/live-sessions', liveSessionsRoutes); // Live sessions management
+
+// Enhanced feature API routes
+app.use('/api/games', gamesRoutes); // Games management and playing
+app.use('/api/collections', collectionsRoutes); // Collections management
+app.use('/api/tools', toolsAndResourcesRoutes); // Tools and resources
+app.use('/api/enhanced-progress', enhancedProgressRoutes); // Enhanced progress tracking
+app.use('/api/leaderboard', leaderboardRoutes); // Community leaderboard
+app.use('/api/progress-tracker', progressTrackerRoutes); // Comprehensive progress tracking system
+
+// Admin management routes
+app.use('/api/admin-progress', require('./routes/adminProgressRoutes')); // Admin progress management
 
 // Platform statistics endpoint
 app.use('/api/platform', userRoutes); // Platform stats available through user routes

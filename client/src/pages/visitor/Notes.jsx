@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { FaStickyNote, FaTrash, FaEdit, FaPlus, FaSearch, FaPin, FaTags } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { FaStickyNote, FaTrash, FaEdit, FaPlus, FaSearch, FaThumbtack, FaTags } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 const Notes = () => {
   const { user } = useAuth();
@@ -42,8 +42,13 @@ const Notes = () => {
         throw new Error('Failed to fetch notes');
       }
 
-      const data = await response.json();
-      setNotes(data.notes || []);
+      const result = await response.json();
+      if (result.success) {
+        setNotes(result.data.notes || []);
+        setCategories(result.data.categories || []);
+      } else {
+        throw new Error(result.message || 'Failed to fetch notes');
+      }
     } catch (error) {
       console.error('Error fetching notes:', error);
       toast.error('Failed to load notes');
@@ -54,18 +59,7 @@ const Notes = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/notes/categories', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch categories');
-      }
-
-      const data = await response.json();
-      setCategories(data.categories || []);
+      // Categories are now fetched with notes, so this is handled in fetchNotes
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -78,7 +72,7 @@ const Notes = () => {
 
       const noteData = {
         ...newNote,
-        tags: newNote.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        tags: newNote.tags ? newNote.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
       };
 
       const response = await fetch(url, {
@@ -90,11 +84,12 @@ const Notes = () => {
         body: JSON.stringify(noteData)
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to ${editingNote ? 'update' : 'create'} note`);
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || `Failed to ${editingNote ? 'update' : 'create'} note`);
       }
 
-      toast.success(`Note ${editingNote ? 'updated' : 'created'} successfully`);
+      toast.success(result.message || `Note ${editingNote ? 'updated' : 'created'} successfully`);
       setShowAddModal(false);
       setEditingNote(null);
       setNewNote({
@@ -124,11 +119,12 @@ const Notes = () => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete note');
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete note');
       }
 
-      toast.success('Note deleted successfully');
+      toast.success(result.message || 'Note deleted successfully');
       fetchNotes();
     } catch (error) {
       console.error('Error deleting note:', error);
@@ -144,11 +140,11 @@ const Notes = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ pinned: !isPinned })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to toggle pin');
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to toggle pin');
       }
 
       fetchNotes();
@@ -241,7 +237,7 @@ const Notes = () => {
               <div
                 key={note._id}
                 className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${
-                  note.pinned ? 'ring-2 ring-yellow-400' : ''
+                  note.isPinned ? 'ring-2 ring-yellow-400' : ''
                 }`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -250,14 +246,14 @@ const Notes = () => {
                   </h3>
                   <div className="flex gap-2 ml-2">
                     <button
-                      onClick={() => togglePin(note._id, note.pinned)}
+                      onClick={() => togglePin(note._id, note.isPinned)}
                       className={`transition-colors ${
-                        note.pinned
+                        note.isPinned
                           ? 'text-yellow-500 hover:text-yellow-600'
                           : 'text-gray-400 hover:text-yellow-500'
                       }`}
                     >
-                      <FaPin />
+                      <FaThumbtack />
                     </button>
                     <button
                       onClick={() => startEdit(note)}

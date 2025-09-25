@@ -39,6 +39,9 @@ import MuseumSettings from '../pages/museum/MuseumSettings'
 // Visitor sub-modules
 import VisitorVirtualMuseum from '../pages/visitor/VisitorVirtualMuseum'
 import ProfileSettings from '../pages/visitor/ProfileSettings'
+import Games from '../pages/visitor/Games'
+import Achievements from '../pages/visitor/Achievements'
+import CommunityLeaderboard from '../pages/visitor/CommunityLeaderboard'
 
 // Profile
 import UserProfile from '../pages/UserProfile'
@@ -320,6 +323,93 @@ export default function App() {
                 <p className="text-gray-600">Coming soon! Explore Ethiopian heritage locations.</p>
               </div>
             </div>
+          </ProtectedRoute>
+        } />
+        
+        {/* Games */}
+        <Route path="/visitor/games" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <Games />
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/games/:gameId" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <Games />
+          </ProtectedRoute>
+        } />
+        
+        {/* Achievements */}
+        <Route path="/visitor/achievements" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Achievements Page</div>
+          </ProtectedRoute>
+        } />
+        
+        {/* Community */}
+        <Route path="/visitor/leaderboard" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Leaderboard Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/community" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Community Page</div>
+          </ProtectedRoute>
+        } />
+        
+        {/* Learning */}
+        <Route path="/visitor/flashcards" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Flashcards Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/my-learning" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>My Learning Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/certificates" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Certificates Page</div>
+          </ProtectedRoute>
+        } />
+        
+        {/* Analytics */}
+        <Route path="/visitor/analytics" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Analytics Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/activity" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Activity Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/goals" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Goals Page</div>
+          </ProtectedRoute>
+        } />
+        
+        {/* Other visitor pages */}
+        <Route path="/visitor/bookmarks" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Bookmarks Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/notes" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Notes Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/tools" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Tools Page</div>
+          </ProtectedRoute>
+        } />
+        <Route path="/visitor/notifications" element={
+          <ProtectedRoute allowedRoles={['visitor']}>
+            <div>Notifications Page</div>
           </ProtectedRoute>
         } />
 

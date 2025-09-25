@@ -39,10 +39,15 @@ import Activity from './pages/visitor/Activity';
 import Goals from './pages/visitor/Goals';
 // Community pages
 import Leaderboard from './pages/visitor/Leaderboard';
+import CommunityLeaderboard from './pages/visitor/CommunityLeaderboard';
 // Virtual Museum pages
 import Gallery from './pages/visitor/Gallery';
 // Learning pages
 import Flashcards from './pages/visitor/Flashcards';
+// Enhanced Progress and Games
+import EnhancedProgress from './pages/visitor/EnhancedProgress';
+import Games from './pages/visitor/Games';
+import Collections from './pages/visitor/Collections';
 // Museum Admin components
 import MuseumProfile from './components/museum/MuseumProfile'
 import ArtifactManagement from './components/museum/ArtifactManagement'
@@ -54,6 +59,11 @@ import MuseumAnalytics from './components/museum/MuseumAnalytics'
 import MuseumNotifications from './components/museum/MuseumNotifications'
 import MuseumCommunications from './components/museum/MuseumCommunications'
 import MuseumSettings from './components/museum/MuseumSettings'
+// Super Admin components
+import SuperAdminGamesManagement from './components/admin/SuperAdminGamesManagement'
+import SuperAdminToolsManagement from './components/admin/SuperAdminToolsManagement'
+import SuperAdminProgressManagement from './components/admin/SuperAdminProgressManagement'
+import SuperAdminStudentManagement from './components/admin/SuperAdminStudentManagement'
 import RoleBasedRoute from './components/auth/RoleBasedRoute'
 import { useAuth } from './hooks/useAuth'
 import EnhancedChatbot from './components/chat/EnhancedChatbot'
@@ -272,6 +282,29 @@ function App() {
               <MuseumSettings />
             </ProtectedRoute>
           } />
+          
+          {/* Super Admin Routes */}
+          <Route path="/super-admin/games" element={
+            <ProtectedRoute allowedRoles={['superAdmin', 'admin']}>
+              <SuperAdminGamesManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/super-admin/tools" element={
+            <ProtectedRoute allowedRoles={['superAdmin', 'admin']}>
+              <SuperAdminToolsManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/super-admin/progress" element={
+            <ProtectedRoute allowedRoles={['superAdmin', 'admin']}>
+              <SuperAdminProgressManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/super-admin/student-management" element={
+            <ProtectedRoute allowedRoles={['superAdmin', 'admin']}>
+              <SuperAdminStudentManagement />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/organizer-dashboard" element={
             <ProtectedRoute allowedRoles={['organizer']}>
               <OrganizerDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -331,12 +364,12 @@ function App() {
           } />
           <Route path="/visitor/quiz" element={
             <RoleBasedRoute allowedRoles={['user']}>
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-4">Quiz & Games</h2>
-                  <p className="text-gray-600">Test your knowledge with interactive quizzes and educational games!</p>
-                </div>
-              </div>
+              <Games />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/games" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <Games />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/live-sessions" element={
@@ -351,12 +384,7 @@ function App() {
           } />
           <Route path="/visitor/progress" element={
             <RoleBasedRoute allowedRoles={['user']}>
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-4">Progress Tracker</h2>
-                  <p className="text-gray-600">Track your learning progress and achievements.</p>
-                </div>
-              </div>
+              <EnhancedProgress />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/events" element={
@@ -375,16 +403,6 @@ function App() {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold mb-4">My Favorites</h2>
                   <p className="text-gray-600">Coming soon! Manage your favorite artifacts and museums.</p>
-                </div>
-              </div>
-            </RoleBasedRoute>
-          } />
-          <Route path="/visitor/recent" element={
-            <RoleBasedRoute allowedRoles={['user']}>
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold mb-4">Recently Viewed</h2>
-                  <p className="text-gray-600">Coming soon! View your browsing history.</p>
                 </div>
               </div>
             </RoleBasedRoute>
@@ -435,7 +453,7 @@ function App() {
           } />
           <Route path="/visitor/collection" element={
             <RoleBasedRoute allowedRoles={['user']}>
-              <Navigate to="/visitor/bookmarks" replace />
+              <Collections />
             </RoleBasedRoute>
           } />
           
@@ -474,7 +492,7 @@ function App() {
           } />
           <Route path="/visitor/leaderboard" element={
             <RoleBasedRoute allowedRoles={['user']}>
-              <Leaderboard />
+              <CommunityLeaderboard />
             </RoleBasedRoute>
           } />
           <Route path="/visitor/share-progress" element={
