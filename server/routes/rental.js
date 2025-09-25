@@ -98,4 +98,25 @@ router.put('/requests/:id/virtual-museum', requireSuperAdmin, rentalController.u
  */
 router.get('/statistics', rentalController.getRentalStatistics);
 
+/**
+ * @route   GET /api/rental/museum-stats
+ * @desc    Get museum-specific rental statistics
+ * @access  Museum admin
+ */
+router.get('/museum-stats', rentalController.getMuseumRentalStats);
+
+/**
+ * @route   GET /api/rental/artifacts
+ * @desc    Get artifacts for museum rental system
+ * @access  Museum admin
+ */
+router.get('/artifacts', rentalController.getMuseumArtifacts);
+
+/**
+ * @route   GET /api/rental/artifacts/:museumId
+ * @desc    Get artifacts for specific museum
+ * @access  Museum admin
+ */
+router.get('/artifacts/:museumId', rentalController.getMuseumArtifacts);
+
 module.exports = router;

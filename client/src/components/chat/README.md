@@ -129,7 +129,7 @@ VITE_CHAT_API_URL=https://your-backend.com/api/chat/ask
 # Optional: Folder index endpoint for enhanced suggestions (defaults to /api/chat/folders)
 VITE_CHAT_FOLDERS_URL=https://your-backend.com/api/chat/folders
 
-# Optional: WebSocket URL for real-time features (defaults to http://localhost:5000)
+# Optional: WebSocket URL for real-time features (defaults to http://localhost:5001)
 VITE_SOCKET_URL=https://your-backend.com
 ```
 

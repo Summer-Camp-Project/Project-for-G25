@@ -237,7 +237,7 @@ const Notes = () => {
               <div
                 key={note._id}
                 className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${
-                  note.isPinned ? 'ring-2 ring-yellow-400' : ''
+                  note.isPinned || note.pinned ? 'ring-2 ring-yellow-400' : ''
                 }`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -246,12 +246,12 @@ const Notes = () => {
                   </h3>
                   <div className="flex gap-2 ml-2">
                     <button
-                      onClick={() => togglePin(note._id, note.isPinned)}
+                      onClick={() => togglePin(note._id, note.isPinned || note.pinned)}
                       className={`transition-colors ${
-                        note.isPinned
+                        note.isPinned || note.pinned
                           ? 'text-yellow-500 hover:text-yellow-600'
                           : 'text-gray-400 hover:text-yellow-500'
-                      }`}
+                        }`}
                     >
                       <FaThumbtack />
                     </button>
@@ -312,7 +312,7 @@ const Notes = () => {
               <h2 className="text-xl font-bold mb-4">
                 {editingNote ? 'Edit Note' : 'Add New Note'}
               </h2>
-              
+
               <div className="space-y-4">
                 <input
                   type="text"
@@ -321,7 +321,7 @@ const Notes = () => {
                   onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <textarea
                   placeholder="Write your note here..."
                   value={newNote.content}
@@ -329,7 +329,7 @@ const Notes = () => {
                   rows="6"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <input
                   type="text"
                   placeholder="Category"
@@ -337,7 +337,7 @@ const Notes = () => {
                   onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <input
                   type="text"
                   placeholder="Tags (comma separated)"
@@ -345,7 +345,7 @@ const Notes = () => {
                   onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
-                
+
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -356,7 +356,7 @@ const Notes = () => {
                   <span className="text-sm text-gray-700">Private note</span>
                 </label>
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => {

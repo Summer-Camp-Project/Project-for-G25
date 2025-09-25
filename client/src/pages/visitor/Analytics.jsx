@@ -7,6 +7,7 @@ import {
   FaCalendar, 
   FaBullseye,
   FaArrowUp,
+  FaChartLine,
   FaEye,
   FaBookmark,
   FaGraduationCap,
@@ -273,7 +274,7 @@ const Analytics = () => {
           {/* Learning Progress Chart */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <FaArrowUp className="text-blue-500" />
+              <FaChartLine className="text-blue-500" />
               Learning Progress
             </h3>
             <div className="h-64">

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 // Create axios instance with default config
 const educationAPI = axios.create({
@@ -30,25 +30,25 @@ educationAPI.interceptors.response.use(
 );
 
 class EducationService {
-  
+
   // ============ COURSES ============
-  
+
   /**
    * Get all available courses
    */
   async getCourses(filters = {}) {
     try {
       console.log('🎓 Fetching courses with filters:', filters);
-      
+
       const params = new URLSearchParams();
       if (filters.category) params.append('category', filters.category);
       if (filters.difficulty) params.append('difficulty', filters.difficulty);
       if (filters.search) params.append('search', filters.search);
       if (filters.limit) params.append('limit', filters.limit);
-      
+
       const response = await educationAPI.get(`/courses?${params}`);
       console.log('✅ Courses fetched:', response.data);
-      
+
       return {
         success: true,
         courses: response.data.courses || response.data.data || [],
@@ -74,7 +74,7 @@ class EducationService {
       console.log('🌟 Fetching featured courses...');
       const response = await educationAPI.get('/courses/featured');
       console.log('✅ Featured courses fetched:', response.data);
-      
+
       return {
         success: true,
         courses: response.data.courses || response.data.data || [],
@@ -98,7 +98,7 @@ class EducationService {
       console.log('📖 Fetching course:', courseId);
       const response = await educationAPI.get(`/courses/${courseId}`);
       console.log('✅ Course fetched:', response.data);
-      
+
       return {
         success: true,
         course: response.data.course || response.data.data,
@@ -122,7 +122,7 @@ class EducationService {
       console.log('📚 Fetching course categories...');
       const response = await educationAPI.get('/courses/categories');
       console.log('✅ Categories fetched:', response.data);
-      
+
       return {
         success: true,
         categories: response.data.categories || response.data.data || [],
@@ -148,7 +148,7 @@ class EducationService {
       console.log('📝 Enrolling in course:', courseId);
       const response = await educationAPI.post(`/courses/${courseId}/enroll`);
       console.log('✅ Enrollment successful:', response.data);
-      
+
       toast.success('Successfully enrolled in course!');
       return {
         success: true,
@@ -175,7 +175,7 @@ class EducationService {
       console.log('👤 Fetching user enrolled courses...');
       const response = await educationAPI.get('/user/courses/enrolled');
       console.log('✅ Enrolled courses fetched:', response.data);
-      
+
       return {
         success: true,
         courses: response.data.courses || response.data.data || [],
@@ -199,7 +199,7 @@ class EducationService {
       console.log('🎓 Fetching completed courses...');
       const response = await educationAPI.get('/user/courses/completed');
       console.log('✅ Completed courses fetched:', response.data);
-      
+
       return {
         success: true,
         courses: response.data.courses || response.data.data || [],
@@ -223,7 +223,7 @@ class EducationService {
       console.log('📊 Updating course progress:', { courseId, progress });
       const response = await educationAPI.put(`/courses/${courseId}/progress`, { progress });
       console.log('✅ Progress updated:', response.data);
-      
+
       return {
         success: true,
         progress: response.data.progress || response.data.data,
@@ -249,7 +249,7 @@ class EducationService {
       console.log('🏆 Fetching user certificates...');
       const response = await educationAPI.get('/user/certificates');
       console.log('✅ Certificates fetched:', response.data);
-      
+
       return {
         success: true,
         certificates: response.data.certificates || response.data.data || [],
@@ -274,7 +274,7 @@ class EducationService {
       const response = await educationAPI.get(`/certificates/${certificateId}/download`, {
         responseType: 'blob'
       });
-      
+
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -284,7 +284,7 @@ class EducationService {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Certificate downloaded successfully!');
       return { success: true };
     } catch (error) {
@@ -304,7 +304,7 @@ class EducationService {
       console.log('📈 Fetching learning statistics...');
       const response = await educationAPI.get('/user/learning/stats');
       console.log('✅ Learning stats fetched:', response.data);
-      
+
       return {
         success: true,
         stats: response.data.stats || response.data.data || {},
@@ -334,7 +334,7 @@ class EducationService {
       console.log('🌍 Fetching platform statistics...');
       const response = await educationAPI.get('/platform/stats');
       console.log('✅ Platform stats fetched:', response.data);
-      
+
       return {
         success: true,
         stats: response.data.stats || {},
@@ -370,7 +370,7 @@ class EducationService {
       console.log('📚 Fetching study guides...');
       const response = await educationAPI.get('/study-guides');
       console.log('✅ Study guides fetched:', response.data);
-      
+
       return {
         success: true,
         guides: response.data.guides || response.data.data || [],
@@ -396,7 +396,7 @@ class EducationService {
       console.log('🗺️ Fetching educational tours...');
       const response = await educationAPI.get('/tours/educational');
       console.log('✅ Educational tours fetched:', response.data);
-      
+
       return {
         success: true,
         tours: response.data.tours || response.data.data || [],

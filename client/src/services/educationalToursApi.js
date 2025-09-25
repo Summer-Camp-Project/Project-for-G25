@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -215,16 +215,16 @@ export const tourUtils = {
   // Check enrollment eligibility
   canEnroll: (tour, user) => {
     if (!user) return { canEnroll: false, reason: 'Authentication required' };
-    
-    const existingEnrollment = tour.enrollments?.find(e => 
+
+    const existingEnrollment = tour.enrollments?.find(e =>
       e.userId === user.id && ['pending', 'confirmed'].includes(e.status)
     );
-    
+
     if (existingEnrollment) return { canEnroll: false, reason: 'Already enrolled' };
     if (tourUtils.getAvailableSpots(tour) <= 0) return { canEnroll: false, reason: 'Tour is full' };
     if (!tourUtils.isUpcoming(tour)) return { canEnroll: false, reason: 'Enrollment closed' };
     if (tour.status !== 'published') return { canEnroll: false, reason: 'Tour not available' };
-    
+
     return { canEnroll: true };
   },
 
@@ -245,20 +245,20 @@ export const tourUtils = {
     return [...tours].sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
-      
+
       // Handle nested properties
       if (sortBy.includes('.')) {
         const keys = sortBy.split('.');
         aValue = keys.reduce((obj, key) => obj?.[key], a);
         bValue = keys.reduce((obj, key) => obj?.[key], b);
       }
-      
+
       // Handle date strings
       if (sortBy.includes('Date')) {
         aValue = new Date(aValue);
         bValue = new Date(bValue);
       }
-      
+
       if (order === 'desc') {
         return bValue > aValue ? 1 : bValue < aValue ? -1 : 0;
       } else {
@@ -271,7 +271,7 @@ export const tourUtils = {
   searchTours: (tours, query) => {
     if (!query) return tours;
     const lowerQuery = query.toLowerCase();
-    return tours.filter(tour => 
+    return tours.filter(tour =>
       tour.title.toLowerCase().includes(lowerQuery) ||
       tour.description?.toLowerCase().includes(lowerQuery) ||
       tour.shortDescription?.toLowerCase().includes(lowerQuery) ||
@@ -283,7 +283,7 @@ export const tourUtils = {
 // Error handling utility
 export const handleApiError = (error) => {
   console.error('API Error:', error);
-  
+
   if (error.response) {
     // Server responded with error status
     const { status, data } = error.response;

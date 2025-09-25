@@ -18,6 +18,15 @@ router.get('/stats', rentalController.getRentalStatistics);
 // POST /api/rentals - Create new rental request
 router.post('/', rentalController.createRentalRequest);
 
+// GET /api/rentals/museum-stats - Get museum-specific rental statistics
+router.get('/museum-stats', rentalController.getMuseumRentalStats);
+
+// GET /api/rentals/artifacts - Get artifacts for museum rental system
+router.get('/artifacts', rentalController.getMuseumArtifacts);
+
+// GET /api/rentals/artifacts/:museumId - Get artifacts for specific museum
+router.get('/artifacts/:museumId', rentalController.getMuseumArtifacts);
+
 // GET /api/rentals/:id - Get specific rental request
 router.get('/:id', rentalController.getRentalRequest);
 

@@ -104,19 +104,34 @@ async function getAllRentalRequests(req, res) {
       requestType,
       museumId,
       userId,
+      search,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
 
     const query = {};
 
-    if (status) query.status = status;
-    if (requestType) query.requestType = requestType;
-    if (museumId) query.museum = museumId;
-    if (userId) query.requestedBy = userId;
+    // Only add filters if they are not undefined or empty
+    if (status && status !== 'undefined' && status !== 'all') query.status = status;
+    if (requestType && requestType !== 'undefined' && requestType !== 'all') query.requestType = requestType;
+    if (museumId && museumId !== 'undefined') query.museum = museumId;
+    if (userId && userId !== 'undefined') query.requestedBy = userId;
+
+    // Add search functionality
+    if (search && search.trim()) {
+      query.$or = [
+        { requestId: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { specialRequirements: { $regex: search, $options: 'i' } }
+      ];
+    }
 
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    console.log('🔍 Rental query:', query);
+    console.log('🔍 Rental sort:', sort);
+    console.log('🔍 Rental pagination:', { page, limit });
 
     const [requests, total] = await Promise.all([
       RentalRequest.find(query)
@@ -130,11 +145,14 @@ async function getAllRentalRequests(req, res) {
       RentalRequest.countDocuments(query)
     ]);
 
+    console.log('📋 Found rental requests:', requests.length);
+    console.log('📋 Total rental requests:', total);
+
     res.json({
       success: true,
       data: {
         requests,
-      pagination: {
+        pagination: {
           current: Number(page),
           pages: Math.ceil(total / limit),
           total
@@ -192,7 +210,14 @@ async function updateRentalRequestStatus(req, res) {
     const { id } = req.params;
     const { status, comments } = req.body;
     const approverId = req.user.id;
-    const approverRole = req.user.role;
+    // Map role to schema enum values
+    const roleMapping = {
+      'superAdmin': 'super_admin',
+      'museumAdmin': 'museum_admin',
+      'super_admin': 'super_admin',
+      'museum_admin': 'museum_admin'
+    };
+    const approverRole = roleMapping[req.user.role] || req.user.role;
 
     const request = await RentalRequest.findById(id);
     if (!request) {
@@ -202,26 +227,42 @@ async function updateRentalRequestStatus(req, res) {
       });
     }
 
-    // Add approval
-    await request.addApproval(approverId, approverRole, status, comments);
+    // Add approval to the request
+    request.approvals.push({
+      approver: approverId,
+      role: approverRole,
+      status: status,
+      comments: comments,
+      approvedAt: new Date()
+    });
 
     // Update overall status based on approvals
     if (status === 'approved') {
-      // Check if all required approvals are received
-      const requiredApprovals = request.requestType === 'museum_to_super'
-        ? ['museum_admin', 'super_admin']
-        : ['super_admin', 'museum_admin'];
-
-      const receivedApprovals = request.approvals
-        .filter(a => a.status === 'approved')
-        .map(a => a.role);
-
-      const hasAllApprovals = requiredApprovals.every(role =>
-        receivedApprovals.includes(role)
-      );
-
-      if (hasAllApprovals) {
+      // For museum_to_super requests, super admin approval is final
+      if (request.requestType === 'museum_to_super' && approverRole === 'super_admin') {
         request.status = 'approved';
+      }
+      // For super_to_museum requests, museum admin approval is final
+      else if (request.requestType === 'super_to_museum' && approverRole === 'museum_admin') {
+        request.status = 'approved';
+      }
+      // Otherwise, check if all required approvals are received
+      else {
+        const requiredApprovals = request.requestType === 'museum_to_super'
+          ? ['museum_admin', 'super_admin']
+          : ['super_admin', 'museum_admin'];
+
+        const receivedApprovals = request.approvals
+          .filter(a => a.status === 'approved')
+          .map(a => a.role);
+
+        const hasAllApprovals = requiredApprovals.every(role =>
+          receivedApprovals.includes(role)
+        );
+
+        if (hasAllApprovals) {
+          request.status = 'approved';
+        }
       }
     } else if (status === 'rejected') {
       request.status = 'rejected';
@@ -472,6 +513,115 @@ async function getRentalStatistics(req, res) {
   }
 }
 
+/**
+ * Get museum-specific rental statistics
+ */
+const getMuseumRentalStats = async (req, res) => {
+  try {
+    console.log('🔍 Museum stats request - User:', req.user);
+    const museumId = req.user?.museumId;
+
+    if (!museumId) {
+      console.log('⚠️ No museum ID found, returning default stats');
+      return res.json({
+        success: true,
+        data: {
+          totalRequests: 0,
+          pendingRequests: 0,
+          approvedRequests: 0,
+          totalRevenue: 0,
+          revenueByMonth: [],
+          requestsByStatus: {
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+            completed: 0
+          }
+        }
+      });
+    }
+
+    console.log('🔍 Getting rental requests for museum:', museumId);
+    // Get rental requests for this museum
+    const requests = await RentalRequest.find({
+      $or: [
+        { museum: museumId },
+        { 'artifact.museum': museumId }
+      ]
+    }).populate('artifact museum requestedBy');
+
+    // Calculate statistics
+    const totalRequests = requests.length;
+    const pendingRequests = requests.filter(r => r.status === 'pending').length;
+    const approvedRequests = requests.filter(r => r.status === 'approved').length;
+    const totalRevenue = requests
+      .filter(r => r.status === 'approved')
+      .reduce((sum, r) => sum + (r.rentalDetails?.rentalFee || 0), 0);
+
+    res.json({
+      success: true,
+      data: {
+        totalRequests,
+        pendingRequests,
+        approvedRequests,
+        totalRevenue,
+        revenueByMonth: [], // TODO: Implement monthly revenue breakdown
+        requestsByStatus: {
+          pending: pendingRequests,
+          approved: approvedRequests,
+          rejected: requests.filter(r => r.status === 'rejected').length,
+          completed: requests.filter(r => r.status === 'completed').length
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get museum rental stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get museum rental statistics',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get artifacts for museum rental system
+ */
+const getMuseumArtifacts = async (req, res) => {
+  try {
+    console.log('🔍 Museum artifacts request - Params:', req.params, 'User:', req.user);
+    const museumId = req.params.museumId || req.user?.museumId;
+
+    if (!museumId) {
+      console.log('⚠️ No museum ID found, returning empty artifacts');
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    console.log('🔍 Getting artifacts for museum:', museumId);
+    // Get artifacts from the specified museum
+    const artifacts = await Artifact.find({ museum: museumId })
+      .select('name description category images status')
+      .populate('museum', 'name location');
+
+    res.json({
+      success: true,
+      data: artifacts
+    });
+
+  } catch (error) {
+    console.error('Get museum artifacts error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get museum artifacts',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createRentalRequest,
   getAllRentalRequests,
@@ -481,5 +631,7 @@ module.exports = {
   updatePaymentStatus,
   update3DIntegrationStatus,
   updateVirtualMuseumIntegration,
-  getRentalStatistics
+  getRentalStatistics,
+  getMuseumRentalStats,
+  getMuseumArtifacts
 };

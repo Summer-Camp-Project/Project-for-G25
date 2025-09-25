@@ -40,7 +40,7 @@ const RentalRequestManager = () => {
 
   // Form data for creating new requests
   const [formData, setFormData] = useState({
-    requestType: 'museum_to_super',
+    requestType: 'super_to_museum', // Super admin can only create super_to_museum requests
     artifactId: '',
     museumId: '',
     duration: '',
@@ -82,21 +82,64 @@ const RentalRequestManager = () => {
     fetchMuseums();
   }, []);
 
-  const fetchRequests = async () => {
+  // Refetch requests when filters change
+  useEffect(() => {
+    fetchRequests();
+  }, [filterStatus, filterType, searchTerm]);
+
+  const fetchRequests = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const response = await api.getAllRentalRequests({
-        page: 1,
-        limit: 50,
-        status: filterStatus !== 'all' ? filterStatus : undefined,
-        requestType: filterType !== 'all' ? filterType : undefined
-      });
+      console.log('🔄 Fetching rental requests...', forceRefresh ? '(force refresh)' : '');
 
-      if (response.success) {
-        setRequests(response.data.requests);
+      // Clear existing requests if force refresh
+      if (forceRefresh) {
+        setRequests([]);
+      }
+
+      // Build query parameters, only including non-empty values
+      const queryParams = {
+        page: 1,
+        limit: 1000 // Increased limit to show all requests
+      };
+
+      if (filterStatus && filterStatus !== 'all') {
+        queryParams.status = filterStatus;
+      }
+
+      if (filterType && filterType !== 'all') {
+        queryParams.requestType = filterType;
+      }
+
+      if (searchTerm && searchTerm.trim()) {
+        queryParams.search = searchTerm.trim();
+      }
+
+      console.log('📋 Query params:', queryParams);
+
+      const response = await api.getAllRentalRequests(queryParams);
+
+      console.log('📋 API Response:', response);
+
+      // Handle the actual API response format: {success: true, data: {requests: [...]}}
+      if (response && response.success && response.data) {
+        console.log('📋 Data object:', response.data);
+        const requests = response.data.requests || response.data;
+        console.log('📋 Rental requests fetched:', requests?.length || 0, 'requests');
+        console.log('📋 First request sample:', requests[0]);
+        setRequests(requests || []);
+      } else if (response && response.requests) {
+        console.log('📋 Rental requests fetched (direct):', response.requests?.length || 0, 'requests');
+        setRequests(response.requests);
+      } else if (response && Array.isArray(response)) {
+        console.log('📋 Rental requests fetched (array):', response.length, 'requests');
+        setRequests(response);
+      } else {
+        console.warn('⚠️ Unexpected response format:', response);
+        setRequests([]);
       }
     } catch (error) {
-      console.error('Failed to fetch rental requests:', error);
+      console.error('❌ Failed to fetch rental requests:', error);
       setErrorMessage('Failed to load rental requests');
       setShowErrorModal(true);
     } finally {
@@ -106,37 +149,83 @@ const RentalRequestManager = () => {
 
   const fetchArtifacts = async () => {
     try {
-      const response = await api.getAllArtifacts({ page: 1, limit: 100 });
-      if (response.success) {
-        setArtifacts(response.data.artifacts);
+      const response = await api.getArtifacts({ page: 1, limit: 100 });
+      console.log('📋 Artifacts response:', response);
+
+      // Handle the actual API response format: {success: true, data: {artifacts: [...]}}
+      let artifacts = [];
+      if (response && response.success && response.data && response.data.artifacts) {
+        artifacts = response.data.artifacts;
+        console.log('📋 Artifacts fetched (success format):', artifacts.length);
+      } else if (response && response.artifacts) {
+        artifacts = response.artifacts;
+        console.log('📋 Artifacts fetched (direct):', artifacts.length);
+      } else if (response && Array.isArray(response)) {
+        artifacts = response;
+        console.log('📋 Artifacts fetched (array):', artifacts.length);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        artifacts = response.data;
+        console.log('📋 Artifacts fetched (data array):', artifacts.length);
+      } else {
+        console.log('📋 Unexpected artifacts response format:', response);
+        artifacts = [];
       }
+
+      console.log('📋 Final artifacts array:', artifacts);
+      setArtifacts(artifacts);
     } catch (error) {
       console.error('Failed to fetch artifacts:', error);
+      setArtifacts([]); // Set empty array on error
     }
   };
 
   const fetchMuseums = async () => {
     try {
-      const response = await api.getAllMuseums({ page: 1, limit: 100 });
-      if (response.success) {
-        setMuseums(response.data.museums);
+      const response = await api.getMuseums();
+      console.log('📋 Museums response:', response);
+
+      // Handle the actual API response format: {success: true, data: {museums: [...]}}
+      let museums = [];
+      if (response && response.success && response.data && response.data.museums) {
+        museums = response.data.museums;
+        console.log('📋 Museums fetched (success format):', museums.length);
+      } else if (response && response.museums) {
+        museums = response.museums;
+        console.log('📋 Museums fetched (direct):', museums.length);
+      } else if (response && Array.isArray(response)) {
+        museums = response;
+        console.log('📋 Museums fetched (array):', museums.length);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        museums = response.data;
+        console.log('📋 Museums fetched (data array):', museums.length);
+      } else {
+        console.log('📋 Unexpected museums response format:', response);
+        museums = [];
       }
+
+      console.log('📋 Final museums array:', museums);
+      setMuseums(museums);
     } catch (error) {
       console.error('Failed to fetch museums:', error);
+      setMuseums([]); // Set empty array on error
     }
   };
 
   const handleCreateRequest = async (e) => {
     e.preventDefault();
     try {
+      console.log('🔄 Creating rental request...', formData);
       const response = await api.createRentalRequest(formData);
-      if (response.success) {
-        setShowCreateModal(false);
-        setSuccessMessage('Rental request created successfully!');
-        setShowSuccessModal(true);
-        fetchRequests();
-        resetForm();
-      }
+      console.log('✅ Rental request created successfully:', response);
+
+      setShowCreateModal(false);
+      setSuccessMessage('Rental request created successfully!');
+      setShowSuccessModal(true);
+
+      // Refresh the requests list
+      console.log('🔄 Refreshing requests list...');
+      await fetchRequests(true);
+      resetForm();
     } catch (error) {
       console.error('Failed to create rental request:', error);
       setErrorMessage('Failed to create rental request');
@@ -147,15 +236,20 @@ const RentalRequestManager = () => {
   const handleApproveRequest = async (e) => {
     e.preventDefault();
     try {
+      console.log('🔄 Approving request:', selectedRequest._id, approvalData);
       const response = await api.updateRentalRequestStatus(selectedRequest._id, approvalData);
-      if (response.success) {
-        setShowApprovalModal(false);
-        setSuccessMessage(`Request ${approvalData.status} successfully!`);
-        setShowSuccessModal(true);
-        fetchRequests();
-        setSelectedRequest(null);
-        setApprovalData({ status: 'approved', comments: '' });
-      }
+      console.log('✅ Approval response:', response);
+
+      setShowApprovalModal(false);
+      setSuccessMessage(`Request ${approvalData.status} successfully!`);
+      setShowSuccessModal(true);
+
+      // Force refresh the requests list
+      console.log('🔄 Refreshing requests after approval...');
+      await fetchRequests(true);
+
+      setSelectedRequest(null);
+      setApprovalData({ status: 'approved', comments: '' });
     } catch (error) {
       console.error('Failed to update request status:', error);
       setErrorMessage('Failed to update request status');
@@ -165,7 +259,7 @@ const RentalRequestManager = () => {
 
   const resetForm = () => {
     setFormData({
-      requestType: 'museum_to_super',
+      requestType: 'super_to_museum', // Super admin can only create super_to_museum requests
       artifactId: '',
       museumId: '',
       duration: '',
@@ -208,12 +302,8 @@ const RentalRequestManager = () => {
     }
   };
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.artifact?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.museum?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.requestId?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  // Use requests directly since filtering is done on the backend
+  const filteredRequests = requests;
 
   return (
     <div className="space-y-6">
@@ -222,6 +312,9 @@ const RentalRequestManager = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Rental Requests</h2>
           <p className="text-gray-600">Manage artifact rental requests between museums and virtual museum</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Showing {requests.length} request{requests.length !== 1 ? 's' : ''}
+          </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -274,7 +367,7 @@ const RentalRequestManager = () => {
           </div>
           <div className="flex items-end">
             <button
-              onClick={fetchRequests}
+              onClick={() => fetchRequests(true)}
               className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center space-x-2"
             >
               <RefreshCw className="h-4 w-4" />
@@ -306,72 +399,86 @@ const RentalRequestManager = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRequests.map((request) => (
-                  <tr key={request._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{request.requestId}</div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(request.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{request.artifact?.name}</div>
-                      <div className="text-sm text-gray-500">{request.artifact?.description}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{request.museum?.name}</div>
-                      <div className="text-sm text-gray-500">{request.museum?.location}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${request.requestType === 'museum_to_super'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-purple-100 text-purple-800'
-                        }`}>
-                        {request.requestType === 'museum_to_super' ? 'Museum → Super' : 'Super → Museum'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                        {getStatusIcon(request.status)}
-                        <span className="ml-1">{request.status}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {request.rentalDetails?.rentalFee} {request.rentalDetails?.currency}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {request.rentalDetails?.duration} days
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedRequest(request);
-                            setShowDetailModal(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        {request.status === 'pending' && (
-                          <button
-                            onClick={() => {
-                              setSelectedRequest(request);
-                              setShowApprovalModal(true);
-                            }}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </button>
-                        )}
+                {filteredRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center">
+                      <div className="text-gray-500">
+                        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No rental requests found</h3>
+                        <p className="text-gray-500">Create your first rental request to get started.</p>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredRequests.map((request) => (
+                    <tr key={request._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{request.requestId}</div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(request.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{request.artifact?.name}</div>
+                        <div className="text-sm text-gray-500">{request.artifact?.description}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{request.museum?.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {request.museum?.location?.city || request.museum?.location?.address || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${request.requestType === 'museum_to_super'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-purple-100 text-purple-800'
+                          }`}>
+                          {request.requestType === 'museum_to_super' ? 'Museum → Super' : 'Super → Museum'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
+                          {getStatusIcon(request.status)}
+                          <span className="ml-1">{request.status}</span>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {request.rentalDetails?.rentalFee} {request.rentalDetails?.currency}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {request.rentalDetails?.duration} days
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setShowDetailModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          {request.status === 'pending' && request.requestType === 'museum_to_super' && (
+                            <button
+                              onClick={() => {
+                                setSelectedRequest(request);
+                                setShowApprovalModal(true);
+                              }}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -396,16 +503,11 @@ const RentalRequestManager = () => {
               <form onSubmit={handleCreateRequest} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Request Type *</label>
-                    <select
-                      value={formData.requestType}
-                      onChange={(e) => setFormData({ ...formData, requestType: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="museum_to_super">Museum → Super Admin</option>
-                      <option value="super_to_museum">Super Admin → Museum</option>
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Request Type</label>
+                    <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600">
+                      Super Admin → Museum (Fixed)
+                    </div>
+                    <input type="hidden" value="super_to_museum" />
                   </div>
 
                   <div>
@@ -417,7 +519,7 @@ const RentalRequestManager = () => {
                       required
                     >
                       <option value="">Select Artifact</option>
-                      {artifacts.map(artifact => (
+                      {artifacts && Array.isArray(artifacts) && artifacts.map(artifact => (
                         <option key={artifact._id} value={artifact._id}>{artifact.name}</option>
                       ))}
                     </select>
@@ -432,7 +534,7 @@ const RentalRequestManager = () => {
                       required
                     >
                       <option value="">Select Museum</option>
-                      {museums.map(museum => (
+                      {museums && Array.isArray(museums) && museums.map(museum => (
                         <option key={museum._id} value={museum._id}>{museum.name}</option>
                       ))}
                     </select>
@@ -590,7 +692,7 @@ const RentalRequestManager = () => {
                   <h4 className="text-sm font-medium text-gray-900 mb-2">Museum</h4>
                   <div className="space-y-2">
                     <div><span className="font-medium">Name:</span> {selectedRequest.museum?.name}</div>
-                    <div><span className="font-medium">Location:</span> {selectedRequest.museum?.location}</div>
+                    <div><span className="font-medium">Location:</span> {selectedRequest.museum?.location?.city || selectedRequest.museum?.location?.address || 'N/A'}</div>
                   </div>
                 </div>
               </div>
@@ -616,7 +718,7 @@ const RentalRequestManager = () => {
                 >
                   Close
                 </button>
-                {selectedRequest.status === 'pending' && (
+                {selectedRequest.status === 'pending' && selectedRequest.requestType === 'museum_to_super' && (
                   <button
                     onClick={() => {
                       setShowDetailModal(false);
