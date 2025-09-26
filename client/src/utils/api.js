@@ -859,6 +859,19 @@ class ApiClient {
     return this.request('/museum-admin/analytics')
   }
 
+  async getMuseumDashboard() {
+    return this.request('/museum-admin/dashboard')
+  }
+
+  async getRecentArtifacts({ page = 1, limit = 10 } = {}) {
+    const q = new URLSearchParams({ page: String(page), limit: String(limit) })
+    return this.request(`/museum-admin/artifacts?${q}`)
+  }
+
+  async getPendingTasks() {
+    return this.request('/museum-admin/quick-stats')
+  }
+
   async submitVirtualMuseum(submissionData) {
     if (this.useMockAPI) {
       return mockApi.submitVirtualMuseum(submissionData)
@@ -1350,6 +1363,22 @@ class ApiClient {
   // ======================
   // RENTAL REQUESTS API
   // ======================
+
+  async getRentalArtifacts(params = {}) {
+    try {
+      await this.checkBackendAvailability();
+      
+      if (this.useMockAPI) {
+        return mockApi.getRentalArtifacts(params);
+      }
+      
+      const queryParams = new URLSearchParams(params).toString()
+      const endpoint = `/rentals/artifacts${queryParams ? `?${queryParams}` : ''}`
+      return this.request(endpoint)
+    } catch (error) {
+      return mockApi.getRentalArtifacts(params);
+    }
+  }
 
   async getAllRentalRequests(params = {}) {
     try {
@@ -2183,6 +2212,47 @@ class ApiClient {
     return this.request(`/visitor/resources/${resourceId}/access`, {
       method: 'POST',
       body: accessData
+    })
+  }
+
+  // Artifact management methods
+  async createArtifact(artifactData) {
+    return this.request('/artifacts', {
+      method: 'POST',
+      body: artifactData,
+    })
+  }
+
+  async updateArtifact(id, artifactData) {
+    return this.request(`/artifacts/${id}`, {
+      method: 'PUT',
+      body: artifactData,
+    })
+  }
+
+  async deleteArtifact(id) {
+    return this.request(`/artifacts/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getArtifactById(id) {
+    return this.request(`/artifacts/${id}`)
+  }
+
+  async uploadArtifactImage(artifactId, imageFile) {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    return this.request(`/artifacts/${artifactId}/images`, {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Let browser set Content-Type for FormData
+    })
+  }
+
+  async deleteArtifactImage(artifactId, imageId) {
+    return this.request(`/artifacts/${artifactId}/images/${imageId}`, {
+      method: 'DELETE',
     })
   }
 }

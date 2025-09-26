@@ -242,10 +242,11 @@ const MuseumAdminDashboard = ({ darkMode, toggleDarkMode }) => {
       setMuseumProfile(prev => ({ ...prev, loading: true, error: '' }));
       try {
         const response = await api.getMuseumProfile();
-        if (response.museum) {
+        if (response.data) {
+          const museumData = response.data.museum || response.data;
           setMuseumProfile(prev => ({
             ...prev,
-            ...response.museum,
+            ...museumData,
             loading: false
           }));
         } else {

@@ -80,15 +80,33 @@ const MuseumDashboard = () => {
 
         // Update state with data (or default values if API failed)
         if (statsResponse.data) {
-          setDashboardStats(statsResponse.data);
+          // Handle the dashboard response structure
+          const dashboardData = statsResponse.data.dashboard || statsResponse.data;
+          if (dashboardData.quickStats) {
+            setDashboardStats({
+              totalArtifacts: dashboardData.quickStats.totalArtifacts || 0,
+              artifactsInStorage: dashboardData.quickStats.publishedArtifacts || 0,
+              activeRentals: dashboardData.quickStats.activeRentals || 0,
+              monthlyVisitors: dashboardData.quickStats.thisMonthVisitors || 0,
+              pendingRentals: dashboardData.quickStats.pendingRentals || 0,
+              totalEvents: 0, // Not implemented yet
+              upcomingEvents: 0, // Not implemented yet
+              totalStaff: 0, // Not implemented yet
+              totalRevenue: dashboardData.quickStats.totalRevenue || 0
+            });
+          }
         }
 
         if (artifactsResponse.data) {
-          setRecentArtifacts(artifactsResponse.data);
+          // Handle artifacts response structure
+          const artifactsData = artifactsResponse.data.artifacts || artifactsResponse.data.data || artifactsResponse.data;
+          setRecentArtifacts(Array.isArray(artifactsData) ? artifactsData : []);
         }
 
         if (tasksResponse.data) {
-          setPendingTasks(tasksResponse.data);
+          // Handle tasks response structure
+          const tasksData = tasksResponse.data.tasks || tasksResponse.data.data || tasksResponse.data;
+          setPendingTasks(Array.isArray(tasksData) ? tasksData : []);
         }
 
         // Clear any previous errors since we're showing data (even if default)

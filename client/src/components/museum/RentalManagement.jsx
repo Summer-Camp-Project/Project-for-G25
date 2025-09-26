@@ -65,6 +65,7 @@ const RentalManagement = () => {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       console.log('🔄 Loading rental data...');
       await Promise.all([
         loadRequests(),
@@ -74,6 +75,8 @@ const RentalManagement = () => {
     } catch (error) {
       console.error('❌ Error loading rental data:', error);
       setError('Failed to load rental data');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,9 +91,9 @@ const RentalManagement = () => {
       console.log('📋 Requests response:', response);
 
       let requestsData = [];
-      if (response && response.data && response.data.success) {
-        requestsData = response.data.data || [];
-        console.log('✅ Set requests from response.data.data:', requestsData.length, 'requests');
+      if (response && response.success && response.data && response.data.requests) {
+        requestsData = response.data.requests;
+        console.log('✅ Set requests from response.data.requests:', requestsData.length, 'requests');
       } else if (response && response.data && Array.isArray(response.data)) {
         requestsData = response.data;
         console.log('✅ Set requests from response.data:', requestsData.length, 'requests');
@@ -99,6 +102,7 @@ const RentalManagement = () => {
         console.log('✅ Set requests from response array:', requestsData.length, 'requests');
       } else {
         console.log('⚠️ No valid requests data found, setting empty array');
+        console.log('🔍 Full response structure:', JSON.stringify(response, null, 2));
         requestsData = [];
       }
 
@@ -119,18 +123,18 @@ const RentalManagement = () => {
 
       // Handle different response structures
       let artifacts = [];
-      if (response && response.data && response.data.success && response.data.data) {
-        artifacts = response.data.data;
-        console.log('✅ Setting artifacts from response.data.data:', artifacts?.length || 0, 'artifacts');
-      } else if (response && response.data && Array.isArray(response.data)) {
+      if (response && response.success && response.data && Array.isArray(response.data)) {
         artifacts = response.data;
         console.log('✅ Setting artifacts from response.data:', artifacts?.length || 0, 'artifacts');
+      } else if (response && response.data && Array.isArray(response.data)) {
+        artifacts = response.data;
+        console.log('✅ Setting artifacts from response.data fallback:', artifacts?.length || 0, 'artifacts');
       } else if (response && Array.isArray(response)) {
         artifacts = response;
         console.log('✅ Setting artifacts from response:', artifacts?.length || 0, 'artifacts');
       } else {
         console.log('⚠️ No valid artifacts data found, setting empty array');
-        console.log('📋 Response structure:', response);
+        console.log('🔍 Full artifacts response structure:', JSON.stringify(response, null, 2));
         artifacts = [];
       }
 
@@ -264,7 +268,7 @@ const RentalManagement = () => {
       <MuseumAdminSidebar />
 
       {/* Main Content */}
-      <Box sx={{ flexGrow: 1, ml: '320px', p: 3 }}>
+      <Box sx={{ flexGrow: 1, p: 3 }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

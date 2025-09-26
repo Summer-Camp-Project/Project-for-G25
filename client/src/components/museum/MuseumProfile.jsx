@@ -69,9 +69,10 @@ const MuseumProfile = () => {
 
         // Set profile data
         if (profileResponse.data) {
+          const museumData = profileResponse.data.museum || profileResponse.data;
           setProfileData({
             ...profileData,
-            ...profileResponse.data,
+            ...museumData,
             loading: false,
             error: ''
           });
