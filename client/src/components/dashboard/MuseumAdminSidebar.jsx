@@ -286,7 +286,7 @@ const MuseumAdminSidebar = () => {
 
 
   return (
-    <div className="w-80 bg-white shadow-lg border-r border-gray-200 flex flex-col min-h-screen">
+    <div className="w-80 bg-white shadow-lg border-r border-gray-200 flex flex-col min-h-screen flex-shrink-0">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3 mb-4">

@@ -16,17 +16,28 @@ async function createRentalRequest(req, res) {
     const {
       requestType,
       artifactId,
-      museumId,
       duration,
       startDate,
       endDate,
       rentalFee,
       currency = 'ETB',
       description,
-      specialRequirements
+      specialRequirements,
+      contactPerson,
+      contactPhone,
+      contactEmail
     } = req.body;
 
     const requestedBy = req.user.id;
+    
+    // Get museum ID from authenticated user
+    const museumId = req.user.museumId;
+    if (!museumId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not associated with a museum'
+      });
+    }
 
     // Validate artifact exists
     const artifact = await Artifact.findById(artifactId);
@@ -59,6 +70,11 @@ async function createRentalRequest(req, res) {
         endDate: new Date(endDate),
         rentalFee,
         currency
+      },
+      contact: {
+        person: contactPerson,
+        phone: contactPhone,
+        email: contactEmail
       },
       description,
       specialRequirements,

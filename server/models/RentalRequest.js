@@ -136,6 +136,13 @@ const rentalRequestSchema = new mongoose.Schema({
     }
   }],
 
+  // Contact Information
+  contact: {
+    person: String,
+    phone: String,
+    email: String
+  },
+
   // Metadata
   description: String,
   specialRequirements: String,

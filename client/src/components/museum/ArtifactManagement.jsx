@@ -139,7 +139,7 @@ const ArtifactManagement = () => {
         } else {
           // Fallback: try to get museum profile
           const profile = await api.getMuseumProfile();
-          const museum = profile?.museum || profile;
+          const museum = profile?.data?.museum || profile?.data || profile?.museum || profile;
           const id = museum?._id || museum?.id;
           if (id) {
             setCurrentMuseumId(id);

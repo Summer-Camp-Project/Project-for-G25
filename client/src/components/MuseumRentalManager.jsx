@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Plus,
   Search,
@@ -25,31 +25,37 @@ import {
   FileText,
   Users,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Send,
+  Building,
+  Artifact as ArtifactIcon
 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { AuthContext } from '../contexts/AuthContext';
 import api from '../utils/api';
 
-const RentalRequestManager = () => {
-  const { user } = useAuth();
+const MuseumRentalManager = () => {
+  const { user } = useContext(AuthContext);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterType, setFilterType] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'cards'
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    pendingRequests: 0,
+    approvedRequests: 0,
+    totalRevenue: 0
+  });
 
   // Form data for creating new requests
   const [formData, setFormData] = useState({
-    requestType: user?.role === 'superAdmin' ? 'super_to_museum' : 'museum_to_super',
+    requestType: 'museum_to_super', // Museum admin can only send requests to super admin
     artifactId: '',
     museumId: '',
     duration: '',
@@ -61,15 +67,8 @@ const RentalRequestManager = () => {
     specialRequirements: ''
   });
 
-  // Approval form data
-  const [approvalData, setApprovalData] = useState({
-    status: 'approved',
-    comments: ''
-  });
-
-  // Available artifacts and museums (would be fetched from API)
+  // Available artifacts (would be fetched from API based on museum)
   const [artifacts, setArtifacts] = useState([]);
-  const [museums, setMuseums] = useState([]);
 
   const statusOptions = [
     { value: 'all', label: 'All Status' },
@@ -79,76 +78,62 @@ const RentalRequestManager = () => {
     { value: 'completed', label: 'Completed' }
   ];
 
-  const typeOptions = [
-    { value: 'all', label: 'All Types' },
-    { value: 'museum_to_super', label: 'Museum → Super Admin' },
-    { value: 'super_to_museum', label: 'Super Admin → Museum' }
-  ];
-
   useEffect(() => {
     fetchRequests();
-    fetchArtifacts();
-    fetchMuseums();
+    fetchMuseumArtifacts();
+    fetchStats();
   }, []);
 
   // Refetch requests when filters change
   useEffect(() => {
     fetchRequests();
-  }, [filterStatus, filterType, searchTerm]);
+  }, [filterStatus, searchTerm]);
 
   const fetchRequests = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching rental requests...', forceRefresh ? '(force refresh)' : '');
+      console.log('🔄 Fetching museum rental requests...', forceRefresh ? '(force refresh)' : '');
 
-      // Clear existing requests if force refresh
       if (forceRefresh) {
         setRequests([]);
       }
 
-      // Build query parameters, only including non-empty values
+      // Build query parameters for museum admin - only show their museum's requests
       const queryParams = {
         page: 1,
-        limit: 1000 // Increased limit to show all requests
+        limit: 1000,
+        requestType: 'museum_to_super' // Museum admin only sees requests they send to super admin
       };
 
       if (filterStatus && filterStatus !== 'all') {
         queryParams.status = filterStatus;
       }
 
-      if (filterType && filterType !== 'all') {
-        queryParams.requestType = filterType;
-      }
-
       if (searchTerm && searchTerm.trim()) {
         queryParams.search = searchTerm.trim();
       }
 
-      console.log('📋 Query params:', queryParams);
+      console.log('📋 Museum query params:', queryParams);
 
       const response = await api.getAllRentalRequests(queryParams);
 
-      console.log('📋 API Response:', response);
+      console.log('📋 Museum API Response:', response);
 
-      // Handle the actual API response format: {success: true, data: {requests: [...]}}
+      // Handle the actual API response format
       if (response && response.success && response.data) {
-        console.log('📋 Data object:', response.data);
         const requests = response.data.requests || response.data;
-        console.log('📋 Rental requests fetched:', requests?.length || 0, 'requests');
-        console.log('📋 First request sample:', requests[0]);
+        console.log('📋 Museum rental requests fetched:', requests?.length || 0, 'requests');
         setRequests(requests || []);
       } else if (response && response.requests) {
-        console.log('📋 Rental requests fetched (direct):', response.requests?.length || 0, 'requests');
         setRequests(response.requests);
       } else if (response && Array.isArray(response)) {
-        console.log('📋 Rental requests fetched (array):', response.length, 'requests');
         setRequests(response);
       } else {
         console.warn('⚠️ Unexpected response format:', response);
         setRequests([]);
       }
     } catch (error) {
-      console.error('❌ Failed to fetch rental requests:', error);
+      console.error('❌ Failed to fetch museum rental requests:', error);
       setErrorMessage('Failed to load rental requests');
       setShowErrorModal(true);
     } finally {
@@ -156,121 +141,77 @@ const RentalRequestManager = () => {
     }
   };
 
-  const fetchArtifacts = async () => {
+  const fetchMuseumArtifacts = async () => {
     try {
-      const response = await api.getArtifacts({ page: 1, limit: 100 });
-      console.log('📋 Artifacts response:', response);
+      // Fetch artifacts for this museum
+      const response = await api.getRentalArtifacts();
+      console.log('📋 Museum artifacts response:', response);
 
-      // Handle the actual API response format: {success: true, data: {artifacts: [...]}}
       let artifacts = [];
-      if (response && response.success && response.data && response.data.artifacts) {
-        artifacts = response.data.artifacts;
-        console.log('📋 Artifacts fetched (success format):', artifacts.length);
-      } else if (response && response.artifacts) {
-        artifacts = response.artifacts;
-        console.log('📋 Artifacts fetched (direct):', artifacts.length);
+      if (response && response.success && response.data) {
+        artifacts = response.data;
       } else if (response && Array.isArray(response)) {
         artifacts = response;
-        console.log('📋 Artifacts fetched (array):', artifacts.length);
-      } else if (response && response.data && Array.isArray(response.data)) {
-        artifacts = response.data;
-        console.log('📋 Artifacts fetched (data array):', artifacts.length);
-      } else {
-        console.log('📋 Unexpected artifacts response format:', response);
-        artifacts = [];
       }
 
-      console.log('📋 Final artifacts array:', artifacts);
+      console.log('📋 Museum artifacts:', artifacts);
       setArtifacts(artifacts);
     } catch (error) {
-      console.error('Failed to fetch artifacts:', error);
-      setArtifacts([]); // Set empty array on error
+      console.error('Failed to fetch museum artifacts:', error);
+      setArtifacts([]);
     }
   };
 
-  const fetchMuseums = async () => {
+  const fetchStats = async () => {
     try {
-      const response = await api.getMuseums();
-      console.log('📋 Museums response:', response);
+      const response = await api.getRentalStatistics();
+      console.log('📋 Museum rental stats response:', response);
 
-      // Handle the actual API response format: {success: true, data: {museums: [...]}}
-      let museums = [];
-      if (response && response.success && response.data && response.data.museums) {
-        museums = response.data.museums;
-        console.log('📋 Museums fetched (success format):', museums.length);
-      } else if (response && response.museums) {
-        museums = response.museums;
-        console.log('📋 Museums fetched (direct):', museums.length);
-      } else if (response && Array.isArray(response)) {
-        museums = response;
-        console.log('📋 Museums fetched (array):', museums.length);
-      } else if (response && response.data && Array.isArray(response.data)) {
-        museums = response.data;
-        console.log('📋 Museums fetched (data array):', museums.length);
-      } else {
-        console.log('📋 Unexpected museums response format:', response);
-        museums = [];
+      if (response && response.success && response.data) {
+        setStats(response.data);
+      } else if (response && response.overview) {
+        setStats(response.overview);
       }
-
-      console.log('📋 Final museums array:', museums);
-      setMuseums(museums);
     } catch (error) {
-      console.error('Failed to fetch museums:', error);
-      setMuseums([]); // Set empty array on error
+      console.error('Failed to fetch rental stats:', error);
     }
   };
 
   const handleCreateRequest = async (e) => {
     e.preventDefault();
     try {
-      console.log('🔄 Creating rental request...', formData);
-      const response = await api.createRentalRequest(formData);
-      console.log('✅ Rental request created successfully:', response);
+      console.log('🔄 Creating museum rental request...', formData);
+      
+      // Set the museum ID from the current user's museum
+      const requestData = {
+        ...formData,
+        museumId: user?.museumId || formData.museumId
+      };
+
+      const response = await api.createRentalRequest(requestData);
+      console.log('✅ Museum rental request created successfully:', response);
 
       setShowCreateModal(false);
-      setSuccessMessage('Rental request created successfully!');
+      setSuccessMessage('Rental request submitted successfully! It will be reviewed by the Super Admin.');
       setShowSuccessModal(true);
 
       // Refresh the requests list
       console.log('🔄 Refreshing requests list...');
       await fetchRequests(true);
+      await fetchStats();
       resetForm();
     } catch (error) {
       console.error('Failed to create rental request:', error);
-      setErrorMessage('Failed to create rental request');
-      setShowErrorModal(true);
-    }
-  };
-
-  const handleApproveRequest = async (e) => {
-    e.preventDefault();
-    try {
-      console.log('🔄 Approving request:', selectedRequest._id, approvalData);
-      const response = await api.updateRentalRequestStatus(selectedRequest._id, approvalData);
-      console.log('✅ Approval response:', response);
-
-      setShowApprovalModal(false);
-      setSuccessMessage(`Request ${approvalData.status} successfully!`);
-      setShowSuccessModal(true);
-
-      // Force refresh the requests list
-      console.log('🔄 Refreshing requests after approval...');
-      await fetchRequests(true);
-
-      setSelectedRequest(null);
-      setApprovalData({ status: 'approved', comments: '' });
-    } catch (error) {
-      console.error('Failed to update request status:', error);
-      setErrorMessage('Failed to update request status');
+      setErrorMessage('Failed to submit rental request');
       setShowErrorModal(true);
     }
   };
 
   const resetForm = () => {
     setFormData({
-      requestType: user?.role === 'superAdmin' ? 'super_to_museum' : 'museum_to_super',
+      requestType: 'museum_to_super',
       artifactId: '',
-      museumId: '',
+      museumId: user?.museumId || '',
       duration: '',
       startDate: '',
       endDate: '',
@@ -279,31 +220,6 @@ const RentalRequestManager = () => {
       description: '',
       specialRequirements: ''
     });
-  };
-
-  // Helper function to determine if current user can approve a request
-  const canApproveRequest = (request) => {
-    // Super admin can approve museum_to_super requests
-    if (user?.role === 'superAdmin' && request.requestType === 'museum_to_super' && request.status === 'pending') {
-      return true;
-    }
-    // Museum admin can approve super_to_museum requests (if needed)
-    if (user?.role === 'museumAdmin' && request.requestType === 'super_to_museum' && request.status === 'pending') {
-      return true;
-    }
-    return false;
-  };
-
-  // Helper function to get request direction label
-  const getRequestDirectionLabel = (requestType) => {
-    switch (requestType) {
-      case 'museum_to_super':
-        return { label: 'Museum → Super Admin', icon: <ArrowRight className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' };
-      case 'super_to_museum':
-        return { label: 'Super Admin → Museum', icon: <ArrowLeft className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' };
-      default:
-        return { label: 'Unknown', icon: null, color: 'bg-gray-100 text-gray-800' };
-    }
   };
 
   const getStatusIcon = (status) => {
@@ -336,7 +252,6 @@ const RentalRequestManager = () => {
     }
   };
 
-  // Use requests directly since filtering is done on the backend
   const filteredRequests = requests;
 
   return (
@@ -344,8 +259,8 @@ const RentalRequestManager = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Rental Requests</h2>
-          <p className="text-gray-600">Manage artifact rental requests between museums and virtual museum</p>
+          <h2 className="text-2xl font-bold text-gray-900">Museum Rental Requests</h2>
+          <p className="text-gray-600">Submit and manage artifact rental requests to Super Admin</p>
           <p className="text-sm text-gray-500 mt-1">
             Showing {requests.length} request{requests.length !== 1 ? 's' : ''}
           </p>
@@ -354,14 +269,65 @@ const RentalRequestManager = () => {
           onClick={() => setShowCreateModal(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
         >
-          <Plus className="h-4 w-4" />
-          <span>New Request</span>
+          <Send className="h-4 w-4" />
+          <span>Request Rental</span>
         </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Requests</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalRequests}</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <Package className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-2xl font-bold text-yellow-600">{stats.pendingRequests}</p>
+            </div>
+            <div className="p-3 bg-yellow-100 rounded-full">
+              <Clock className="h-6 w-6 text-yellow-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Approved</p>
+              <p className="text-2xl font-bold text-green-600">{stats.approvedRequests}</p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-purple-600">{stats.totalRevenue} ETB</p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-full">
+              <DollarSign className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
             <div className="relative">
@@ -383,18 +349,6 @@ const RentalRequestManager = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {typeOptions.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
@@ -425,21 +379,26 @@ const RentalRequestManager = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artifact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Museum</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredRequests.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-12 text-center">
+                    <td colSpan="6" className="px-6 py-12 text-center">
                       <div className="text-gray-500">
-                        <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No rental requests found</h3>
-                        <p className="text-gray-500">Create your first rental request to get started.</p>
+                        <Send className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No rental requests yet</h3>
+                        <p className="text-gray-500 mb-4">Submit your first rental request to get started.</p>
+                        <button
+                          onClick={() => setShowCreateModal(true)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Request Rental
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -455,22 +414,13 @@ const RentalRequestManager = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.artifact?.name}</div>
-                        <div className="text-sm text-gray-500">{request.artifact?.description}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{request.museum?.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {request.museum?.location?.city || request.museum?.location?.address || 'N/A'}
+                        <div className="flex items-center">
+                          <ArtifactIcon className="h-8 w-8 text-gray-400 mr-3" />
+                          <div>
+                            <div className="text-sm text-gray-900">{request.artifact?.name || 'N/A'}</div>
+                            <div className="text-sm text-gray-500">{request.artifact?.category || 'N/A'}</div>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${request.requestType === 'museum_to_super'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-purple-100 text-purple-800'
-                          }`}>
-                          {request.requestType === 'museum_to_super' ? 'Museum → Super' : 'Super → Museum'}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
@@ -482,51 +432,27 @@ const RentalRequestManager = () => {
                         <div className="text-sm text-gray-900">
                           {request.rentalDetails?.rentalFee} {request.rentalDetails?.currency}
                         </div>
-                        <div className="text-sm text-gray-500">
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
                           {request.rentalDetails?.duration} days
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(request.rentalDetails?.startDate).toLocaleDateString()} - {new Date(request.rentalDetails?.endDate).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          {/* See More Button - Always visible */}
                           <button
                             onClick={() => {
                               setSelectedRequest(request);
                               setShowDetailModal(true);
                             }}
                             className="text-blue-600 hover:text-blue-900 flex items-center"
-                            title="See More Details"
+                            title="View Details"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          
-                          {/* Approval Button - Only visible when user can approve */}
-                          {canApproveRequest(request) && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setApprovalData({ ...approvalData, status: 'approved' });
-                                  setShowApprovalModal(true);
-                                }}
-                                className="text-green-600 hover:text-green-900 flex items-center"
-                                title="Approve Request"
-                              >
-                                <ThumbsUp className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setApprovalData({ ...approvalData, status: 'rejected' });
-                                  setShowApprovalModal(true);
-                                }}
-                                className="text-red-600 hover:text-red-900 flex items-center"
-                                title="Reject Request"
-                              >
-                                <ThumbsDown className="h-4 w-4" />
-                              </button>
-                            </>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -544,7 +470,7 @@ const RentalRequestManager = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Create Rental Request</h3>
+                <h3 className="text-lg font-medium text-gray-900">Request Artifact Rental</h3>
                 <button
                   onClick={() => setShowCreateModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -554,15 +480,14 @@ const RentalRequestManager = () => {
               </div>
 
               <form onSubmit={handleCreateRequest} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Request Type</label>
-                    <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600">
-                      Super Admin → Museum (Fixed)
-                    </div>
-                    <input type="hidden" value="super_to_museum" />
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <div className="flex items-center">
+                    <Building className="h-5 w-5 text-blue-600 mr-2" />
+                    <span className="text-sm font-medium text-blue-800">Requesting rental from Super Admin</span>
                   </div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Artifact *</label>
                     <select
@@ -576,21 +501,7 @@ const RentalRequestManager = () => {
                         <option key={artifact._id} value={artifact._id}>{artifact.name}</option>
                       ))}
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Museum *</label>
-                    <select
-                      value={formData.museumId}
-                      onChange={(e) => setFormData({ ...formData, museumId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Select Museum</option>
-                      {museums && Array.isArray(museums) && museums.map(museum => (
-                        <option key={museum._id} value={museum._id}>{museum.name}</option>
-                      ))}
-                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Available artifacts from our collection</p>
                   </div>
 
                   <div>
@@ -601,6 +512,7 @@ const RentalRequestManager = () => {
                       onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
+                      min="1"
                     />
                   </div>
 
@@ -612,6 +524,7 @@ const RentalRequestManager = () => {
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
 
@@ -623,6 +536,7 @@ const RentalRequestManager = () => {
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
+                      min={formData.startDate || new Date().toISOString().split('T')[0]}
                     />
                   </div>
 
@@ -634,6 +548,8 @@ const RentalRequestManager = () => {
                       onChange={(e) => setFormData({ ...formData, rentalFee: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
+                      min="0"
+                      step="0.01"
                     />
                   </div>
 
@@ -682,9 +598,10 @@ const RentalRequestManager = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
                   >
-                    Create Request
+                    <Send className="h-4 w-4" />
+                    <span>Submit Request</span>
                   </button>
                 </div>
               </form>
@@ -713,7 +630,7 @@ const RentalRequestManager = () => {
                   <h4 className="text-sm font-medium text-gray-900 mb-2">Request Information</h4>
                   <div className="space-y-2">
                     <div><span className="font-medium">Request ID:</span> {selectedRequest.requestId}</div>
-                    <div><span className="font-medium">Type:</span> {selectedRequest.requestType}</div>
+                    <div><span className="font-medium">Type:</span> <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">Museum → Super Admin</span></div>
                     <div><span className="font-medium">Status:</span>
                       <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusColor(selectedRequest.status)}`}>
                         {selectedRequest.status}
@@ -753,14 +670,14 @@ const RentalRequestManager = () => {
               {selectedRequest.description && (
                 <div className="mt-6">
                   <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
-                  <p className="text-gray-700">{selectedRequest.description}</p>
+                  <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedRequest.description}</p>
                 </div>
               )}
 
               {selectedRequest.specialRequirements && (
                 <div className="mt-6">
                   <h4 className="text-sm font-medium text-gray-900 mb-2">Special Requirements</h4>
-                  <p className="text-gray-700">{selectedRequest.specialRequirements}</p>
+                  <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedRequest.specialRequirements}</p>
                 </div>
               )}
 
@@ -771,97 +688,7 @@ const RentalRequestManager = () => {
                 >
                   Close
                 </button>
-                {canApproveRequest(selectedRequest) && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setApprovalData({ ...approvalData, status: 'approved' });
-                        setShowDetailModal(false);
-                        setShowApprovalModal(true);
-                      }}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                      <span>Approve</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setApprovalData({ ...approvalData, status: 'rejected' });
-                        setShowDetailModal(false);
-                        setShowApprovalModal(true);
-                      }}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2"
-                    >
-                      <ThumbsDown className="h-4 w-4" />
-                      <span>Reject</span>
-                    </button>
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Approval Modal */}
-      {showApprovalModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Review Request</h3>
-                <button
-                  onClick={() => setShowApprovalModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="h-6 w-6" />
-                </button>
-              </div>
-
-              <form onSubmit={handleApproveRequest} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Decision *</label>
-                  <select
-                    value={approvalData.status}
-                    onChange={(e) => setApprovalData({ ...approvalData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="approved">Approve</option>
-                    <option value="rejected">Reject</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Comments</label>
-                  <textarea
-                    value={approvalData.comments}
-                    onChange={(e) => setApprovalData({ ...approvalData, comments: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Add any comments or conditions..."
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowApprovalModal(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className={`px-4 py-2 rounded-lg ${approvalData.status === 'approved'
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-red-600 hover:bg-red-700 text-white'
-                      }`}
-                  >
-                    {approvalData.status === 'approved' ? 'Approve' : 'Reject'} Request
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </div>
@@ -908,4 +735,4 @@ const RentalRequestManager = () => {
   );
 };
 
-export default RentalRequestManager;
+export default MuseumRentalManager;

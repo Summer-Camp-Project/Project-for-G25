@@ -15,7 +15,7 @@ const NotificationSocketService = require('./services/notificationSocket');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const superAdminRoutes = require('./routes/superAdmin');
-// const museumAdminRoutes = require('./routes/museumAdmin');
+const museumAdminRoutes = require('./routes/museumAdmin');
 const museumRoutes = require('./routes/museums'); // Added museum management routes
 const artifactRoutes = require('./routes/artifacts'); // Added artifact management routes
 const staffRoutes = require('./routes/staff'); // Added staff management routes
@@ -168,7 +168,7 @@ app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/exhibitions', adminExhibitionsRoutes); // Admin exhibitions management API
 app.use('/api/super-admin', superAdminRoutes);
-// app.use('/api/museum-admin', museumAdminRoutes);
+app.use('/api/museum-admin', museumAdminRoutes);
 app.use('/api/museums', museumRoutes); // Added museum management API
 app.use('/api/museums/settings', require('./routes/museumSettings')); // Added museum settings API
 app.use('/api/artifacts', artifactRoutes); // Added artifact management API
