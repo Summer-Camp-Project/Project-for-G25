@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import VisitorSidebar from '../../components/dashboard/VisitorSidebar';
 import { 
   FaMapMarkerAlt, 
   FaGlobe, 
@@ -9,14 +10,73 @@ import {
   FaMobile,
   FaTools,
   FaLanguage,
-  FaCalculator
+  FaCalculator,
+  FaBook,
+  FaGamepad,
+  FaDownload,
+  FaExternalLinkAlt,
+  FaSpinner,
+  FaStar,
+  FaUsers,
+  FaEye,
+  FaArrowRight
 } from 'react-icons/fa';
+import { toast } from 'sonner';
+import educationService from '../../services/educationService';
 
 const Tools = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [educationalStats, setEducationalStats] = useState({});
+
+  useEffect(() => {
+    loadEducationalStats();
+  }, []);
+
+  const loadEducationalStats = async () => {
+    try {
+      const stats = await educationService.getLearningStats();
+      if (stats.success) {
+        setEducationalStats(stats.stats);
+      }
+    } catch (error) {
+      console.error('Error loading educational stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toolCategories = [
+    {
+      title: 'Educational Tools',
+      tools: [
+        {
+          name: 'Interactive Flashcards',
+          description: 'Study Ethiopian heritage with spaced repetition flashcards',
+          icon: FaBook,
+          path: '/education?section=flashcards',
+          color: 'bg-purple-500',
+          available: true
+        },
+        {
+          name: 'Practice Quizzes',
+          description: 'Test your knowledge with interactive quizzes',
+          icon: FaGamepad,
+          path: '/education?section=quizzes',
+          color: 'bg-green-500',
+          available: true
+        },
+        {
+          name: 'Educational Games',
+          description: 'Learn through fun and engaging games',
+          icon: FaGamepad,
+          path: '/visitor/games',
+          color: 'bg-red-500',
+          available: true
+        }
+      ]
+    },
     {
       title: 'Navigation & Geography',
       tools: [
@@ -89,8 +149,10 @@ const Tools = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-100">
-      <div className="container mx-auto px-4 py-8">
+    <div className="flex min-h-screen bg-gray-50">
+      <VisitorSidebar />
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between">
@@ -224,6 +286,7 @@ const Tools = () => {
             <li>• Check back regularly for new tools and updates</li>
             <li>• Contact support if you need help with any tool</li>
           </ul>
+        </div>
         </div>
       </div>
     </div>

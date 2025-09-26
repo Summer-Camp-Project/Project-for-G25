@@ -123,20 +123,103 @@ router.get('/leaderboard',
 
 router.post('/share-progress',
   [
-    body('goalId').isMongoId(),
-    body('message').optional().isString(),
-    body('platforms').optional().isArray()
+    body('goalId').optional().isMongoId(),
+    body('achievementId').optional().isMongoId(),
+    body('activityType').optional().isIn(['course_completed', 'quiz_passed', 'artifact_discovered', 'museum_visited', 'heritage_explored']),
+    body('message').optional().isString().isLength({ max: 500 }),
+    body('platforms').optional().isArray(),
+    body('privacy').optional().isIn(['public', 'followers', 'private'])
   ],
   communityController.shareProgress
 );
 
+// Enhanced Friend System
 router.get('/find-friends',
   [
     query('search').notEmpty().withMessage('Search term is required'),
+    query('filter').optional().isIn(['all', 'following', 'followers', 'mutual', 'suggested']),
+    query('sortBy').optional().isIn(['recent', 'name', 'activity']),
+    query('interests').optional().isString(),
+    query('location').optional().isString(),
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 })
   ],
   communityController.findUsers
+);
+
+router.get('/users/suggested',
+  [
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 50 })
+  ],
+  communityController.getSuggestedFriends
+);
+
+router.get('/users/:userId/profile',
+  [param('userId').isMongoId()],
+  communityController.getUserProfile
+);
+
+router.get('/users/connections',
+  [
+    query('userId').optional().isMongoId(),
+    query('type').optional().isIn(['followers', 'following']),
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 100 })
+  ],
+  communityController.getConnections
+);
+
+// Enhanced Posts System
+router.get('/posts',
+  [
+    query('category').optional().isIn(['general', 'artifacts', 'history', 'culture', 'heritage-sites', 'museums', 'events']),
+    query('sortBy').optional().isIn(['recent', 'popular', 'trending']),
+    query('search').optional().isString(),
+    query('tags').optional().isString(),
+    query('author').optional().isMongoId(),
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 50 })
+  ],
+  communityController.getPosts
+);
+
+router.post('/posts',
+  [
+    body('title').isLength({ min: 5, max: 200 }).withMessage('Title must be between 5 and 200 characters'),
+    body('content').isLength({ min: 10, max: 5000 }).withMessage('Content must be between 10 and 5000 characters'),
+    body('category').optional().isIn(['general', 'artifacts', 'history', 'culture', 'heritage-sites', 'museums', 'events']),
+    body('tags').optional().isArray()
+  ],
+  communityController.createPost
+);
+
+router.post('/posts/:id/like',
+  [param('id').isMongoId()],
+  communityController.toggleLikePost
+);
+
+router.post('/posts/:id/comments',
+  [
+    param('id').isMongoId(),
+    body('content').isLength({ min: 1, max: 1000 }).withMessage('Comment must be between 1 and 1000 characters')
+  ],
+  communityController.addComment
+);
+
+// Social Features
+router.post('/users/:userId/follow',
+  [param('userId').isMongoId()],
+  communityController.toggleFollow
+);
+
+router.get('/activity',
+  [
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 50 }),
+    query('userId').optional().isMongoId()
+  ],
+  communityController.getActivityFeed
 );
 
 // Community statistics

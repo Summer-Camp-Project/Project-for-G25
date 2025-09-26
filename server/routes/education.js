@@ -629,6 +629,246 @@ router.get('/courses/:courseId/enrollment/:userId', async (req, res) => {
   }
 });
 
+// ===== VISITOR LEARNING STATS =====
+
+// Get visitor learning statistics for dashboard
+router.get('/learning-stats', async (req, res) => {
+  try {
+    const userId = req.user?.id || req.query.userId;
+    
+    if (!userId) {
+      // Return empty stats for non-authenticated users
+      return res.json({
+        success: true,
+        stats: {
+          coursesEnrolled: 0,
+          coursesCompleted: 0,
+          certificatesEarned: 0,
+          totalStudyHours: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          totalQuizzesTaken: 0,
+          averageQuizScore: 0,
+          flashcardsStudied: 0,
+          gamesPlayed: 0,
+          achievementsEarned: 0,
+          favoriteCategory: 'heritage',
+          recentActivities: [],
+          progressOverview: {
+            weeklyProgress: [],
+            categoryProgress: {}
+          },
+          learningGoals: {
+            dailyGoal: 30,
+            weeklyGoal: 210,
+            currentWeekProgress: 0
+          }
+        }
+      });
+    }
+    
+    const LearningProgress = require('../models/LearningProgress');
+    const QuizAttempt = require('../models/QuizAttempt');
+    const Certificate = require('../models/Certificate');
+    const Course = require('../models/Course');
+    
+    // Get learning progress
+    const progress = await LearningProgress.findOne({ userId })
+      .populate('courses.courseId', 'title category image')
+      .lean();
+    
+    // Get quiz attempts
+    const quizAttempts = await QuizAttempt.find({ user: userId })
+      .populate('quiz', 'title category')
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+    
+    // Get certificates
+    const certificates = await Certificate.find({ 
+      recipient: userId, 
+      isActive: true 
+    }).populate('course', 'title').lean();
+    
+    let stats = {
+      coursesEnrolled: 0,
+      coursesCompleted: 0,
+      certificatesEarned: certificates.length,
+      totalStudyHours: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      totalQuizzesTaken: quizAttempts.length,
+      averageQuizScore: 0,
+      flashcardsStudied: 0,
+      gamesPlayed: 0,
+      achievementsEarned: 0,
+      favoriteCategory: 'heritage',
+      recentActivities: [],
+      progressOverview: {
+        weeklyProgress: [],
+        categoryProgress: {}
+      },
+      learningGoals: {
+        dailyGoal: 30, // minutes
+        weeklyGoal: 210, // minutes
+        currentWeekProgress: 0
+      }
+    };
+    
+    if (progress) {
+      stats.coursesEnrolled = progress.courses.length;
+      stats.coursesCompleted = progress.courses.filter(c => c.status === 'completed').length;
+      stats.totalStudyHours = Math.round((progress.overallStats.totalTimeSpent || 0) / 60);
+      stats.currentStreak = progress.overallStats.currentStreak || 0;
+      stats.longestStreak = progress.overallStats.longestStreak || 0;
+      stats.achievementsEarned = progress.achievements?.length || 0;
+      
+      // Calculate favorite category
+      const categoryCount = {};
+      progress.courses.forEach(course => {
+        if (course.courseId && course.courseId.category) {
+          categoryCount[course.courseId.category] = (categoryCount[course.courseId.category] || 0) + 1;
+        }
+      });
+      
+      stats.favoriteCategory = Object.keys(categoryCount).reduce((a, b) => 
+        categoryCount[a] > categoryCount[b] ? a : b, 'heritage'
+      ) || 'heritage';
+      
+      // Calculate category progress
+      const categoryProgress = {};
+      progress.courses.forEach(course => {
+        if (course.courseId && course.courseId.category) {
+          const category = course.courseId.category;
+          if (!categoryProgress[category]) {
+            categoryProgress[category] = { completed: 0, total: 0, progress: 0 };
+          }
+          categoryProgress[category].total++;
+          if (course.status === 'completed') {
+            categoryProgress[category].completed++;
+          }
+          categoryProgress[category].progress += course.progressPercentage || 0;
+        }
+      });
+      
+      // Calculate average progress per category
+      Object.keys(categoryProgress).forEach(category => {
+        const cat = categoryProgress[category];
+        cat.averageProgress = cat.total > 0 ? Math.round(cat.progress / cat.total) : 0;
+      });
+      
+      stats.progressOverview.categoryProgress = categoryProgress;
+      
+      // Recent activities (last 10)
+      const recentActivities = [];
+      
+      // Add course enrollments
+      progress.courses.forEach(course => {
+        if (course.enrolledAt && course.courseId) {
+          recentActivities.push({
+            type: 'course_enrolled',
+            title: `Enrolled in ${course.courseId.title}`,
+            description: `Started learning ${course.courseId.category}`,
+            date: course.enrolledAt,
+            icon: 'book',
+            category: course.courseId.category
+          });
+        }
+        
+        if (course.completedAt && course.courseId) {
+          recentActivities.push({
+            type: 'course_completed',
+            title: `Completed ${course.courseId.title}`,
+            description: `Finished course in ${course.courseId.category}`,
+            date: course.completedAt,
+            icon: 'trophy',
+            category: course.courseId.category
+          });
+        }
+      });
+      
+      // Add recent quiz attempts
+      quizAttempts.slice(0, 5).forEach(attempt => {
+        if (attempt.submittedAt && attempt.quiz) {
+          recentActivities.push({
+            type: 'quiz_completed',
+            title: `Completed ${attempt.quiz.title}`,
+            description: `Scored ${attempt.percentage || 0}% in ${attempt.quiz.category} quiz`,
+            date: attempt.submittedAt,
+            icon: 'puzzle',
+            category: attempt.quiz.category,
+            score: attempt.percentage
+          });
+        }
+      });
+      
+      // Add certificates earned
+      certificates.forEach(cert => {
+        recentActivities.push({
+          type: 'certificate_earned',
+          title: `Certificate Earned: ${cert.course?.title || cert.title}`,
+          description: `Achievement unlocked in ${cert.category || 'general'}`,
+          date: cert.issuedAt,
+          icon: 'award',
+          category: cert.category || 'general'
+        });
+      });
+      
+      // Sort by date and take last 10
+      stats.recentActivities = recentActivities
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 10);
+      
+      // Calculate weekly progress for the chart
+      const weeklyProgress = [];
+      const today = new Date();
+      let currentWeekProgress = 0;
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        
+        // Calculate progress for this day (simplified)
+        const dayProgress = progress.courses.reduce((total, course) => {
+          const dayLessons = course.lessons.filter(lesson => {
+            const lessonDate = new Date(lesson.completedAt || lesson.lastAccessedAt);
+            return lessonDate.toDateString() === date.toDateString();
+          });
+          return total + dayLessons.reduce((time, lesson) => time + (lesson.timeSpent || 0), 0);
+        }, 0);
+        
+        const dayMinutes = Math.round(dayProgress / 60);
+        weeklyProgress.push({
+          day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+          date: date.toISOString().split('T')[0],
+          minutes: dayMinutes,
+          sessions: dayProgress > 0 ? 1 : 0
+        });
+        
+        // Add to current week progress
+        currentWeekProgress += dayMinutes;
+      }
+      
+      stats.progressOverview.weeklyProgress = weeklyProgress;
+      stats.learningGoals.currentWeekProgress = currentWeekProgress;
+    }
+    
+    // Calculate quiz statistics
+    if (quizAttempts.length > 0) {
+      const completedQuizzes = quizAttempts.filter(q => q.status === 'submitted');
+      if (completedQuizzes.length > 0) {
+        const totalScore = completedQuizzes.reduce((sum, quiz) => sum + (quiz.percentage || 0), 0);
+        stats.averageQuizScore = Math.round(totalScore / completedQuizzes.length);
+      }
+    }
+    
+    res.json({ success: true, stats });
+  } catch (error) {
+    console.error('Get learning stats error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ===== DASHBOARD & SUMMARY ROUTES =====
 
 // Get education dashboard summary for homepage/top bar

@@ -1,61 +1,63 @@
+const mongoose = require('mongoose');
 const Course = require('../models/Course');
-const Enrollment = require('../models/Enrollment');
 const Quiz = require('../models/Quiz');
-const QuizAttempt = require('../models/QuizAttempt');
 const Flashcard = require('../models/Flashcard');
 const LiveSession = require('../models/LiveSession');
-const Certificate = require('../models/Certificate');
 const StudyGuide = require('../models/StudyGuide');
+const Certificate = require('../models/Certificate');
+const LearningProgress = require('../models/LearningProgress');
+const QuizAttempt = require('../models/QuizAttempt');
+const Enrollment = require('../models/Enrollment');
+const User = require('../models/User');
 const { validationResult } = require('express-validator');
 
-class EducationController {
-  // Courses
-  async getCourses(req, res) {
-    try {
-      const {
-        page = 1,
-        limit = 10,
-        category,
-        difficulty,
-        sort = 'createdAt',
-        search
-      } = req.query;
+// ===== COURSES =====
+const getCourses = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      category,
+      difficulty,
+      sort = 'createdAt',
+      search
+    } = req.query;
 
-      const query = { isActive: true };
-      
-      if (category) query.category = category;
-      if (difficulty) query.difficulty = difficulty;
-      if (search) {
-        query.$or = [
-          { title: { $regex: search, $options: 'i' }},
-          { description: { $regex: search, $options: 'i' }}
-        ];
-      }
-
-      const courses = await Course.find(query)
-        .populate('instructor', 'name email profileImage')
-        .populate('museum', 'name location')
-        .sort({ [sort]: -1 })
-        .limit(limit * 1)
-        .skip((page - 1) * limit);
-
-      const total = await Course.countDocuments(query);
-
-      res.json({
-        success: true,
-        data: courses,
-        pagination: {
-          current: page,
-          pages: Math.ceil(total / limit),
-          total
-        }
-      });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+    const query = { isActive: true };
+    
+    if (category) query.category = category;
+    if (difficulty) query.difficulty = difficulty;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' }},
+        { description: { $regex: search, $options: 'i' }}
+      ];
     }
-  }
 
-  async getCourse(req, res) {
+    const courses = await Course.find(query)
+      .populate('instructor', 'name email profileImage')
+      .populate('museum', 'name location')
+      .sort({ [sort]: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Course.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: courses,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getCourse = async (req, res) => {
     try {
       const course = await Course.findById(req.params.id)
         .populate('instructor', 'name email profileImage bio')
@@ -86,9 +88,9 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  async enrollInCourse(req, res) {
+const enrollInCourse = async (req, res) => {
     try {
       const courseId = req.params.id;
       const userId = req.user.id;
@@ -133,9 +135,9 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  async getMyEnrollments(req, res) {
+const getMyEnrollments = async (req, res) => {
     try {
       const { status, page = 1, limit = 10 } = req.query;
       
@@ -168,10 +170,10 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  // Quizzes
-  async getQuizzes(req, res) {
+// Quizzes
+const getQuizzes = async (req, res) => {
     try {
       const { category, difficulty, page = 1, limit = 10 } = req.query;
       
@@ -201,9 +203,9 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  async getQuiz(req, res) {
+const getQuiz = async (req, res) => {
     try {
       const quiz = await Quiz.findById(req.params.id)
         .populate('createdBy', 'name')
@@ -235,9 +237,9 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  async startQuizAttempt(req, res) {
+const startQuizAttempt = async (req, res) => {
     try {
       const quizId = req.params.id;
       const userId = req.user.id;
@@ -276,9 +278,9 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  async submitQuizAttempt(req, res) {
+const submitQuizAttempt = async (req, res) => {
     try {
       const { answers } = req.body;
       const attemptId = req.params.attemptId;
@@ -327,10 +329,10 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  // Flashcards
-  async getFlashcards(req, res) {
+// Flashcards
+const getFlashcards = async (req, res) => {
     try {
       const { category, difficulty, page = 1, limit = 20 } = req.query;
       
@@ -360,10 +362,10 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  // Live Sessions
-  async getLiveSessions(req, res) {
+// Live Sessions
+const getLiveSessions = async (req, res) => {
     try {
       const { category, status = 'scheduled', page = 1, limit = 10 } = req.query;
       
@@ -392,9 +394,9 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  async registerForLiveSession(req, res) {
+const registerForLiveSession = async (req, res) => {
     try {
       const sessionId = req.params.id;
       const userId = req.user.id;
@@ -413,10 +415,10 @@ class EducationController {
     } catch (error) {
       res.status(400).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  // Study Guides
-  async getStudyGuides(req, res) {
+// Study Guides
+const getStudyGuides = async (req, res) => {
     try {
       const { category, page = 1, limit = 10 } = req.query;
       
@@ -444,10 +446,10 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  };
 
-  // Certificates
-  async getMyCertificates(req, res) {
+// Certificates
+const getMyCertificates = async (req, res) => {
     try {
       const certificates = await Certificate.find({
         recipient: req.user.id,
@@ -464,7 +466,89 @@ class EducationController {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
-}
+  };
 
-module.exports = new EducationController();
+// Platform stats endpoint for visitor dashboard
+const getPlatformStats = async (req, res) => {
+  try {
+    // Get platform-wide statistics
+    const [totalCourses, totalLearners, completedEnrollments] = await Promise.all([
+      Course.countDocuments({ isActive: true }),
+      User.countDocuments({ role: { $in: ['visitor', 'student'] } }),
+      Enrollment.countDocuments({ status: 'completed' })
+    ]);
+
+    // Calculate success rate
+    const totalEnrollments = await Enrollment.countDocuments();
+    const successRate = totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
+
+    // Get featured courses
+    const featuredCourses = await Course.find({ 
+      isActive: true, 
+      featured: true 
+    })
+    .populate('instructor', 'name')
+    .sort({ enrollmentCount: -1 })
+    .limit(6);
+
+    // Get categories with course counts
+    const categories = await Course.aggregate([
+      { $match: { isActive: true } },
+      { 
+        $group: {
+          _id: '$category',
+          coursesCount: { $sum: 1 },
+          description: { $first: '$categoryDescription' }
+        }
+      },
+      { $sort: { coursesCount: -1 } },
+      { 
+        $project: {
+          name: '$_id',
+          coursesCount: 1,
+          description: { $ifNull: ['$description', 'Explore this category'] },
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        totalCourses,
+        totalLearners,
+        coursesCompleted: completedEnrollments,
+        successRate
+      },
+      featured: {
+        courses: featuredCourses
+      },
+      categories,
+      message: 'Platform statistics retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Error getting platform stats:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get platform statistics',
+      error: error.message 
+    });
+  }
+};
+
+module.exports = {
+  getCourses,
+  getCourse,
+  enrollInCourse,
+  getMyEnrollments,
+  getQuizzes,
+  getQuiz,
+  startQuizAttempt,
+  submitQuizAttempt,
+  getFlashcards,
+  getLiveSessions,
+  registerForLiveSession,
+  getStudyGuides,
+  getMyCertificates,
+  getPlatformStats
+};

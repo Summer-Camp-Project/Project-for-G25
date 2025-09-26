@@ -23,8 +23,10 @@ import EducationalTours from './pages/EducationalTours'
 import AdminSupport from './pages/AdminSupport';
 import Support from './pages/Support';
 import StudyGuides from './pages/StudyGuides'
+import EducationHub from './pages/EducationHub'
 // Visitor specific pages
 import VisitorVirtualMuseum from './pages/visitor/VirtualMuseum'
+import StudyGroups from './pages/visitor/StudyGroups'
 import ProfileSettings from './pages/visitor/ProfileSettings';
 import MyLearning from './pages/visitor/MyLearning';
 import Certificates from './pages/visitor/Certificates';
@@ -49,6 +51,11 @@ import Flashcards from './pages/visitor/Flashcards';
 import EnhancedProgress from './pages/visitor/EnhancedProgress';
 import Games from './pages/visitor/Games';
 import Collections from './pages/visitor/Collections';
+// Tools & Resources pages
+import LanguageGuide from './pages/visitor/LanguageGuide';
+import CulturalCalendar from './pages/visitor/CulturalCalendar';
+import ConverterTools from './pages/visitor/ConverterTools';
+import MobileApp from './pages/visitor/MobileApp';
 // Museum Admin components
 import MuseumProfile from './components/museum/MuseumProfile'
 import ArtifactManagement from './components/museum/ArtifactManagement'
@@ -183,22 +190,18 @@ function App() {
             </>
           } />
           {/* Educational Routes - Consolidated */}
-          <Route path="/courses" element={
-            <>
-              <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              <Courses />
-              <Footer />
-            </>
-          } />
           <Route path="/education" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              <Courses />
+              <EducationHub />
               <Footer />
             </>
           } />
-          {/* Redirect old learning route to courses */}
-          <Route path="/learning" element={<Navigate to="/courses" replace />} />
+          {/* Redirect old routes to main education hub */}
+          <Route path="/courses" element={<Navigate to="/education" replace />} />
+          <Route path="/education-hub" element={<Navigate to="/education" replace />} />
+          {/* Redirect old learning route to education */}
+          <Route path="/learning" element={<Navigate to="/education" replace />} />
           <Route path="/educational-tours" element={
             <>
               <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
@@ -490,6 +493,11 @@ function App() {
               <Community />
             </RoleBasedRoute>
           } />
+          <Route path="/visitor/groups" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <StudyGroups />
+            </RoleBasedRoute>
+          } />
           <Route path="/visitor/leaderboard" element={
             <RoleBasedRoute allowedRoles={['user']}>
               <CommunityLeaderboard />
@@ -598,6 +606,33 @@ function App() {
                   <p className="text-gray-600">Manage your notification preferences.</p>
                 </div>
               </div>
+            </RoleBasedRoute>
+          } />
+
+          {/* Tools & Resources Sub-pages */}
+          <Route path="/visitor/dashboard-tool" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <VisitorDashboard darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/language" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <LanguageGuide />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/cultural-calendar" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <CulturalCalendar />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/converters" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <ConverterTools />
+            </RoleBasedRoute>
+          } />
+          <Route path="/visitor/mobile" element={
+            <RoleBasedRoute allowedRoles={['user']}>
+              <MobileApp />
             </RoleBasedRoute>
           } />
 

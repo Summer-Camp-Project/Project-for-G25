@@ -24,6 +24,9 @@ const organizerRoutes = require('./routes/organizer');
 const studentDashboardRoutes = require('./routes/studentDashboard'); // Added student dashboard routes
 const educationalTourRoutes = require('./routes/educationalTourRoutes');
 const visitorRoutes = require('./routes/visitor');
+const visitorEventsRoutes = require('./routes/visitorEvents');
+const visitorExhibitionsRoutes = require('./routes/visitorExhibitions');
+const adminExhibitionsRoutes = require('./routes/adminExhibitions');
 // const toursRoutes = require('./routes/tours');
 const tourPackageRoutes = require('./routes/TourPackage');
 const bookingRoutes = require('./routes/Booking');
@@ -159,8 +162,11 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/users', usersRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/visitor', visitorRoutes);
+app.use('/api/visitor/events', visitorEventsRoutes); // Visitor events API
+app.use('/api/visitor/exhibitions', visitorExhibitionsRoutes); // Visitor exhibitions API
 app.use('/api/rentals', rentalsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/exhibitions', adminExhibitionsRoutes); // Admin exhibitions management API
 app.use('/api/super-admin', superAdminRoutes);
 // app.use('/api/museum-admin', museumAdminRoutes);
 app.use('/api/museums', museumRoutes); // Added museum management API
@@ -169,7 +175,7 @@ app.use('/api/artifacts', artifactRoutes); // Added artifact management API
 app.use('/api/staff', staffRoutes); // Added staff management API
 app.use('/api/events', eventRoutes); // Added event management API
 app.use('/api/organizer', organizerRoutes);
-// app.use('/api/tours', toursRoutes);
+app.use('/api/tours', require('./routes/tours'));
 app.use('/api/tour-packages', tourPackageRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/messages', messageRoutes);
@@ -206,7 +212,7 @@ app.use('/api/live-sessions', liveSessionsRoutes); // Live sessions management
 // Enhanced feature API routes
 app.use('/api/games', gamesRoutes); // Games management and playing
 app.use('/api/collections', collectionsRoutes); // Collections management
-app.use('/api/tools', toolsAndResourcesRoutes); // Tools and resources
+app.use('/api/tools', require('./routes/toolsRoutes')); // Tools and resources
 app.use('/api/enhanced-progress', enhancedProgressRoutes); // Enhanced progress tracking
 app.use('/api/leaderboard', leaderboardRoutes); // Community leaderboard
 app.use('/api/progress-tracker', progressTrackerRoutes); // Comprehensive progress tracking system

@@ -69,7 +69,7 @@ const Home = () => {
 
   // Real-time WebSocket connection
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // Create axios instance with default config
 const educationAPI = axios.create({
@@ -297,29 +297,47 @@ class EducationService {
   // ============ USER LEARNING DATA ============
 
   /**
-   * Get user learning statistics
+   * Get user learning statistics for visitor dashboard
    */
   async getLearningStats() {
     try {
       console.log('📈 Fetching learning statistics...');
-      const response = await educationAPI.get('/user/learning/stats');
+      const response = await educationAPI.get('/learning-stats');
       console.log('✅ Learning stats fetched:', response.data);
 
       return {
         success: true,
-        stats: response.data.stats || response.data.data || {},
+        stats: response.data.stats || {},
         message: response.data.message
       };
     } catch (error) {
       console.error('❌ Error fetching learning stats:', error);
+      // Fallback to default stats structure for visitor dashboard
       return {
-        success: false,
+        success: true,
         stats: {
-          totalCoursesEnrolled: 0,
-          completedCourses: 0,
+          coursesEnrolled: 0,
+          coursesCompleted: 0,
           certificatesEarned: 0,
-          totalHoursLearned: 0,
-          averageProgress: 0
+          totalStudyHours: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          totalQuizzesTaken: 0,
+          averageQuizScore: 0,
+          flashcardsStudied: 0,
+          gamesPlayed: 0,
+          achievementsEarned: 0,
+          favoriteCategory: 'heritage',
+          recentActivities: [],
+          progressOverview: {
+            weeklyProgress: [],
+            categoryProgress: {}
+          },
+          learningGoals: {
+            dailyGoal: 30,
+            weeklyGoal: 210,
+            currentWeekProgress: 0
+          }
         },
         error: error.response?.data?.message || error.message
       };

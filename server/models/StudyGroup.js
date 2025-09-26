@@ -209,4 +209,4 @@ studyGroupSchema.methods.generateInviteCode = function() {
   return Promise.resolve(this);
 };
 
-module.exports = mongoose.model('StudyGroup', studyGroupSchema);
+module.exports = mongoose.models.StudyGroup || mongoose.model('StudyGroup', studyGroupSchema);

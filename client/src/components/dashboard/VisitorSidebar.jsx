@@ -43,7 +43,11 @@ import {
   Share2,
   Headphones,
   Monitor,
-  Smartphone
+  Smartphone,
+  Brain,
+  Shield,
+  Command,
+  Layers
 } from 'lucide-react';
 import visitorDashboardService from '../../services/visitorDashboardService';
 import visitorLogo from '../../assets/visitor-logo.jpg';
@@ -110,11 +114,11 @@ const VisitorSidebar = () => {
       id: 'education',
       label: 'Education Hub',
       icon: GraduationCap,
-      path: '/visitor/education',
+      path: '/education',
       description: 'Learn Ethiopian heritage',
       badge: userStats.coursesEnrolled > 0 ? userStats.coursesEnrolled : null,
       subItems: [
-        { label: 'Browse Courses', path: '/courses', icon: BookOpen, description: 'Discover new courses' },
+        { label: 'Browse Courses', path: '/education', icon: BookOpen, description: 'Discover new courses' },
         { label: 'My Learning', path: '/visitor/my-learning', icon: User, description: 'Your enrolled courses' },
         { label: 'Study Guides', path: '/study-guides', icon: FileText, description: 'Download study materials' },
         { label: 'Certificates', path: '/visitor/certificates', icon: Trophy, description: 'Your achievements' },
@@ -138,15 +142,15 @@ const VisitorSidebar = () => {
     {
       id: 'learning',
       label: 'Interactive Learning',
-      icon: Target,
-      path: '/visitor/learning',
+      icon: Brain,
+      path: '/education',
       description: 'Engage with interactive content',
       subItems: [
-        { label: 'Quiz & Games', path: '/visitor/quiz', icon: Trophy, description: 'Test your knowledge' },
+        { label: 'Interactive Quizzes', path: '/education?section=quizzes', icon: Brain, description: 'Test your knowledge with dynamic quizzes' },
+        { label: 'Flashcard Practice', path: '/education?section=flashcards', icon: Layers, description: 'Study with interactive flashcards' },
         { label: 'Virtual Tours', path: '/tours', icon: MapPin, description: 'Immersive experiences' },
-        { label: 'Live Sessions', path: '/visitor/live-sessions', icon: Users, description: 'Join live events' },
-        { label: 'Progress Tracker', path: '/visitor/progress', icon: TrendingUp, description: 'Monitor your learning' },
-        { label: 'Flashcards', path: '/visitor/flashcards', icon: BookOpen, description: 'Study cards' }
+        { label: 'Live Sessions', path: '/visitor/live-sessions', icon: Users, description: 'Join live educational events' },
+        { label: 'Progress Tracker', path: '/visitor/progress', icon: TrendingUp, description: 'Monitor your learning journey' }
       ]
     },
     {
@@ -214,6 +218,7 @@ const VisitorSidebar = () => {
       path: '/visitor/tools',
       description: 'Helpful tools and utilities',
       subItems: [
+        { label: 'Visitor Dashboard', path: '/visitor/dashboard-tool', icon: BarChart3, description: 'Your personal learning analytics dashboard' },
         { label: 'Heritage Map', path: '/map', icon: MapPin, description: 'Explore Ethiopia locations' },
         { label: 'Language Guide', path: '/visitor/language', icon: Globe, description: 'Learn Amharic phrases' },
         { label: 'Cultural Calendar', path: '/visitor/cultural-calendar', icon: Calendar, description: 'Ethiopian holidays' },
@@ -374,6 +379,46 @@ const VisitorSidebar = () => {
             {visitorMenuItems.map(renderMenuItem)}
           </nav>
         </div>
+
+        {/* Super Admin Section - Only for elevated users */}
+        {(user?.role === 'superAdmin' || user?.role === 'admin') && (
+          <div className="p-4 border-t border-gray-100">
+            <h3 className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Shield className="h-3 w-3" />
+              Admin Access
+            </h3>
+            <nav className="space-y-1">
+              <button
+                onClick={() => handleNavigation('/super-admin')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
+                  isActive('/super-admin')
+                    ? 'bg-red-50 text-red-700 border-r-2 border-red-600'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Command className="h-5 w-5" />
+                <div className="flex-1">
+                  <span className="font-medium">Super Admin Dashboard</span>
+                  <p className="text-xs text-gray-500">System administration</p>
+                </div>
+              </button>
+              <button
+                onClick={() => handleNavigation('/super-admin/student-management')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
+                  isActive('/super-admin/student-management')
+                    ? 'bg-red-50 text-red-700 border-r-2 border-red-600'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Users className="h-5 w-5" />
+                <div className="flex-1">
+                  <span className="font-medium">Education Management</span>
+                  <p className="text-xs text-gray-500">Manage courses & students</p>
+                </div>
+              </button>
+            </nav>
+          </div>
+        )}
 
         {/* Settings Section */}
         <div className="p-4 border-t border-gray-100">
