@@ -46,6 +46,7 @@ const visitorDashboardRoutes = require('./routes/visitorDashboard'); // Added vi
 const userRoutes = require('./routes/User');
 const rentalsRoutes = require('./routes/rentals');
 const liveSessionsRoutes = require('./routes/liveSessionsRoutes'); // Add live sessions routes
+const communicationsRoutes = require('./routes/communications'); // Add communications routes
 
 // New comprehensive routes
 const educationHubRoutes = require('./routes/educationRoutes');
@@ -208,6 +209,7 @@ app.use('/api/social', require('./routes/socialRoutes')); // Social features
 app.use('/api/system-settings', require('./routes/systemSettings')); // System settings management
 app.use('/api/flashcards', require('./routes/flashcards')); // Flashcards management
 app.use('/api/live-sessions', liveSessionsRoutes); // Live sessions management
+app.use('/api/communications', communicationsRoutes); // Communications management
 
 // Enhanced feature API routes
 app.use('/api/games', gamesRoutes); // Games management and playing
