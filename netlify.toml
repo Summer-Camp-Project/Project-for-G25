@@ -9,8 +9,8 @@
   command = "cd client && npm install && npm run build"
 
 [build.environment]
-  NODE_VERSION = "18"
-  NPM_VERSION = "8"
+  NODE_VERSION = "20"
+  NPM_VERSION = "10"
 
 # Redirect all server-side API routes to Netlify Functions
 [[redirects]]
