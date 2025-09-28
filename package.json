@@ -54,6 +54,8 @@
     "setup:dev": "node scripts/dev-setup.js",
     "test:connectivity": "node scripts/test-connectivity.js",
     "fix:deps": "node scripts/fix-dependencies.js",
+    "setup:openai": "node scripts/setup-openai.js",
+    "test:openai": "node test-openai-integration.js",
     "start": "cd server && npm start",
     "start:client": "cd client && npm run preview",
     "start:server": "cd server && npm start",
