@@ -36,7 +36,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       },
       {
@@ -56,7 +56,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       },
       {
@@ -76,7 +76,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       },
       {
@@ -96,7 +96,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       }
     ];
@@ -120,7 +120,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       }
     ];
@@ -144,7 +144,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       },
       {
@@ -164,7 +164,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       },
       {
@@ -184,7 +184,7 @@ const seedUsers = async () => {
             push: true
           }
         },
-        isEmailVerified: true,
+        isVerified: true,
         isActive: true
       }
     ];

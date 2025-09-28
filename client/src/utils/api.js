@@ -13,29 +13,59 @@ class ApiClient {
   }
 
   async checkBackendAvailability() {
+    // Skip check if we're forced to use mock API
+    if (USE_MOCK_API) {
+      this.useMockAPI = true
+      this.backendChecked = true
+      return false
+    }
+
     if (this.backendChecked) return !this.useMockAPI
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000)
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // Increased timeout
 
-      const response = await fetch(`${this.baseURL}/health`, {
-        method: 'GET',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+      // Try health check first
+      let response
+      try {
+        response = await fetch(`${this.baseURL}/health`, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      } catch (healthError) {
+        console.log('Health endpoint failed, trying root endpoint')
+        // Fallback to root endpoint if health check fails
+        response = await fetch(`${this.baseURL.replace('/api', '')}`, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      }
 
       clearTimeout(timeoutId)
 
-      if (response.ok) {
-        const data = await response.json()
-        this.useMockAPI = false
+      if (response && response.ok) {
+        try {
+          const data = await response.json()
+          console.log('Backend is available:', data.message || 'OK')
+          this.useMockAPI = false
+        } catch {
+          // Even if we can't parse JSON, if we got a 200 response, backend is available
+          console.log('Backend is available (non-JSON response)')
+          this.useMockAPI = false
+        }
       } else {
+        console.log('Backend not available, falling back to mock API')
         this.useMockAPI = true
       }
     } catch (error) {
+      console.log('Backend check failed:', error.message, '- using mock API')
       this.useMockAPI = true
     }
 

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 
 class CollectionService {
   constructor() {
-    this.baseURL = '/api/collections';
+    this.baseURL = '/collections';
   }
 
   // ===============================

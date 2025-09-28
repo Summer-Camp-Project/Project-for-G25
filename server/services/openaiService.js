@@ -349,6 +349,126 @@ Context: ${context}`;
       };
     }
   }
+
+  /**
+   * Check if OpenAI service is available
+   */
+  isAvailable() {
+    return this.isConfigured() && !!this.openai;
+  }
+
+  /**
+   * Get chat completion for enhanced chatbot
+   * Compatible with standard OpenAI API format
+   */
+  async getChatCompletion(request) {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      throw new Error(canExecute.error);
+    }
+
+    try {
+      const completion = await this.openai.chat.completions.create(request);
+      return completion;
+    } catch (error) {
+      console.error('OpenAI chat completion error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate Ethiopian heritage focused response
+   */
+  async generateHeritageResponse(userMessage, context = {}) {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
+    try {
+      const systemPrompt = this.buildHeritageSystemPrompt(context);
+      
+      const completion = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        max_tokens: 600,
+        temperature: 0.7,
+        presence_penalty: 0.1,
+        frequency_penalty: 0.1
+      });
+
+      return {
+        success: true,
+        response: completion.choices[0].message.content.trim(),
+        context: context,
+        model: this.model
+      };
+    } catch (error) {
+      console.error('OpenAI heritage response generation error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Build comprehensive system prompt for Ethiopian heritage context
+   */
+  buildHeritageSystemPrompt(context = {}) {
+    const basePrompt = `You are an intelligent assistant for EthioHeritage360, a platform dedicated to Ethiopian cultural heritage preservation and education. You are knowledgeable, culturally respectful, and enthusiastic about Ethiopian history, culture, and heritage sites.
+
+Key Ethiopian Heritage Information:
+- Heritage Sites: Lalibela (rock churches), Aksum (ancient kingdom), Gondar (royal city), Harar (historic city), Simien Mountains
+- Coffee Culture: Ethiopia is the birthplace of coffee with traditional ceremonies central to social life
+- Calendar: Ethiopian calendar has 13 months, 7-8 years behind Gregorian calendar
+- Languages: Over 80 languages spoken, Amharic is official, Ge'ez script used
+- Religious Diversity: Orthodox Christianity (4th century), Islam, traditional beliefs
+- Major Festivals: Timkat (Epiphany), Meskel (True Cross), Enkutatash (New Year)
+
+Platform Features:
+- Virtual 3D tours of heritage sites
+- Digital museum with artifacts and historical items
+- Educational courses and cultural learning modules
+- Tour booking system for physical visits
+- Interactive heritage maps and guides`;
+
+    // Add context-specific information
+    let contextPrompt = '';
+    if (context.userRole) {
+      const rolePrompts = {
+        'museumAdmin': '\n\nUser Role: Museum administrator who needs help with platform management, staff coordination, visitor analytics, and artifact curation.',
+        'user': '\n\nUser Role: Registered user interested in Ethiopian culture, heritage tours, and educational content.',
+        'visitor': '\n\nUser Role: General visitor exploring the platform and learning about Ethiopian heritage.'
+      };
+      contextPrompt += rolePrompts[context.userRole] || rolePrompts.visitor;
+    }
+
+    if (context.platformContext) {
+      const contextPrompts = {
+        'museum_exploration': '\n\nCurrent Context: User is exploring virtual museums and artifact collections.',
+        'artifact_viewing': '\n\nCurrent Context: User is viewing specific artifacts and learning about their history.',
+        'tour_booking': '\n\nCurrent Context: User is interested in booking tours or travel experiences.',
+        'virtual_tour': '\n\nCurrent Context: User is taking or interested in virtual tours of heritage sites.',
+        'learning': '\n\nCurrent Context: User is engaged with educational content and learning modules.',
+        'admin_overview': '\n\nCurrent Context: Museum administrator viewing dashboard and analytics.',
+        'artifact_management': '\n\nCurrent Context: Museum administrator managing artifact uploads and curation.',
+        'visitor_analytics': '\n\nCurrent Context: Museum administrator reviewing visitor statistics and engagement.'
+      };
+      contextPrompt += contextPrompts[context.platformContext] || '';
+    }
+
+    return basePrompt + contextPrompt + '\n\nAlways provide helpful, accurate, and culturally respectful responses. Include practical suggestions for user actions when appropriate.';
+  }
 }
 
 module.exports = new OpenAIService();
