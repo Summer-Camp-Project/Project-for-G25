@@ -1,10 +1,15 @@
 const OpenAI = require('openai');
+const retry = require('retry');
 
 class OpenAIService {
   constructor() {
     this.openai = null;
     this.model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
     this.maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS) || 1000;
+    this.temperature = parseFloat(process.env.OPENAI_TEMPERATURE) || 0.7;
+    this.timeout = parseInt(process.env.OPENAI_TIMEOUT) || 30000;
+    this.maxRetries = parseInt(process.env.OPENAI_MAX_RETRIES) || 3;
+    this.retryDelay = parseInt(process.env.OPENAI_RETRY_DELAY) || 1000;
   }
 
   /**
@@ -358,6 +363,90 @@ Context: ${context}`;
   }
 
   /**
+   * Execute OpenAI request with retry logic and enhanced error handling
+   */
+  async executeWithRetry(apiCall, operationType = 'API call') {
+    const operation = retry.operation({
+      retries: this.maxRetries,
+      factor: 2,
+      minTimeout: this.retryDelay,
+      maxTimeout: this.retryDelay * 8,
+      randomize: true,
+    });
+
+    return new Promise((resolve, reject) => {
+      operation.attempt(async (currentAttempt) => {
+        try {
+          const result = await apiCall();
+          resolve(result);
+        } catch (error) {
+          const shouldRetry = this.shouldRetryError(error);
+          
+          if (operation.retry(shouldRetry ? error : null)) {
+            console.warn(`${operationType} attempt ${currentAttempt} failed, retrying...`, error.message);
+            return;
+          }
+          
+          // Log final error with context
+          console.error(`${operationType} failed after ${currentAttempt} attempts:`, {
+            error: error.message,
+            code: error.code,
+            status: error.status,
+            type: error.type
+          });
+          
+          reject(this.formatError(error, operationType));
+        }
+      });
+    });
+  }
+
+  /**
+   * Determine if an error should trigger a retry
+   */
+  shouldRetryError(error) {
+    if (!error) return false;
+    
+    // Retry on rate limit, timeout, and temporary server errors
+    const retryableCodes = ['rate_limit_exceeded', 'timeout', 'server_error'];
+    const retryableStatuses = [429, 500, 502, 503, 504];
+    
+    return retryableCodes.includes(error.code) || 
+           retryableStatuses.includes(error.status) ||
+           error.message?.includes('timeout') ||
+           error.message?.includes('network');
+  }
+
+  /**
+   * Format error for consistent error handling
+   */
+  formatError(error, operation) {
+    const errorInfo = {
+      operation,
+      timestamp: new Date().toISOString(),
+      message: error.message || 'Unknown error occurred',
+      code: error.code,
+      status: error.status,
+      type: error.type
+    };
+
+    // Provide user-friendly error messages
+    if (error.code === 'rate_limit_exceeded') {
+      errorInfo.userMessage = 'AI service is currently busy. Please try again in a moment.';
+    } else if (error.code === 'insufficient_quota') {
+      errorInfo.userMessage = 'AI service quota exceeded. Please contact support.';
+    } else if (error.code === 'invalid_api_key') {
+      errorInfo.userMessage = 'AI service configuration error. Please contact support.';
+    } else if (error.status >= 500) {
+      errorInfo.userMessage = 'AI service is temporarily unavailable. Please try again later.';
+    } else {
+      errorInfo.userMessage = 'AI service encountered an error. Please try again.';
+    }
+
+    return errorInfo;
+  }
+
+  /**
    * Get chat completion for enhanced chatbot
    * Compatible with standard OpenAI API format
    */
@@ -367,13 +456,10 @@ Context: ${context}`;
       throw new Error(canExecute.error);
     }
 
-    try {
-      const completion = await this.openai.chat.completions.create(request);
-      return completion;
-    } catch (error) {
-      console.error('OpenAI chat completion error:', error);
-      throw error;
-    }
+    return this.executeWithRetry(
+      () => this.openai.chat.completions.create(request),
+      'Chat completion'
+    );
   }
 
   /**
