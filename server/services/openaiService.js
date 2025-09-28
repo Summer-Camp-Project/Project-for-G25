@@ -2,18 +2,53 @@ const OpenAI = require('openai');
 
 class OpenAIService {
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    
+    this.openai = null;
     this.model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
     this.maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS) || 1000;
+  }
+
+  /**
+   * Initialize OpenAI client if not already initialized
+   */
+  initializeOpenAI() {
+    if (!this.openai && this.isConfigured()) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    }
+    return this.openai !== null;
+  }
+
+  /**
+   * Check if method can be executed
+   */
+  canExecute() {
+    if (!this.isConfigured()) {
+      return {
+        success: false,
+        error: 'OpenAI service is not configured. Please set OPENAI_API_KEY environment variable.'
+      };
+    }
+    
+    if (!this.initializeOpenAI()) {
+      return {
+        success: false,
+        error: 'Failed to initialize OpenAI client.'
+      };
+    }
+    
+    return { success: true };
   }
 
   /**
    * Generate artifact description using AI
    */
   async generateArtifactDescription(artifactName, category, historicalPeriod) {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       const prompt = `Generate a detailed and engaging description for an Ethiopian cultural artifact called "${artifactName}" from the ${category} category, dating from the ${historicalPeriod} period. Include historical context, cultural significance, and interesting facts about Ethiopian heritage. Keep it educational but accessible, around 150-200 words.`;
 
@@ -50,6 +85,11 @@ class OpenAIService {
    * Generate museum tour guide content
    */
   async generateTourGuide(museumName, exhibits, targetAudience = 'general') {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       const prompt = `Create an engaging tour guide script for ${museumName} featuring these exhibits: ${exhibits.join(', ')}. Target audience: ${targetAudience}. Include interesting stories, historical context, and interactive questions. Make it culturally sensitive and educational about Ethiopian heritage.`;
 
@@ -86,6 +126,11 @@ class OpenAIService {
    * Generate educational content for heritage learning
    */
   async generateEducationalContent(topic, difficulty = 'intermediate', contentType = 'lesson') {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       let prompt = '';
       
@@ -139,6 +184,11 @@ class OpenAIService {
    * Generate chatbot responses for visitor questions
    */
   async generateChatResponse(userMessage, context = '') {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       const systemPrompt = `You are a helpful AI assistant for EthioHeritage360, an Ethiopian cultural heritage platform. You help visitors with questions about Ethiopian museums, artifacts, culture, history, and heritage sites. Be informative, friendly, and culturally respectful. If you don't know something specific, suggest they contact the museum directly.
 
@@ -177,6 +227,11 @@ Context: ${context}`;
    * Generate personalized recommendations
    */
   async generateRecommendations(userPreferences, visitHistory = []) {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       const prompt = `Based on a user's preferences: ${JSON.stringify(userPreferences)} and their visit history: ${visitHistory.join(', ')}, recommend 5 Ethiopian heritage sites, museums, or cultural experiences. Explain why each recommendation matches their interests.`;
 
@@ -213,6 +268,11 @@ Context: ${context}`;
    * Translate content to different languages
    */
   async translateContent(content, targetLanguage) {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       const prompt = `Translate the following content about Ethiopian heritage to ${targetLanguage}. Maintain cultural context and respectful tone:\n\n${content}`;
 
@@ -258,6 +318,11 @@ Context: ${context}`;
    * Test OpenAI connection
    */
   async testConnection() {
+    const canExecute = this.canExecute();
+    if (!canExecute.success) {
+      return canExecute;
+    }
+
     try {
       const completion = await this.openai.chat.completions.create({
         model: this.model,
