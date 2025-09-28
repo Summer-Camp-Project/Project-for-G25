@@ -1,4 +1,4 @@
-import apiService from './apiService';
+import apiService from '../utils/api.js';
 import { toast } from 'sonner';
 
 class CollectionService {

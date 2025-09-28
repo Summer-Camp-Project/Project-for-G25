@@ -1256,6 +1256,13 @@ class ApiClient {
     });
   }
 
+  async patch(url, data = {}) {
+    return this.request(url, {
+      method: 'PATCH',
+      body: data
+    });
+  }
+
   // Course/Education endpoints
   async getCourses(filters = {}) {
     try {
