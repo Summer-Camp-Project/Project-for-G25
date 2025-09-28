@@ -104,15 +104,15 @@ class ApiClient {
     } catch (error) {
       // Don't fall back to mock API for authentication errors (4xx)
       // Only fall back for network/server errors (5xx)
-      if (error.message.includes('Invalid email or password') || 
-          error.message.includes('User not found') ||
-          error.message.includes('400') ||
-          error.message.includes('401') ||
-          error.message.includes('403')) {
+      if (error.message.includes('Invalid email or password') ||
+        error.message.includes('User not found') ||
+        error.message.includes('400') ||
+        error.message.includes('401') ||
+        error.message.includes('403')) {
         // These are authentication errors, don't fall back
         throw error
       }
-      
+
       // Fall back to mock API only for network/server errors
       try {
         return mockApi.login(credentials)
@@ -415,15 +415,17 @@ class ApiClient {
   }
 
   // Admin endpoints
-  async getUsers() {
+  async getUsers({ page = 1, limit = 10, role } = {}) {
     if (this.useMockAPI) {
       return mockApi.getUsers()
     }
-    return this.request('/admin/users')
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+    if (role) params.append('role', role)
+    return this.request(`/super-admin/users?${params}`)
   }
 
   async updateUserRole(userId, role) {
-    return this.request(`/admin/users/${userId}/role`, {
+    return this.request(`/super-admin/users/${userId}`, {
       method: 'PUT',
       body: { role },
     })
@@ -607,7 +609,7 @@ class ApiClient {
     }
     const q = new URLSearchParams({ page: String(page), limit: String(limit) })
     if (role) q.set('role', role)
-    return this.request(`/admin/users?${q.toString()}`)
+    return this.request(`/super-admin/users?${q.toString()}`)
   }
 
   async setUserRole(userId, role) {
@@ -881,6 +883,55 @@ class ApiClient {
     const q = new URLSearchParams({ page: String(page), limit: String(limit) })
     if (status) q.set('status', status)
     return this.request(`/museum-admin/virtual-submissions?${q.toString()}`)
+  }
+
+  // Museum Admin Communications endpoints
+  async getMuseumCommunications(params = {}) {
+    const queryParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value)
+      }
+    })
+    return this.request(`/museum-admin/communications?${queryParams}`)
+  }
+
+  async getMuseumCommunication(id) {
+    return this.request(`/museum-admin/communications/${id}`)
+  }
+
+  async createMuseumCommunication(communicationData) {
+    return this.request('/museum-admin/communications', {
+      method: 'POST',
+      body: communicationData,
+    })
+  }
+
+  async replyToMuseumCommunication(id, replyData) {
+    return this.request(`/museum-admin/communications/${id}/reply`, {
+      method: 'POST',
+      body: replyData,
+    })
+  }
+
+  async markMuseumCommunicationAsRead(id) {
+    return this.request(`/museum-admin/communications/${id}/read`, {
+      method: 'PUT',
+    })
+  }
+
+  async archiveMuseumCommunication(id) {
+    return this.request(`/museum-admin/communications/${id}/archive`, {
+      method: 'PUT',
+    })
+  }
+
+  async getMuseumUnreadCount() {
+    return this.request('/museum-admin/communications/unread-count')
+  }
+
+  async getMuseumCommunicationConversation(id) {
+    return this.request(`/museum-admin/communications/${id}/conversation`)
   }
 
   // User/Visitor endpoints
@@ -1209,13 +1260,13 @@ class ApiClient {
   async getCourses(filters = {}) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         const params = new URLSearchParams(filters);
         const endpoint = `/education/public/courses?${params.toString()}`;
         return mockApi.getCourses(endpoint);
       }
-      
+
       const params = new URLSearchParams(filters);
       return this.request(`/learning/courses?${params.toString()}`);
     } catch (error) {
@@ -1229,11 +1280,11 @@ class ApiClient {
   async getCourseById(courseId) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getCourseById(courseId);
       }
-      
+
       return this.request(`/learning/courses/${courseId}`);
     } catch (error) {
       return mockApi.getCourseById(courseId);
@@ -1243,11 +1294,11 @@ class ApiClient {
   async getCourseLessons(courseId) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getCourseLessons(courseId);
       }
-      
+
       return this.request(`/learning/courses/${courseId}/lessons`);
     } catch (error) {
       return mockApi.getCourseLessons(courseId);
@@ -1257,11 +1308,11 @@ class ApiClient {
   async enrollInCourse(courseId) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.enrollInCourse(courseId);
       }
-      
+
       return this.request(`/learning/courses/${courseId}/enroll`, {
         method: 'POST'
       });
@@ -1273,11 +1324,11 @@ class ApiClient {
   async getCourseProgress(courseId) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getCourseProgress(courseId);
       }
-      
+
       return this.request(`/learning/courses/${courseId}/progress`);
     } catch (error) {
       return mockApi.getCourseProgress(courseId);
@@ -1287,11 +1338,11 @@ class ApiClient {
   async updateLessonProgress(courseId, lessonId, completed = true) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.updateLessonProgress(courseId, lessonId, completed);
       }
-      
+
       return this.request(`/learning/courses/${courseId}/lessons/${lessonId}/progress`, {
         method: 'PUT',
         body: { completed }
@@ -1305,11 +1356,11 @@ class ApiClient {
   async createCourse(courseData) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.createCourse(courseData);
       }
-      
+
       return this.request('/learning/courses', {
         method: 'POST',
         body: courseData
@@ -1322,11 +1373,11 @@ class ApiClient {
   async updateCourse(courseId, courseData) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.updateCourse(courseId, courseData);
       }
-      
+
       return this.request(`/learning/courses/${courseId}`, {
         method: 'PUT',
         body: courseData
@@ -1339,11 +1390,11 @@ class ApiClient {
   async deleteCourse(courseId) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.deleteCourse(courseId);
       }
-      
+
       return this.request(`/learning/courses/${courseId}`, {
         method: 'DELETE'
       });
@@ -1359,11 +1410,11 @@ class ApiClient {
   async getRentalArtifacts(params = {}) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getRentalArtifacts(params);
       }
-      
+
       const queryParams = new URLSearchParams(params).toString()
       const endpoint = `/rentals/artifacts${queryParams ? `?${queryParams}` : ''}`
       return this.request(endpoint)
@@ -1375,11 +1426,11 @@ class ApiClient {
   async getAllRentalRequests(params = {}) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getAllRentalRequests(params);
       }
-      
+
       const queryParams = new URLSearchParams(params).toString()
       const endpoint = `/rentals${queryParams ? `?${queryParams}` : ''}`
       return this.request(endpoint)
@@ -1391,11 +1442,11 @@ class ApiClient {
   async getRentalRequestById(id) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getRentalRequestById(id);
       }
-      
+
       return this.request(`/rentals/${id}`)
     } catch (error) {
       return mockApi.getRentalRequestById(id);
@@ -1405,11 +1456,11 @@ class ApiClient {
   async createRentalRequest(data) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.createRentalRequest(data);
       }
-      
+
       return this.request('/rentals', {
         method: 'POST',
         body: JSON.stringify(data)
@@ -1422,11 +1473,11 @@ class ApiClient {
   async updateRentalRequestStatus(id, data) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.updateRentalRequestStatus(id, data);
       }
-      
+
       return this.request(`/rentals/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify(data)
@@ -1439,11 +1490,11 @@ class ApiClient {
   async addRentalRequestMessage(id, data) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.addRentalRequestMessage(id, data);
       }
-      
+
       return this.request(`/rentals/${id}/messages`, {
         method: 'POST',
         body: JSON.stringify(data)
@@ -1456,11 +1507,11 @@ class ApiClient {
   async updateRentalPaymentStatus(id, data) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.updateRentalPaymentStatus(id, data);
       }
-      
+
       return this.request(`/rentals/${id}/payment-status`, {
         method: 'PATCH',
         body: JSON.stringify(data)
@@ -1473,11 +1524,11 @@ class ApiClient {
   async updateRental3DIntegration(id, data) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.updateRental3DIntegration(id, data);
       }
-      
+
       return this.request(`/rentals/${id}/3d-integration`, {
         method: 'PATCH',
         body: JSON.stringify(data)
@@ -1490,11 +1541,11 @@ class ApiClient {
   async updateRentalVirtualMuseum(id, data) {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.updateRentalVirtualMuseum(id, data);
       }
-      
+
       return this.request(`/rentals/${id}/virtual-museum`, {
         method: 'PATCH',
         body: JSON.stringify(data)
@@ -1507,11 +1558,11 @@ class ApiClient {
   async getRentalStatistics() {
     try {
       await this.checkBackendAvailability();
-      
+
       if (this.useMockAPI) {
         return mockApi.getRentalStatistics();
       }
-      
+
       return this.request('/rentals/stats')
     } catch (error) {
       return mockApi.getRentalStatistics();
@@ -2222,6 +2273,55 @@ class ApiClient {
     return this.request(`/artifacts/${artifactId}/images/${imageId}`, {
       method: 'DELETE',
     })
+  }
+
+  // Communications endpoints
+  async getCommunications(params = {}) {
+    const queryParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value)
+      }
+    })
+    return this.request(`/communications?${queryParams}`)
+  }
+
+  async getCommunication(id) {
+    return this.request(`/communications/${id}`)
+  }
+
+  async createCommunication(communicationData) {
+    return this.request('/communications', {
+      method: 'POST',
+      body: communicationData,
+    })
+  }
+
+  async replyToCommunication(id, replyData) {
+    return this.request(`/communications/${id}/reply`, {
+      method: 'POST',
+      body: replyData,
+    })
+  }
+
+  async markCommunicationAsRead(id) {
+    return this.request(`/communications/${id}/read`, {
+      method: 'PUT',
+    })
+  }
+
+  async archiveCommunication(id) {
+    return this.request(`/communications/${id}/archive`, {
+      method: 'PUT',
+    })
+  }
+
+  async getUnreadCount() {
+    return this.request('/communications/unread-count')
+  }
+
+  async getCommunicationConversation(id) {
+    return this.request(`/communications/${id}/conversation`)
   }
 }
 

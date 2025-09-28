@@ -37,6 +37,19 @@ const MuseumDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Debug: Monitor state changes
+  useEffect(() => {
+    console.log('Dashboard stats updated:', dashboardStats);
+  }, [dashboardStats]);
+
+  useEffect(() => {
+    console.log('Recent artifacts updated:', recentArtifacts);
+  }, [recentArtifacts]);
+
+  useEffect(() => {
+    console.log('Pending tasks updated:', pendingTasks);
+  }, [pendingTasks]);
+
   // Load dashboard data
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -82,8 +95,15 @@ const MuseumDashboard = () => {
         if (statsResponse.data) {
           // Handle the dashboard response structure
           const dashboardData = statsResponse.data.dashboard || statsResponse.data;
+          console.log('Dashboard data:', dashboardData);
+          console.log('Dashboard data keys:', Object.keys(dashboardData));
+
           if (dashboardData.quickStats) {
-            setDashboardStats({
+            console.log('Quick stats found:', dashboardData.quickStats);
+            console.log('Quick stats keys:', Object.keys(dashboardData.quickStats));
+
+            // Extract the real data from quickStats
+            const stats = {
               totalArtifacts: dashboardData.quickStats.totalArtifacts || 0,
               artifactsInStorage: dashboardData.quickStats.publishedArtifacts || 0,
               activeRentals: dashboardData.quickStats.activeRentals || 0,
@@ -93,24 +113,78 @@ const MuseumDashboard = () => {
               upcomingEvents: 0, // Not implemented yet
               totalStaff: 0, // Not implemented yet
               totalRevenue: dashboardData.quickStats.totalRevenue || 0
-            });
+            };
+
+            console.log('Extracted stats:', stats);
+            setDashboardStats(stats);
+          } else {
+            console.log('No quickStats found in dashboard data');
+            console.log('Available dashboard properties:', Object.keys(dashboardData));
           }
+        } else {
+          console.log('No dashboard data in response');
         }
 
         if (artifactsResponse.data) {
-          // Handle artifacts response structure
-          const artifactsData = artifactsResponse.data.artifacts || artifactsResponse.data.data || artifactsResponse.data;
-          setRecentArtifacts(Array.isArray(artifactsData) ? artifactsData : []);
+          // Handle artifacts response structure: { success: true, artifacts: [...], pagination: {...} }
+          const artifactsData = artifactsResponse.data.artifacts;
+          console.log('Artifacts data:', artifactsData);
+          console.log('Artifacts data type:', typeof artifactsData);
+          console.log('Artifacts data length:', Array.isArray(artifactsData) ? artifactsData.length : 'not array');
+
+          if (Array.isArray(artifactsData)) {
+            setRecentArtifacts(artifactsData);
+            console.log('Set recent artifacts:', artifactsData.length, 'items');
+          } else {
+            console.log('Artifacts data is not an array, setting empty array');
+            setRecentArtifacts([]);
+          }
         }
 
         if (tasksResponse.data) {
-          // Handle tasks response structure
-          const tasksData = tasksResponse.data.tasks || tasksResponse.data.data || tasksResponse.data;
-          setPendingTasks(Array.isArray(tasksData) ? tasksData : []);
+          // Handle tasks response structure: { success: true, stats: {...} }
+          // The quick-stats endpoint returns stats, not tasks, so we'll create mock tasks for now
+          const statsData = tasksResponse.data.stats;
+          console.log('Tasks/Stats data:', statsData);
+
+          // Create mock tasks based on stats
+          const mockTasks = [];
+          if (statsData.pendingApprovals > 0) {
+            mockTasks.push({
+              id: 'pending-approvals',
+              type: 'artifact_approval',
+              title: `${statsData.pendingApprovals} artifacts pending approval`,
+              priority: 'high',
+              actionUrl: '/museum-dashboard/artifacts'
+            });
+          }
+          if (statsData.activeRentals > 0) {
+            mockTasks.push({
+              id: 'active-rentals',
+              type: 'rental_management',
+              title: `${statsData.activeRentals} active rentals to manage`,
+              priority: 'medium',
+              actionUrl: '/museum-dashboard/rentals'
+            });
+          }
+
+          setPendingTasks(mockTasks);
+          console.log('Set pending tasks:', mockTasks.length, 'items');
         }
 
         // Clear any previous errors since we're showing data (even if default)
         setError(null);
+
+        // Debug: Log the final state values
+        console.log('Final dashboard stats:', dashboardStats);
+        console.log('Final recent artifacts:', recentArtifacts);
+        console.log('Final pending tasks:', pendingTasks);
+
+        // Debug: Check if we actually got real data
+        console.log('=== DATA EXTRACTION SUMMARY ===');
+        console.log('Dashboard stats after processing:', dashboardStats);
+        console.log('Recent artifacts after processing:', recentArtifacts);
+        console.log('Pending tasks after processing:', pendingTasks);
 
       } catch (error) {
         console.error('Critical error loading dashboard data:', error);
@@ -171,6 +245,11 @@ const MuseumDashboard = () => {
     );
   }
 
+  // Debug: Log render values
+  console.log('Rendering with stats:', dashboardStats);
+  console.log('Rendering with artifacts:', recentArtifacts);
+  console.log('Rendering with tasks:', pendingTasks);
+
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: 'white' }}>
       <MuseumAdminSidebar />
@@ -195,42 +274,42 @@ const MuseumDashboard = () => {
 
           {/* Quick Stats Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
                 <ArtTrackIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">Total Artifacts</Typography>
-                  <Typography variant="h4" color="inherit">{dashboardStats.totalArtifacts}</Typography>
+                  <Typography variant="h4" color="inherit">{dashboardStats.totalArtifacts || 0}</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>In Collection</Typography>
                 </Box>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
                 <EventAvailableIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">Active Rentals</Typography>
-                  <Typography variant="h4" color="inherit">{dashboardStats.activeRentals}</Typography>
+                  <Typography variant="h4" color="inherit">{dashboardStats.activeRentals || 0}</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Current Bookings</Typography>
                 </Box>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
                 <StorageIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">In Storage</Typography>
-                  <Typography variant="h4" color="inherit">{dashboardStats.artifactsInStorage}</Typography>
+                  <Typography variant="h4" color="inherit">{dashboardStats.artifactsInStorage || 0}</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Available Items</Typography>
                 </Box>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Paper sx={{ p: 3, display: 'flex', alignItems: 'center', backgroundColor: '#8B5A3C', color: 'white' }}>
                 <TrendingUpIcon sx={{ fontSize: 40, mr: 2 }} />
                 <Box>
                   <Typography color="inherit" variant="body2">Monthly Visitors</Typography>
-                  <Typography variant="h4" color="inherit">{dashboardStats.monthlyVisitors}</Typography>
+                  <Typography variant="h4" color="inherit">{dashboardStats.monthlyVisitors || 0}</Typography>
                   <Typography variant="caption" sx={{ opacity: 0.8 }}>Not implemented yet</Typography>
                 </Box>
               </Paper>
@@ -239,7 +318,7 @@ const MuseumDashboard = () => {
 
           {/* Recent Activity and Quick Actions */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Paper sx={{ p: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>Recent Artifacts</Typography>
                 <TableContainer>
@@ -307,7 +386,7 @@ const MuseumDashboard = () => {
                 </Box>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 3, mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>Quick Actions</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
