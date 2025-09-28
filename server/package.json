@@ -8,6 +8,7 @@
     "dev": "nodemon server.js --ignore client/",
     "dev:debug": "nodemon --inspect server.js",
     "build": "echo 'Backend build completed - no transpilation needed for Node.js'",
+    "build:render": "echo 'Render build completed - dependencies installed'",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "test:unit": "jest --testPathPattern=tests/unit",
@@ -30,6 +31,7 @@
     "logs:tail": "tail -f logs/server.log",
     "security:audit": "npm audit && node scripts/security-audit.js",
     "validate:env": "node scripts/validate-environment.js",
+    "test:mongodb": "node scripts/test-mongodb.js",
     "prestart": "npm run validate:env",
     "postinstall": "node scripts/setup-directories.js"
   },
