@@ -17,6 +17,7 @@ dist-ssr
 .env.test.local
 .env.production.local
 .env.netlify
+.env.render-deploy
 *.local
 
 # Logs
