@@ -11,12 +11,18 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_VERSION = "10"
+  VITE_API_URL = "https://ethioheritage360-ethiopian-heritage.onrender.com/api"
+  VITE_USE_MOCK_API = "false"
+  VITE_APP_NAME = "EthioHeritage360"
+  VITE_SOCKET_URL = "https://ethioheritage360-ethiopian-heritage.onrender.com"
 
-# Redirect all server-side API routes to Netlify Functions
+# Redirect API calls to external backend on Render
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = "https://ethioheritage360-ethiopian-heritage.onrender.com/api/:splat"
   status = 200
+  force = false
+  headers = {X-From = "Netlify"}
 
 # Handle client-side routing (SPA)
 [[redirects]]
@@ -32,7 +38,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.mapbox.com https://events.mapbox.com wss: ws:;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ethioheritage360-ethiopian-heritage.onrender.com https://api.mapbox.com https://events.mapbox.com wss: ws:;"
 
 [[headers]]
   for = "/static/*"
