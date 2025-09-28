@@ -5,8 +5,8 @@
   # Directory that contains the deploy-ready HTML files and assets
   publish = "client/dist"
   
-  # Default build command
-  command = "npm run build:netlify"
+  # Default build command - simplified for Netlify
+  command = "cd client && npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
