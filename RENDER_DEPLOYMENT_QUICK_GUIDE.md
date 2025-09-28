@@ -8,10 +8,11 @@ The deployment was failing because:
 
 ## Changes Made
 
-1. **Removed prestart validation** - Prevents deployment failures
-2. **Made dotenv loading resilient** - Scripts now work without dotenv
-3. **Updated Render build command** - Better dependency installation
-4. **Removed problematic local dependency** - Cleaner package.json
+1. **Switched to Docker runtime** - More reliable dependency management
+2. **Created optimized Dockerfile** - Ensures proper Node.js environment
+3. **Removed prestart validation** - Prevents deployment failures
+4. **Made dotenv loading resilient** - Scripts now work without dotenv
+5. **Removed problematic local dependency** - Cleaner package.json
 
 ## Environment Variables Required in Render Dashboard
 

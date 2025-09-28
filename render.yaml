@@ -2,11 +2,9 @@ services:
   # Backend API Service
   - type: web
     name: ethioheritage360-api
-    runtime: node
+    runtime: docker
     plan: free
     region: ohio  # Choose region closest to your users
-    buildCommand: npm install --prefix server
-    startCommand: cd server && npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
