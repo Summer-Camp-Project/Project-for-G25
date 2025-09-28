@@ -39,7 +39,7 @@ const VisitorDashboard = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [showWishlist, setShowWishlist] = useState(false);
   const [wishlistItems, setWishlistItems] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [localNotifications, setLocalNotifications] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [featuredCourses, setFeaturedCourses] = useState([]);

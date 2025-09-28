@@ -863,14 +863,6 @@ class ApiClient {
     return this.request('/museum-admin/dashboard')
   }
 
-  async getRecentArtifacts({ page = 1, limit = 10 } = {}) {
-    const q = new URLSearchParams({ page: String(page), limit: String(limit) })
-    return this.request(`/museum-admin/artifacts?${q}`)
-  }
-
-  async getPendingTasks() {
-    return this.request('/museum-admin/quick-stats')
-  }
 
   async submitVirtualMuseum(submissionData) {
     if (this.useMockAPI) {
@@ -2215,30 +2207,6 @@ class ApiClient {
     })
   }
 
-  // Artifact management methods
-  async createArtifact(artifactData) {
-    return this.request('/artifacts', {
-      method: 'POST',
-      body: artifactData,
-    })
-  }
-
-  async updateArtifact(id, artifactData) {
-    return this.request(`/artifacts/${id}`, {
-      method: 'PUT',
-      body: artifactData,
-    })
-  }
-
-  async deleteArtifact(id) {
-    return this.request(`/artifacts/${id}`, {
-      method: 'DELETE',
-    })
-  }
-
-  async getArtifactById(id) {
-    return this.request(`/artifacts/${id}`)
-  }
 
   async uploadArtifactImage(artifactId, imageFile) {
     const formData = new FormData()
