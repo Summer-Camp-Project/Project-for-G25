@@ -2,7 +2,7 @@ CRITICAL ENVIRONMENT VARIABLES TO SET IN RENDER DASHBOARD:
 ================================================================
 
 1. MONGODB_URI
-   Value: mongodb+srv://melkamuwako5:zW1pMgTkc4BkyFTp@ethioheritage360.tuhmybp.mongodb.net/ethioheritage360?retryWrites=true&w=majority&appName=ethioheritage360
+   Value: mongodb+srv://melkamuwako5_db_user:YFweyhElTJBj5sXp@cluster0.x3jfm8p.mongodb.net/ethioheritage360?retryWrites=true&w=majority&appName=Cluster0
 
 2. NODE_ENV
    Value: production
