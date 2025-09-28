@@ -62,6 +62,7 @@ const enhancedProgressRoutes = require('./routes/enhancedProgressRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const progressTrackerRoutes = require('./routes/progressTrackerRoutes');
 const openaiRoutes = require('./routes/openai');
+const downloadsRoutes = require('./routes/downloads');
 
 // Import middleware
 const { errorHandler } = require('./utils/errorHandler');
@@ -249,6 +250,9 @@ app.use('/api/platform', userRoutes); // Platform stats available through user r
 
 // OpenAI Integration routes
 app.use('/api/openai', openaiRoutes); // OpenAI AI-powered features
+
+// Downloads and File Serving routes
+app.use('/api/downloads', downloadsRoutes); // File downloads, exports, backups
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
