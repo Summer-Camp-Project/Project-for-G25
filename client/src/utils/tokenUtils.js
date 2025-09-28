@@ -10,10 +10,19 @@ export const isValidTokenFormat = (token) => {
     return false;
   }
 
+  // Clean the token (remove whitespace, newlines)
+  token = token.trim();
+  
+  // Check for obvious invalid patterns
+  if (token.length < 10 || !token.includes('.')) {
+    console.warn('Token appears to be malformed or too short');
+    return false;
+  }
+
   // JWT tokens should have 3 parts separated by dots
   const parts = token.split('.');
   if (parts.length !== 3) {
-    console.warn('Token does not have 3 parts (header.payload.signature)');
+    console.warn(`Token does not have 3 parts (header.payload.signature), found ${parts.length} parts`);
     return false;
   }
 
@@ -27,13 +36,18 @@ export const isValidTokenFormat = (token) => {
     // Check if it's valid base64
     try {
       if (i < 2) { // Don't decode signature part
-        const decoded = atob(parts[i].replace(/-/g, '+').replace(/_/g, '/'));
+        // Handle URL-safe base64 and add padding if needed
+        let base64Part = parts[i].replace(/-/g, '+').replace(/_/g, '/');
+        const padding = '='.repeat((4 - base64Part.length % 4) % 4);
+        base64Part += padding;
+        
+        const decoded = atob(base64Part);
         if (i === 0 || i === 1) {
           JSON.parse(decoded); // Should be valid JSON
         }
       }
     } catch (error) {
-      console.warn(`Token part ${i + 1} is not valid base64 or JSON:`, error);
+      console.warn(`Token part ${i + 1} is not valid base64 or JSON:`, error.message);
       return false;
     }
   }

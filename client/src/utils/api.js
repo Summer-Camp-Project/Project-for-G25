@@ -86,7 +86,10 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}`
     
     // Clean up any corrupted tokens before making request
-    cleanupCorruptedTokens()
+    const wasCorrupted = cleanupCorruptedTokens()
+    if (wasCorrupted) {
+      console.log('🧹 Cleaned up corrupted authentication data')
+    }
     
     // Get valid token
     const token = getValidToken()
