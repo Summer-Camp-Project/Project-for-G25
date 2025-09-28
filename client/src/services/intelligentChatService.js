@@ -439,7 +439,7 @@ class IntelligentChatService {
       };
 
       // Call backend OpenAI service
-      const response = await apiService.post('/api/chat/openai', payload);
+      const response = await apiService.post('/chat/openai', payload);
       
       if (response.success && response.data) {
         return {

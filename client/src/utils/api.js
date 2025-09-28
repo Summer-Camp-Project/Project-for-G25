@@ -1,4 +1,5 @@
 import mockApi from './mockApi.js';
+import { getValidToken, cleanupCorruptedTokens } from './tokenUtils.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
@@ -83,7 +84,12 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`
-    const token = localStorage.getItem('token')
+    
+    // Clean up any corrupted tokens before making request
+    cleanupCorruptedTokens()
+    
+    // Get valid token
+    const token = getValidToken()
 
     const config = {
       headers: {
@@ -102,11 +108,35 @@ class ApiClient {
       const response = await fetch(url, config)
       let data
 
-      try {
-        data = await response.json()
-      } catch (parseError) {
-        // If response is not JSON, use the text
-        data = { message: await response.text() }
+      // Check if response has content before trying to parse
+      const contentType = response.headers.get('content-type')
+      const hasContent = response.status !== 204 && response.headers.get('content-length') !== '0'
+      
+      if (hasContent && contentType && contentType.includes('application/json')) {
+        try {
+          // Clone response to avoid body consumption issues
+          const responseClone = response.clone()
+          data = await responseClone.json()
+        } catch (parseError) {
+          console.warn('JSON parse failed, trying text:', parseError)
+          try {
+            const textData = await response.text()
+            data = textData ? { message: textData } : {}
+          } catch (textError) {
+            console.error('Failed to read response as text:', textError)
+            data = { message: 'Unable to parse response' }
+          }
+        }
+      } else if (hasContent) {
+        try {
+          const textData = await response.text()
+          data = textData ? { message: textData } : {}
+        } catch (textError) {
+          console.error('Failed to read response as text:', textError)
+          data = { message: 'Unable to parse response' }
+        }
+      } else {
+        data = {}
       }
 
       if (!response.ok) {
@@ -180,15 +210,30 @@ class ApiClient {
       return mockApi.logout()
     }
 
-    return this.request('/auth/logout', {
-      method: 'POST',
-    })
+    try {
+      return await this.request('/auth/logout', {
+        method: 'POST',
+      })
+    } catch (error) {
+      // If logout fails due to invalid token, still clear local storage
+      if (error.message.includes('Invalid token') || error.message.includes('Token is not valid')) {
+        console.warn('Logout failed due to invalid token, clearing local storage anyway')
+        // Clean up local storage regardless of server response
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        // Return success since we've cleared the local session
+        return { success: true, message: 'Local session cleared' }
+      }
+      // Re-throw other errors
+      throw error
+    }
   }
 
   async refreshToken(refreshToken) {
     if (this.useMockAPI) {
       // Mock API doesn't need refresh tokens, return current session
-      const token = localStorage.getItem('token')
+      cleanupCorruptedTokens()
+      const token = getValidToken()
       if (token) {
         return { token, success: true }
       }
@@ -204,7 +249,8 @@ class ApiClient {
   async getCurrentUser() {
     try {
       if (this.useMockAPI) {
-        const token = localStorage.getItem('token')
+        cleanupCorruptedTokens()
+        const token = getValidToken()
         return mockApi.getCurrentUser(token)
       }
 
@@ -238,7 +284,8 @@ class ApiClient {
 
       // Try fallback to mock API if real API fails
       try {
-        const token = localStorage.getItem('token')
+        cleanupCorruptedTokens()
+        const token = getValidToken()
         if (token) {
           return mockApi.getCurrentUser(token)
         }
@@ -314,7 +361,9 @@ class ApiClient {
     const formData = new FormData()
     images.forEach((file) => formData.append('images', file))
 
-    const token = localStorage.getItem('token')
+    // Clean up corrupted tokens and get valid token
+    cleanupCorruptedTokens()
+    const token = getValidToken()
     const response = await fetch(`${this.baseURL}/artifacts/${id}/images`, {
       method: 'POST',
       headers: {
@@ -338,7 +387,9 @@ class ApiClient {
     const formData = new FormData()
     images.forEach((file) => formData.append('images', file))
 
-    const token = localStorage.getItem('token')
+    // Clean up corrupted tokens and get valid token
+    cleanupCorruptedTokens()
+    const token = getValidToken()
     const response = await fetch(`${this.baseURL}/artifacts/${id}/images`, {
       method: 'PUT',
       headers: {
@@ -362,7 +413,9 @@ class ApiClient {
     const formData = new FormData()
     formData.append('model', modelFile)
 
-    const token = localStorage.getItem('token')
+    // Clean up corrupted tokens and get valid token
+    cleanupCorruptedTokens()
+    const token = getValidToken()
     const response = await fetch(`${this.baseURL}/artifacts/${id}/model`, {
       method: 'POST',
       headers: {
@@ -784,7 +837,9 @@ class ApiClient {
     const formData = new FormData()
     formData.append('logo', logoFile)
 
-    const token = localStorage.getItem('token')
+    // Clean up corrupted tokens and get valid token
+    cleanupCorruptedTokens()
+    const token = getValidToken()
     const response = await fetch(`${this.baseURL}/museums/profile/logo`, {
       method: 'POST',
       headers: {
@@ -1620,7 +1675,9 @@ class ApiClient {
     formData.append('file', file)
     formData.append('type', type)
 
-    const token = localStorage.getItem('token')
+    // Clean up corrupted tokens and get valid token
+    cleanupCorruptedTokens()
+    const token = getValidToken()
 
     const response = await fetch(`${this.baseURL}/upload`, {
       method: 'POST',
