@@ -35,16 +35,27 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     build: {
+      target: 'es2015',
+      outDir: 'dist',
+      assetsDir: 'assets',
       sourcemap: false,
+      minify: 'esbuild',
+      cssMinify: true,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           manualChunks: {
             react: ['react', 'react-dom', 'react-router-dom'],
             mui: ['@mui/material', '@mui/icons-material'],
             i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
-          }
+          },
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]'
         }
-      }
+      },
+      reportCompressedSize: false,
+      emptyOutDir: true
     },
     esbuild: {
       loader: 'jsx',

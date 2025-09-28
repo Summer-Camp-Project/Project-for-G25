@@ -1,12 +1,12 @@
 [build]
   # Directory to change to before starting a build
-  base = "."
+  base = "client"
   
   # Directory that contains the deploy-ready HTML files and assets
-  publish = "client/dist"
+  publish = "dist"
   
-  # Default build command - simplified for Netlify
-  command = "cd client && npm install && npm run build"
+  # Default build command - optimized for Netlify
+  command = "npm ci && npm run build"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -55,6 +55,36 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://ethioheritage360-ethiopian-heritage.onrender.com http://localhost:5000 https://api.mapbox.com https://events.mapbox.com wss: ws:;"
 
+# JavaScript and CSS assets
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Content-Encoding = "gzip"
+
+[[headers]]
+  for = "/assets/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Content-Encoding = "gzip"
+
+# Images and fonts
+[[headers]]
+  for = "/assets/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Legacy static directory
 [[headers]]
   for = "/static/*"
   [headers.values]
