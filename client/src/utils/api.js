@@ -22,9 +22,17 @@ class ApiClient {
 
     if (this.backendChecked) return !this.useMockAPI
 
+    // For production deployments, assume backend is available and let individual requests handle failures
+    if (this.baseURL === '/api') {
+      console.log('Using Netlify proxy - assuming backend available')
+      this.useMockAPI = false
+      this.backendChecked = true
+      return true
+    }
+
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // Increased timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // Increased timeout to 10s for Render wake-up
 
       // Try health check first
       let response

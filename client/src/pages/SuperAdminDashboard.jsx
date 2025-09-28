@@ -290,12 +290,17 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
   ];
 
   useEffect(() => {
-    // Fetch enhanced dashboard data
-    const loadDashboard = async () => {
+    // Fetch enhanced dashboard data with retry logic
+    const loadDashboard = async (retryCount = 0) => {
+      const maxRetries = 3;
+      
       try {
+        console.log('Loading dashboard data...');
         const res = await api.getSuperAdminDashboard();
+        
         if (res.success && res.dashboard) {
           const dashboard = res.dashboard;
+          console.log('Dashboard data loaded successfully');
 
           // Update stats with enhanced data
           setStats((prev) => ({
@@ -312,23 +317,41 @@ const SuperAdminDashboard = ({ darkMode, toggleDarkMode }) => {
 
           // Store enhanced dashboard data for use in components
           setDashboardData(dashboard);
+        } else {
+          throw new Error('Invalid dashboard response format');
         }
       } catch (e) {
-        console.error('Failed to load dashboard data', e);
-        // Fallback to basic stats if enhanced API fails
+        console.error(`Dashboard data load attempt ${retryCount + 1} failed:`, e.message);
+        
+        // Retry logic for network/timeout errors
+        if (retryCount < maxRetries && 
+            (e.message.includes('fetch') || e.message.includes('timeout') || 
+             e.message.includes('502') || e.message.includes('503') ||
+             e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
+          const delay = 2000 * Math.pow(2, retryCount); // Exponential backoff: 2s, 4s, 8s
+          console.log(`Retrying dashboard data load in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+          setTimeout(() => loadDashboard(retryCount + 1), delay);
+          return;
+        }
+        
+        // If all retries failed or it's a non-retryable error, try fallback
+        console.log('Attempting fallback to basic stats API...');
         try {
           const res = await api.getAdminStats();
           const s = res.stats || {};
+          console.log('Fallback stats loaded successfully');
           setStats((prev) => ({
             ...prev,
             totalUsers: s.totalUsers ?? prev.totalUsers,
             museums: s.totalMuseums ?? prev.museums,
           }));
         } catch (fallbackError) {
-          console.error('Fallback stats also failed', fallbackError);
+          console.error('Fallback stats also failed:', fallbackError.message);
+          // Could set an error state here if needed for UI feedback
         }
       }
     };
+    
     loadDashboard();
   }, []);
 

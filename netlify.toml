@@ -16,13 +16,20 @@
   VITE_APP_NAME = "EthioHeritage360"
   VITE_SOCKET_URL = "https://ethioheritage360-ethiopian-heritage.onrender.com"
 
-# Redirect API calls to external backend on Render with proper CORS
+# Redirect API calls to external backend on Render with proper CORS and timeout handling
 [[redirects]]
   from = "/api/*"
   to = "https://ethioheritage360-ethiopian-heritage.onrender.com/api/:splat"
   status = 200
   force = true
-  headers = {X-From = "Netlify", Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET,POST,PUT,DELETE,OPTIONS", Access-Control-Allow-Headers = "Content-Type,Authorization"}
+  headers = {X-From = "Netlify", Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET,POST,PUT,DELETE,OPTIONS", Access-Control-Allow-Headers = "Content-Type,Authorization", X-Forwarded-For = "netlify"}
+
+# Fallback for API calls that might timeout - redirect to wake up backend
+[[redirects]]
+  from = "/api/wake"
+  to = "https://ethioheritage360-ethiopian-heritage.onrender.com/api/health"
+  status = 200
+  force = true
 
 # Handle client-side routing (SPA)
 [[redirects]]
