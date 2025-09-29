@@ -100,7 +100,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['visitor', 'admin', 'super_admin', 'museum_curator', 'tour_organizer', 'education_coordinator'], 
+    enum: ['visitor', 'admin', 'super_admin', 'museum', 'museum_curator', 'tour_organizer', 'education_coordinator'], 
     default: 'visitor' 
   },
   isActive: { type: Boolean, default: true },
@@ -131,6 +131,16 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// ============ ROUTE IMPORTS ============
+
+// Import route modules
+const toursRouter = require('./routes/tours');
+const educationRouter = require('./routes/education');
+
+// Mount routes
+app.use('/api/tours', toursRouter);
+app.use('/api/education', educationRouter);
 
 // ============ AI-POWERED ROUTES ============
 
@@ -1311,10 +1321,10 @@ const createDefaultUsers = async () => {
     
     if (!existingMuseumAdmin) {
       const museumUser = new User({
-        name: 'Museum Administrator',
+        name: 'National Museum Admin',
         email: museumEmail,
         password: 'museum123', // Change this password!
-        role: 'admin'
+        role: 'museum'
       });
       await museumUser.save();
       console.log('✅ Default museum admin created:', museumEmail);
@@ -1323,6 +1333,7 @@ const createDefaultUsers = async () => {
     console.error('Error creating default users:', error);
   }
 };
+
 
 // User CRUD routes (existing)
 app.get('/api/users', async (req, res) => {
