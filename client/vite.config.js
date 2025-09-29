@@ -44,18 +44,40 @@ export default defineConfig(({ command, mode }) => {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            react: ['react', 'react-dom', 'react-router-dom'],
-            mui: ['@mui/material', '@mui/icons-material'],
-            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
+          manualChunks: (id) => {
+            // Vendor chunks
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@mui') || id.includes('@emotion')) {
+                return 'mui-vendor';
+              }
+              if (id.includes('i18next') || id.includes('react-i18next')) {
+                return 'i18n-vendor';
+              }
+              if (id.includes('three') || id.includes('@react-three')) {
+                return 'three-vendor';
+              }
+              if (id.includes('leaflet') || id.includes('mapbox')) {
+                return 'map-vendor';
+              }
+              return 'vendor';
+            }
           },
-          chunkFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: (chunkInfo) => {
+            const facadeModuleId = chunkInfo.facadeModuleId
+              ? chunkInfo.facadeModuleId.split('/').pop().replace(/\.[^/.]+$/, '')
+              : 'chunk';
+            return `assets/${facadeModuleId}-[hash].js`;
+          },
           entryFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash].[ext]'
         }
       },
       reportCompressedSize: false,
-      emptyOutDir: true
+      emptyOutDir: true,
+      assetsInlineLimit: 4096
     },
     esbuild: {
       loader: 'jsx',

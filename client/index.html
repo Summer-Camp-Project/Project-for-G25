@@ -6,15 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EthioHeritage360 - Discover Ethiopia's Rich Heritage</title>
     
-    <!-- Preload critical resources -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"></noscript>
+    <!-- Critical CSS - Load immediately -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     
     <!-- Leaflet CSS from CDN -->
-    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'" 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /></noscript>
     
     <!-- Preload and defer Leaflet JS -->
     <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" 
@@ -61,6 +58,44 @@
       <!-- Temporary loading state to prevent layout shift -->
       <div class="loading-spinner"></div>
     </div>
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- Error handling for module loading -->
+    <script>
+      // Handle module loading errors
+      window.addEventListener('error', function(event) {
+        if (event.target && event.target.tagName === 'SCRIPT') {
+          console.error('Script loading failed:', event.target.src);
+          // Try to reload the page once
+          if (!sessionStorage.getItem('reloaded')) {
+            sessionStorage.setItem('reloaded', 'true');
+            setTimeout(() => location.reload(), 1000);
+          }
+        }
+      });
+      
+      // Handle module import errors
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Module import failed:', event.reason);
+        if (event.reason && event.reason.message && event.reason.message.includes('Loading')) {
+          // Show error message to user
+          const root = document.getElementById('root');
+          if (root) {
+            root.innerHTML = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; font-family: Inter, sans-serif;">
+                <h1 style="color: #e74c3c; margin-bottom: 20px;">Loading Error</h1>
+                <p style="color: #666; margin-bottom: 20px;">The application failed to load. Please try refreshing the page.</p>
+                <button onclick="location.reload()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Refresh Page</button>
+              </div>
+            `;
+          }
+        }
+      });
+      
+      // Clear session storage after successful load
+      window.addEventListener('load', function() {
+        sessionStorage.removeItem('reloaded');
+      });
+    </script>
+    
+    <script type="module" src="/src/main.jsx" onerror="console.error('Failed to load main script')"></script>
   </body>
 </html>

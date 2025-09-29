@@ -9,9 +9,9 @@
   },
   "scripts": {
     "dev": "vite --host",
-    "build": "NODE_ENV=production vite build",
+    "build": "vite build --mode production",
     "build:analyze": "npm run build && npx vite-bundle-analyzer dist/stats.html",
-    "build:production": "npm ci && NODE_ENV=production vite build --mode production",
+    "build:production": "vite build --mode production",
     "preview": "vite preview --host",
     "start": "npm run dev",
     "test": "vitest",
