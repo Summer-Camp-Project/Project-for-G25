@@ -1020,6 +1020,21 @@ const createDefaultUsers = async () => {
       await tourUser.save();
       console.log('✅ Default tour organizer created:', tourEmail);
     }
+
+    // Create museum admin
+    const museumEmail = 'museum.admin@ethioheritage360.com';
+    const existingMuseumAdmin = await User.findOne({ email: museumEmail });
+    
+    if (!existingMuseumAdmin) {
+      const museumUser = new User({
+        name: 'Museum Administrator',
+        email: museumEmail,
+        password: 'museum123', // Change this password!
+        role: 'admin'
+      });
+      await museumUser.save();
+      console.log('✅ Default museum admin created:', museumEmail);
+    }
   } catch (error) {
     console.error('Error creating default users:', error);
   }
