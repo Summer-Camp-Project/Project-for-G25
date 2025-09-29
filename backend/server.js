@@ -36,16 +36,23 @@ app.use(cors({
 // MongoDB connection with better error handling
 const connectDB = async () => {
   try {
-    // Check if MONGODB_URI exists
-    const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL;
+    // Check multiple possible MongoDB URI environment variables
+    const mongoUri = process.env.MONGODB_URI || 
+                     process.env.MONGO_URI || 
+                     process.env.DATABASE_URL || 
+                     process.env.DB_URI;
     
     if (!mongoUri) {
-      console.error('❌ MONGODB_URI environment variable is not set!');
-      console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('MONGO')));
+      console.error('❌ MongoDB URI environment variable is not set!');
+      console.error('Looking for: MONGODB_URI, MONGO_URI, DATABASE_URL, or DB_URI');
+      console.error('Available MongoDB-related env vars:', Object.keys(process.env).filter(k => k.toLowerCase().includes('mongo') || k.toLowerCase().includes('db')));
       process.exit(1);
     }
     
     console.log('🔄 Connecting to MongoDB...');
+    console.log('Using MongoDB URI variable:', Object.keys(process.env).find(key => 
+      [process.env.MONGODB_URI, process.env.MONGO_URI, process.env.DATABASE_URL, process.env.DB_URI].includes(process.env[key])
+    ));
     console.log('MongoDB URI exists:', !!mongoUri);
     
     const conn = await mongoose.connect(mongoUri, {
