@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const OpenAI = require('openai');
 require('dotenv').config();
 
@@ -46,7 +48,27 @@ const connectDB = async () => {
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { 
+    type: String, 
+    enum: ['visitor', 'admin', 'super_admin', 'museum_curator', 'tour_organizer', 'education_coordinator'], 
+    default: 'visitor' 
+  },
+  isActive: { type: Boolean, default: true },
+  lastLogin: { type: Date },
   createdAt: { type: Date, default: Date.now }
+});
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+// Compare password method
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 });
 
 const User = mongoose.model('User', userSchema);
@@ -401,6 +423,179 @@ app.get('/api/openai/status', async (req, res) => {
   }
 });
 
+// ============ AUTHENTICATION ROUTES ============
+
+// JWT token generation
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || 'ethioheritage360_secret_key', {
+    expiresIn: '7d'
+  });
+};
+
+// Register new user
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email and password are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User already exists with this email' });
+    }
+
+    // Create new user
+    const user = new User({
+      name,
+      email,
+      password,
+      role: role || 'visitor'
+    });
+
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ success: false, message: 'Error registering user', error: error.message });
+  }
+});
+
+// Login user
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(400).json({ success: false, message: 'Account is deactivated. Please contact support.' });
+    }
+
+    // Check password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        lastLogin: user.lastLogin
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Error during login', error: error.message });
+  }
+});
+
+// Get current user profile
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ethioheritage360_secret_key');
+    const user = await User.findById(decoded.userId).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    res.status(401).json({ success: false, message: 'Invalid token' });
+  }
+});
+
+// Create default admin users if they don't exist
+const createDefaultUsers = async () => {
+  try {
+    const adminEmail = 'melkamuwako5@admin.com';
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    
+    if (!existingAdmin) {
+      const adminUser = new User({
+        name: 'Super Admin',
+        email: adminEmail,
+        password: 'admin123', // Change this password!
+        role: 'super_admin'
+      });
+      await adminUser.save();
+      console.log('✅ Default super admin created:', adminEmail);
+    }
+
+    // Create tour organizer
+    const tourEmail = 'organizer@heritagetours.et';
+    const existingTourOrganizer = await User.findOne({ email: tourEmail });
+    
+    if (!existingTourOrganizer) {
+      const tourUser = new User({
+        name: 'Heritage Tour Organizer',
+        email: tourEmail,
+        password: 'tour123', // Change this password!
+        role: 'tour_organizer'
+      });
+      await tourUser.save();
+      console.log('✅ Default tour organizer created:', tourEmail);
+    }
+  } catch (error) {
+    console.error('Error creating default users:', error);
+  }
+};
+
 // User CRUD routes (existing)
 app.get('/api/users', async (req, res) => {
   try {
@@ -442,6 +637,10 @@ app.use((err, req, res, next) => {
 // Start server
 const startServer = async () => {
   await connectDB();
+  
+  // Create default users after DB connection
+  await createDefaultUsers();
+  
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 EthioHeritage360 AI Server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
