@@ -12,10 +12,34 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client with enhanced configuration
+let openai = null;
+let openaiConfigured = false;
+
+const initializeOpenAI = () => {
+  try {
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-')) {
+      openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        timeout: 30000, // 30 second timeout
+        maxRetries: 3,
+      });
+      openaiConfigured = true;
+      console.log('✅ OpenAI client initialized successfully');
+      return true;
+    } else {
+      console.log('⚠️ OpenAI API key not configured or invalid format');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ OpenAI initialization error:', error.message);
+    openaiConfigured = false;
+    return false;
+  }
+};
+
+// Initialize OpenAI on startup
+initializeOpenAI();
 
 // Middleware
 app.use(express.json());
@@ -110,17 +134,99 @@ app.get('/api/health', (req, res) => {
 
 // ============ AI-POWERED ROUTES ============
 
+// OpenAI middleware for consistent error handling
+const validateOpenAI = (req, res, next) => {
+  if (!openaiConfigured || !openai) {
+    return res.status(503).json({
+      success: false,
+      message: 'OpenAI service unavailable',
+      error: 'OpenAI client not properly configured',
+      suggestion: 'Check OPENAI_API_KEY environment variable'
+    });
+  }
+  next();
+};
+
+// Rate limiting helper for OpenAI calls
+const rateLimiter = new Map();
+const checkRateLimit = (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute
+  const maxRequests = 20; // 20 requests per minute
+
+  if (!rateLimiter.has(ip)) {
+    rateLimiter.set(ip, { count: 1, resetTime: now + windowMs });
+    return next();
+  }
+
+  const userLimit = rateLimiter.get(ip);
+  if (now > userLimit.resetTime) {
+    rateLimiter.set(ip, { count: 1, resetTime: now + windowMs });
+    return next();
+  }
+
+  if (userLimit.count >= maxRequests) {
+    return res.status(429).json({
+      success: false,
+      message: 'Rate limit exceeded',
+      retryAfter: Math.ceil((userLimit.resetTime - now) / 1000)
+    });
+  }
+
+  userLimit.count++;
+  next();
+};
+
+// Enhanced OpenAI request wrapper
+const makeOpenAIRequest = async (requestData, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const completion = await openai.chat.completions.create(requestData);
+      return completion;
+    } catch (error) {
+      console.error(`OpenAI attempt ${attempt} failed:`, error.message);
+      
+      if (error.status === 429) {
+        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+        console.log(`Rate limited, waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+      
+      if (error.status === 401) {
+        throw new Error('OpenAI API key is invalid or expired');
+      }
+      
+      if (error.status >= 500 && attempt < retries) {
+        console.log(`OpenAI server error, retrying in ${attempt * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+  throw new Error('OpenAI request failed after all retries');
+};
+
 // Intelligent Chat Endpoint
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', validateOpenAI, checkRateLimit, async (req, res) => {
   try {
-    const { message, context } = req.body;
+    const { message, context, userId } = req.body;
     
-    if (!message) {
-      return res.status(400).json({ success: false, message: 'Message is required' });
+    if (!message || message.trim().length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Message is required and cannot be empty' 
+      });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ success: false, message: 'OpenAI API key not configured' });
+    if (message.length > 1000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message too long (max 1000 characters)'
+      });
     }
 
     // Detect query type for intelligent responses
@@ -176,7 +282,7 @@ app.post('/api/chat', async (req, res) => {
         systemPrompt += ` Provide expert knowledge about Ethiopian heritage, culture, and history. Always relate back to platform features. ${context ? `Context: ${context}` : ''}`;
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await makeOpenAIRequest({
       model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: systemPrompt },
@@ -207,7 +313,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Heritage Information Endpoint
-app.post('/api/heritage-info', async (req, res) => {
+app.post('/api/heritage-info', validateOpenAI, checkRateLimit, async (req, res) => {
   try {
     const { site, query } = req.body;
     
@@ -215,15 +321,20 @@ app.post('/api/heritage-info', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Site name or query required' });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ success: false, message: 'OpenAI API key not configured' });
+    // Validate input length
+    const input = site || query;
+    if (input.length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: 'Input too long (max 200 characters)'
+      });
     }
 
     const prompt = site 
       ? `Tell me about the Ethiopian heritage site: ${site}. Include historical significance, cultural importance, and visitor information.`
       : query;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await makeOpenAIRequest({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -246,21 +357,46 @@ app.post('/api/heritage-info', async (req, res) => {
     });
   } catch (error) {
     console.error('Heritage Info Error:', error);
-    res.status(500).json({ success: false, message: 'Error fetching heritage information' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error fetching heritage information',
+      error: error.message
+    });
   }
 });
 
 // Tour Suggestions Endpoint
-app.post('/api/tour-suggestions', async (req, res) => {
+app.post('/api/tour-suggestions', validateOpenAI, checkRateLimit, async (req, res) => {
   try {
     const { interests, duration, location } = req.body;
     
-    if (!interests) {
-      return res.status(400).json({ success: false, message: 'Interests required for tour suggestions' });
+    if (!interests || interests.trim().length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Interests are required for tour suggestions' 
+      });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ success: false, message: 'OpenAI API key not configured' });
+    // Validate input lengths
+    if (interests.length > 300) {
+      return res.status(400).json({
+        success: false,
+        message: 'Interests description too long (max 300 characters)'
+      });
+    }
+
+    if (duration && duration.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Duration description too long (max 50 characters)'
+      });
+    }
+
+    if (location && location.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location description too long (max 100 characters)'
+      });
     }
 
     const prompt = `Create a personalized Ethiopian heritage tour based on:
@@ -270,7 +406,7 @@ app.post('/api/tour-suggestions', async (req, res) => {
     
     Provide detailed itinerary with sites, experiences, and practical tips.`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await makeOpenAIRequest({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -293,21 +429,32 @@ app.post('/api/tour-suggestions', async (req, res) => {
     });
   } catch (error) {
     console.error('Tour Suggestions Error:', error);
-    res.status(500).json({ success: false, message: 'Error generating tour suggestions' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error generating tour suggestions',
+      error: error.message
+    });
   }
 });
 
 // Cultural Context Endpoint
-app.post('/api/cultural-context', async (req, res) => {
+app.post('/api/cultural-context', validateOpenAI, checkRateLimit, async (req, res) => {
   try {
     const { text, context_type } = req.body;
     
-    if (!text) {
-      return res.status(400).json({ success: false, message: 'Text required for cultural context' });
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Text is required for cultural context' 
+      });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ success: false, message: 'OpenAI API key not configured' });
+    // Validate input length
+    if (text.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Text too long (max 500 characters)'
+      });
     }
 
     let systemPrompt = "You are an expert on Ethiopian culture, languages, and traditions.";
@@ -326,7 +473,7 @@ app.post('/api/cultural-context', async (req, res) => {
         systemPrompt += " Provide cultural context about Ethiopian heritage and customs.";
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await makeOpenAIRequest({
       model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: systemPrompt },
@@ -346,7 +493,11 @@ app.post('/api/cultural-context', async (req, res) => {
     });
   } catch (error) {
     console.error('Cultural Context Error:', error);
-    res.status(500).json({ success: false, message: 'Error providing cultural context' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error providing cultural context',
+      error: error.message
+    });
   }
 });
 

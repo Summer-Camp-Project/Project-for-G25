@@ -37,7 +37,10 @@
     "compression": "^1.7.4",
     "helmet": "^7.1.0",
     "express-rate-limit": "^7.1.5",
-    "body-parser": "^1.20.2"
+    "body-parser": "^1.20.2",
+    "node-fetch": "^3.3.2",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
