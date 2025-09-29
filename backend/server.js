@@ -33,16 +33,31 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// MongoDB connection
+// MongoDB connection with better error handling
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    // Check if MONGODB_URI exists
+    const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL;
+    
+    if (!mongoUri) {
+      console.error('❌ MONGODB_URI environment variable is not set!');
+      console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('MONGO')));
+      process.exit(1);
+    }
+    
+    console.log('🔄 Connecting to MongoDB...');
+    console.log('MongoDB URI exists:', !!mongoUri);
+    
+    const conn = await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    return conn;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('❌ MongoDB connection error:', error.message);
+    console.error('Full error:', error);
     process.exit(1);
   }
 };
