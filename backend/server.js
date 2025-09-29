@@ -426,6 +426,117 @@ app.get('/api/openai/status', async (req, res) => {
   }
 });
 
+// ============ ADMIN SEED ENDPOINT ============
+
+// Seed admin users endpoint (for production setup)
+app.post('/api/admin/seed-users', async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    
+    // Security check
+    if (secretKey !== 'ethioheritage360-setup-secret-2024') {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    console.log('🌱 Seeding admin users...');
+    
+    const results = [];
+    
+    // Admin users to create
+    const adminUsers = [
+      {
+        name: 'Melkamu Wako',
+        email: 'melkamuwako5@admin.com',
+        password: 'admin123',
+        role: 'super_admin',
+        isActive: true
+      },
+      {
+        name: 'Museum Administrator', 
+        email: 'museum.admin@ethioheritage360.com',
+        password: 'museum123',
+        role: 'admin',
+        isActive: true
+      },
+      {
+        name: 'Heritage Tour Organizer',
+        email: 'organizer@heritagetours.et', 
+        password: 'tour123',
+        role: 'tour_organizer',
+        isActive: true
+      }
+    ];
+
+    for (const userData of adminUsers) {
+      try {
+        // Check if user exists
+        const existingUser = await User.findOne({ email: userData.email });
+        
+        if (existingUser) {
+          // Update existing user
+          existingUser.password = userData.password;
+          existingUser.role = userData.role;
+          existingUser.isActive = userData.isActive;
+          await existingUser.save();
+          
+          results.push({
+            email: userData.email,
+            action: 'updated',
+            role: userData.role,
+            status: 'success'
+          });
+          console.log(`✅ Updated ${userData.email}`);
+        } else {
+          // Create new user
+          const newUser = new User(userData);
+          await newUser.save();
+          
+          results.push({
+            email: userData.email,
+            action: 'created',
+            role: userData.role,
+            status: 'success'
+          });
+          console.log(`✅ Created ${userData.email}`);
+        }
+        
+        // Test password
+        const testUser = await User.findOne({ email: userData.email });
+        const passwordTest = await testUser.comparePassword(userData.password);
+        results[results.length - 1].passwordTest = passwordTest ? 'PASS' : 'FAIL';
+        
+      } catch (error) {
+        results.push({
+          email: userData.email,
+          action: 'failed',
+          status: 'error',
+          error: error.message
+        });
+        console.error(`❌ Failed ${userData.email}:`, error.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Admin users seeded successfully',
+      results: results,
+      credentials: {
+        super_admin: 'melkamuwako5@admin.com / admin123',
+        museum_admin: 'museum.admin@ethioheritage360.com / museum123', 
+        tour_organizer: 'organizer@heritagetours.et / tour123'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Seeding error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Seeding failed', 
+      error: error.message 
+    });
+  }
+});
+
 // ============ RENDER DASHBOARD ROUTES ============
 
 // Download project files endpoint for Render dashboard
