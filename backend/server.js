@@ -442,6 +442,16 @@ app.get('/api/render/download', (req, res) => {
         return downloadProject(res);
       case 'database':
         return downloadDatabaseExport(res);
+      case 'modules':
+        return downloadModules(res);
+      case 'openai':
+        return downloadOpenAIModules(res);
+      case 'environment':
+        return downloadEnvironmentTemplate(res);
+      case 'backup':
+        return downloadFullBackup(res);
+      case 'deployment':
+        return downloadDeploymentGuide(res);
       default:
         return downloadProject(res);
     }
@@ -569,6 +579,206 @@ function downloadDatabaseExport(res) {
     success: true,
     message: 'Database Export Information',
     data: exportData
+  });
+}
+
+// Download Node modules information
+function downloadModules(res) {
+  const packageData = require('./package.json');
+  const modules = {
+    name: packageData.name,
+    version: packageData.version,
+    production_dependencies: packageData.dependencies,
+    dev_dependencies: packageData.devDependencies,
+    scripts: packageData.scripts,
+    installation_command: 'npm install',
+    module_status: {
+      express: 'Web framework - REQUIRED',
+      mongoose: 'MongoDB ODM - REQUIRED',
+      cors: 'Cross-Origin Resource Sharing - REQUIRED',
+      bcryptjs: 'Password hashing - REQUIRED',
+      jsonwebtoken: 'JWT authentication - REQUIRED',
+      openai: 'OpenAI API client - REQUIRED for AI features',
+      archiver: 'File compression - REQUIRED for downloads',
+      dotenv: 'Environment variables - REQUIRED'
+    }
+  };
+  
+  res.json({
+    success: true,
+    message: 'Node.js Modules Information',
+    data: modules,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Download OpenAI specific modules and configuration
+function downloadOpenAIModules(res) {
+  const openaiConfig = {
+    module: 'openai',
+    version: '^4.20.1',
+    status: process.env.OPENAI_API_KEY ? 'CONFIGURED' : 'NOT CONFIGURED',
+    installation: {
+      command: 'npm install openai@^4.20.1',
+      import: 'const OpenAI = require(\'openai\');',
+      initialization: `const openai = new OpenAI({\n  apiKey: process.env.OPENAI_API_KEY,\n});`
+    },
+    endpoints: {
+      chat: '/api/chat',
+      heritage_info: '/api/heritage-info',
+      tour_suggestions: '/api/tour-suggestions',
+      cultural_context: '/api/cultural-context',
+      status_check: '/api/openai/status'
+    },
+    models_used: {
+      primary: 'gpt-3.5-turbo',
+      fallback: 'gpt-3.5-turbo',
+      purpose: 'Ethiopian heritage and cultural assistance'
+    },
+    configuration_required: {
+      api_key: 'OPENAI_API_KEY environment variable',
+      note: 'Get your API key from https://platform.openai.com/api-keys'
+    }
+  };
+  
+  res.json({
+    success: true,
+    message: 'OpenAI Module Configuration',
+    data: openaiConfig,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Download environment template
+function downloadEnvironmentTemplate(res) {
+  const envTemplate = `# EthioHeritage360 Environment Configuration\n# Generated: ${new Date().toISOString()}\n\n# Database Configuration\nMONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ethioheritage360?retryWrites=true&w=majority\n\n# OpenAI Configuration\nOPENAI_API_KEY=sk-your-openai-api-key-here\n\n# JWT Configuration\nJWT_SECRET=your-super-secret-jwt-key-here\n\n# Frontend Configuration\nFRONTEND_URL=https://your-netlify-app.netlify.app\n\n# Server Configuration\nNODE_ENV=production\nPORT=5000\n\n# Render Configuration (Optional)\nRENDER_EXTERNAL_URL=https://your-app.onrender.com\nRENDER_PAID_PLAN=false\n\n# Security Notes:\n# 1. Never commit this file to version control\n# 2. Change all default values for production\n# 3. Use strong passwords and secrets\n# 4. Regularly rotate API keys`;
+  
+  const tempDir = path.join(__dirname, 'temp');
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  
+  const envFile = path.join(tempDir, `.env-template-${Date.now()}`);
+  fs.writeFileSync(envFile, envTemplate);
+  
+  res.download(envFile, 'ethioheritage360.env.template', (err) => {
+    if (err) console.error('Download error:', err);
+    setTimeout(() => {
+      try { fs.unlinkSync(envFile); } catch (e) {}
+    }, 5000);
+  });
+}
+
+// Download full backup with everything
+function downloadFullBackup(res) {
+  const tempDir = path.join(__dirname, 'temp');
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  
+  const zipPath = path.join(tempDir, `ethioheritage360-full-backup-${Date.now()}.zip`);
+  const output = fs.createWriteStream(zipPath);
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  
+  output.on('close', () => {
+    res.download(zipPath, 'ethioheritage360-full-backup.zip', (err) => {
+      if (err) console.error('Download error:', err);
+      setTimeout(() => {
+        try { fs.unlinkSync(zipPath); } catch (e) {}
+      }, 10000);
+    });
+  });
+  
+  archive.on('error', (err) => {
+    console.error('Archive error:', err);
+    res.status(500).json({ success: false, message: 'Backup creation failed' });
+  });
+  
+  archive.pipe(output);
+  
+  // Add all project files
+  archive.file(path.join(__dirname, 'server.js'), { name: 'backend/server.js' });
+  archive.file(path.join(__dirname, 'package.json'), { name: 'backend/package.json' });
+  
+  // Add environment template
+  const envTemplate = `MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ethioheritage360\nOPENAI_API_KEY=sk-your-key-here\nJWT_SECRET=your-secret\nFRONTEND_URL=https://your-app.netlify.app\nNODE_ENV=production`;
+  archive.append(envTemplate, { name: 'backend/.env.example' });
+  
+  // Add deployment guide
+  const deployGuide = `# EthioHeritage360 - Complete Deployment Guide\n\n## 🚀 Quick Setup:\n\n### 1. MongoDB Atlas:\n- Create account at mongodb.com\n- Create cluster and get connection string\n- Add to MONGODB_URI environment variable\n\n### 2. OpenAI API:\n- Get API key from platform.openai.com\n- Add to OPENAI_API_KEY environment variable\n\n### 3. Deploy Backend (Render):\n- Connect GitHub repository\n- Set environment variables\n- Deploy!\n\n### 4. Deploy Frontend (Netlify):\n- Connect repository\n- Build and deploy\n\n## 🔗 Important URLs:\n- Backend: https://ethioheritage360-ethiopian-heritage.onrender.com\n- Downloads: /api/render/download\n- Health: /api/health\n- OpenAI Status: /api/openai/status\n\nGenerated: ${new Date().toISOString()}`;
+  archive.append(deployGuide, { name: 'DEPLOYMENT.md' });
+  
+  archive.finalize();
+}
+
+// Download deployment guide
+function downloadDeploymentGuide(res) {
+  const deploymentGuide = {
+    title: 'EthioHeritage360 - Complete Deployment Guide',
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    backend_deployment: {
+      platform: 'Render.com',
+      url: 'https://ethioheritage360-ethiopian-heritage.onrender.com',
+      repository: 'https://github.com/Melke27/group_25',
+      build_command: 'npm install',
+      start_command: 'npm start',
+      environment_variables: {
+        MONGODB_URI: 'Your MongoDB Atlas connection string',
+        OPENAI_API_KEY: 'Your OpenAI API key from platform.openai.com',
+        JWT_SECRET: 'Your JWT secret key (generate strong random string)',
+        FRONTEND_URL: 'Your Netlify domain',
+        NODE_ENV: 'production'
+      }
+    },
+    frontend_deployment: {
+      platform: 'Netlify.com',
+      build_settings: {
+        build_command: 'npm run build',
+        publish_directory: 'dist' 
+      },
+      redirects: {
+        api_proxy: '/api/* https://ethioheritage360-ethiopian-heritage.onrender.com/api/:splat 200',
+        spa_fallback: '/* /index.html 200'
+      }
+    },
+    database_setup: {
+      provider: 'MongoDB Atlas',
+      steps: [
+        '1. Create account at mongodb.com',
+        '2. Create new cluster (free tier available)',
+        '3. Create database user',
+        '4. Get connection string',
+        '5. Add connection string to MONGODB_URI'
+      ]
+    },
+    openai_setup: {
+      provider: 'OpenAI Platform',
+      steps: [
+        '1. Create account at platform.openai.com',
+        '2. Go to API Keys section',
+        '3. Create new API key',
+        '4. Add API key to OPENAI_API_KEY environment variable',
+        '5. Test connection at /api/openai/status'
+      ]
+    },
+    available_downloads: {
+      logs: '/api/render/download?type=logs',
+      config: '/api/render/download?type=config',
+      project: '/api/render/download?type=project',
+      database: '/api/render/download?type=database',
+      modules: '/api/render/download?type=modules',
+      openai: '/api/render/download?type=openai',
+      environment: '/api/render/download?type=environment',
+      backup: '/api/render/download?type=backup',
+      deployment: '/api/render/download?type=deployment'
+    }
+  };
+  
+  res.json({
+    success: true,
+    message: 'Complete Deployment Guide',
+    data: deploymentGuide
   });
 }
 
