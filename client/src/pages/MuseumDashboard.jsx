@@ -57,52 +57,55 @@ const MuseumDashboard = () => {
         setLoading(true);
         console.log('=== LOADING DASHBOARD DATA ===');
 
-        // Load dashboard data with individual error handling
-        const promises = [
-          api.getMuseumDashboard().catch(error => {
-            console.warn('Dashboard stats failed, using default values:', error);
-            return {
-              data: {
-                totalArtifacts: 0,
-                artifactsInStorage: 0,
-                activeRentals: 0,
-                monthlyVisitors: 0,
-                pendingRentals: 0,
-                totalEvents: 0,
-                upcomingEvents: 0,
-                totalStaff: 0,
-                totalRevenue: 0
+        // Load dashboard data from single API call
+        const dashboardResponse = await api.getMuseumDashboard().catch(error => {
+          console.error('❌ Dashboard API failed:', error);
+          console.error('❌ Error details:', error.message, error.status);
+          setError(`Dashboard API failed: ${error.message}`);
+          return {
+            success: false,
+            data: {
+              dashboard: {
+                quickStats: {
+                  totalArtifacts: 0,
+                  publishedArtifacts: 0,
+                  activeRentals: 0,
+                  thisMonthVisitors: 0,
+                  pendingRentals: 0,
+                  totalRevenue: 0
+                },
+                analytics: {
+                  topArtifacts: []
+                },
+                tasks: {
+                  pendingApprovals: 0,
+                  pendingRentals: 0,
+                  recentRentals: [],
+                  pendingArtifacts: []
+                }
               }
-            };
-          }),
-          api.getRecentArtifacts().catch(error => {
-            console.warn('Recent artifacts failed, using empty array:', error);
-            return { data: [] };
-          }),
-          api.getPendingTasks().catch(error => {
-            console.warn('Pending tasks failed, using empty array:', error);
-            return { data: [] };
-          })
-        ];
+            }
+          };
+        });
 
-        const [statsResponse, artifactsResponse, tasksResponse] = await Promise.all(promises);
+        console.log('📊 Dashboard response:', dashboardResponse);
 
-        console.log('Stats response:', statsResponse);
-        console.log('Artifacts response:', artifactsResponse);
-        console.log('Tasks response:', tasksResponse);
+        // Check if API call failed
+        if (dashboardResponse.error) {
+          console.error('❌ Dashboard API failed:', dashboardResponse.error);
+        }
 
-        // Update state with data (or default values if API failed)
-        if (statsResponse.data) {
-          // Handle the dashboard response structure
-          const dashboardData = statsResponse.data.dashboard || statsResponse.data;
+        // Update state with data from single dashboard response
+        if (dashboardResponse.dashboard) {
+          const dashboardData = dashboardResponse.dashboard;
           console.log('Dashboard data:', dashboardData);
           console.log('Dashboard data keys:', Object.keys(dashboardData));
 
+          // Extract stats from quickStats
           if (dashboardData.quickStats) {
             console.log('Quick stats found:', dashboardData.quickStats);
             console.log('Quick stats keys:', Object.keys(dashboardData.quickStats));
 
-            // Extract the real data from quickStats
             const stats = {
               totalArtifacts: dashboardData.quickStats.totalArtifacts || 0,
               artifactsInStorage: dashboardData.quickStats.publishedArtifacts || 0,
@@ -121,55 +124,70 @@ const MuseumDashboard = () => {
             console.log('No quickStats found in dashboard data');
             console.log('Available dashboard properties:', Object.keys(dashboardData));
           }
-        } else {
-          console.log('No dashboard data in response');
-        }
 
-        if (artifactsResponse.data) {
-          // Handle artifacts response structure: { success: true, artifacts: [...], pagination: {...} }
-          const artifactsData = artifactsResponse.data.artifacts;
-          console.log('Artifacts data:', artifactsData);
-          console.log('Artifacts data type:', typeof artifactsData);
-          console.log('Artifacts data length:', Array.isArray(artifactsData) ? artifactsData.length : 'not array');
+          // Extract recent artifacts from analytics.topArtifacts
+          if (dashboardData.analytics && dashboardData.analytics.topArtifacts) {
+            const artifactsData = dashboardData.analytics.topArtifacts;
+            console.log('Artifacts data:', artifactsData);
+            console.log('Artifacts data type:', typeof artifactsData);
+            console.log('Artifacts data length:', Array.isArray(artifactsData) ? artifactsData.length : 'not array');
 
-          if (Array.isArray(artifactsData)) {
-            setRecentArtifacts(artifactsData);
-            console.log('Set recent artifacts:', artifactsData.length, 'items');
+            if (Array.isArray(artifactsData)) {
+              setRecentArtifacts(artifactsData);
+              console.log('Set recent artifacts:', artifactsData.length, 'items');
+            } else {
+              console.log('Artifacts data is not an array, setting empty array');
+              setRecentArtifacts([]);
+            }
           } else {
-            console.log('Artifacts data is not an array, setting empty array');
+            console.log('No topArtifacts found in analytics');
             setRecentArtifacts([]);
           }
-        }
 
-        if (tasksResponse.data) {
-          // Handle tasks response structure: { success: true, stats: {...} }
-          // The quick-stats endpoint returns stats, not tasks, so we'll create mock tasks for now
-          const statsData = tasksResponse.data.stats;
-          console.log('Tasks/Stats data:', statsData);
+          // Extract tasks from tasks object
+          if (dashboardData.tasks) {
+            const tasksData = dashboardData.tasks;
+            console.log('Tasks data:', tasksData);
 
-          // Create mock tasks based on stats
-          const mockTasks = [];
-          if (statsData.pendingApprovals > 0) {
-            mockTasks.push({
-              id: 'pending-approvals',
-              type: 'artifact_approval',
-              title: `${statsData.pendingApprovals} artifacts pending approval`,
-              priority: 'high',
-              actionUrl: '/museum-dashboard/artifacts'
-            });
+            // Create tasks based on pending items
+            const tasks = [];
+            if (tasksData.pendingApprovals > 0) {
+              tasks.push({
+                id: 'pending-approvals',
+                type: 'artifact_approval',
+                title: `${tasksData.pendingApprovals} artifacts pending approval`,
+                priority: 'high',
+                actionUrl: '/museum-dashboard/artifacts'
+              });
+            }
+            if (tasksData.pendingRentals > 0) {
+              tasks.push({
+                id: 'pending-rentals',
+                type: 'rental_management',
+                title: `${tasksData.pendingRentals} rentals pending approval`,
+                priority: 'medium',
+                actionUrl: '/museum-dashboard/rentals'
+              });
+            }
+            if (tasksData.recentRentals && tasksData.recentRentals.length > 0) {
+              tasks.push({
+                id: 'recent-rentals',
+                type: 'rental_management',
+                title: `${tasksData.recentRentals.length} recent rental requests`,
+                priority: 'medium',
+                actionUrl: '/museum-dashboard/rentals'
+              });
+            }
+
+            setPendingTasks(tasks);
+            console.log('Set pending tasks:', tasks.length, 'items');
+          } else {
+            console.log('No tasks data found');
+            setPendingTasks([]);
           }
-          if (statsData.activeRentals > 0) {
-            mockTasks.push({
-              id: 'active-rentals',
-              type: 'rental_management',
-              title: `${statsData.activeRentals} active rentals to manage`,
-              priority: 'medium',
-              actionUrl: '/museum-dashboard/rentals'
-            });
-          }
-
-          setPendingTasks(mockTasks);
-          console.log('Set pending tasks:', mockTasks.length, 'items');
+        } else {
+          console.log('No dashboard data in response');
+          console.log('Response structure:', dashboardResponse);
         }
 
         // Clear any previous errors since we're showing data (even if default)
@@ -195,14 +213,14 @@ const MuseumDashboard = () => {
       }
     };
 
-    if (user && user.role === 'museumAdmin') {
+    if (user && (user.role === 'museumAdmin' || user.role === 'museum')) {
       loadDashboardData();
     }
   }, [user]);
 
   // Redirect if not authenticated or not a museum admin
   useEffect(() => {
-    if (!user || user.role !== 'museumAdmin') {
+    if (!user || (user.role !== 'museumAdmin' && user.role !== 'museum')) {
       navigate('/auth');
     }
   }, [user, navigate]);
@@ -253,6 +271,11 @@ const MuseumDashboard = () => {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: 'white' }}>
       <MuseumAdminSidebar />
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
       <div
         className="flex-1 overflow-auto"
@@ -333,36 +356,45 @@ const MuseumDashboard = () => {
                     </TableHead>
                     <TableBody>
                       {recentArtifacts.length > 0 ? (
-                        recentArtifacts.slice(0, 5).map((artifact) => (
-                          <TableRow key={artifact.id}>
-                            <TableCell>{artifact.name}</TableCell>
-                            <TableCell>
-                              <Chip
-                                label={artifact.status.replace('_', ' ')}
-                                sx={{
-                                  backgroundColor: artifact.status === 'on_display' ? '#8B5A3C' : '#8B5A3C',
-                                  color: 'white',
-                                  '&:hover': {
-                                    backgroundColor: '#8B5A3C'
-                                  }
-                                }}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {new Date(artifact.lastUpdated).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <IconButton
-                                size="small"
-                                sx={{ color: '#8B5A3C', '&:hover': { backgroundColor: 'white' } }}
-                                onClick={() => navigate('/museum-dashboard/artifacts')}
-                              >
-                                <EditIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        recentArtifacts.slice(0, 5).map((artifact, index) => {
+                          // Safely handle artifact properties that might be undefined
+                          const rowId = artifact.id || artifact._id || artifact.accessionNumber || index;
+                          const status = artifact.status || 'unknown';
+                          const statusLabel = status.toString().replace(/_/g, ' ');
+                          const lastUpdated = artifact.lastUpdated || artifact.updatedAt || artifact.createdAt;
+                          const dateStr = lastUpdated ? new Date(lastUpdated).toLocaleDateString() : 'N/A';
+                          
+                          return (
+                            <TableRow key={rowId}>
+                              <TableCell>{artifact.name || 'Unnamed Artifact'}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={statusLabel}
+                                  sx={{
+                                    backgroundColor: status === 'on_display' ? '#8B5A3C' : '#8B5A3C',
+                                    color: 'white',
+                                    '&:hover': {
+                                      backgroundColor: '#8B5A3C'
+                                    }
+                                  }}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {dateStr}
+                              </TableCell>
+                              <TableCell>
+                                <IconButton
+                                  size="small"
+                                  sx={{ color: '#8B5A3C', '&:hover': { backgroundColor: 'white' } }}
+                                  onClick={() => navigate('/museum-dashboard/artifacts')}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       ) : (
                         <TableRow>
                           <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
