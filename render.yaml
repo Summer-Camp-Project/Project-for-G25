@@ -6,8 +6,9 @@ services:
     plan: free
     region: ohio  # Choose region closest to your users
     healthCheckPath: /api/health
-    buildCommand: cd server && npm install
-    startCommand: cd server && node server.js
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -41,6 +42,8 @@ services:
         value: true
       - key: CORS_ORIGIN
         value: https://ethioheritage360-ethiopianheritagepf.netlify.app
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
     # Add custom domains if you have them
     # customDomains:
     #   - name: api.ethioheritage360.com
