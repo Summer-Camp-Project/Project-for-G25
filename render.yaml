@@ -37,6 +37,8 @@ services:
         value: true
       - key: MONITORING_ENABLED
         value: true
+      - key: CORS_ORIGIN
+        value: https://ethioheritage360-ethiopianheritagepf.netlify.app
     # Add custom domains if you have them
     # customDomains:
     #   - name: api.ethioheritage360.com
