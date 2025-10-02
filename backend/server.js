@@ -12,16 +12,21 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize OpenAI client with enhanced configuration
+// Initialize AI clients with enhanced configuration
 let openai = null;
+let openRouter = null;
+let huggingFace = null;
 let openaiConfigured = false;
+let openRouterConfigured = false;
+let huggingFaceConfigured = false;
 
+// Initialize OpenAI client
 const initializeOpenAI = () => {
   try {
     if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-')) {
       openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
-        timeout: 30000, // 30 second timeout
+        timeout: 30000,
         maxRetries: 3,
       });
       openaiConfigured = true;
@@ -38,8 +43,91 @@ const initializeOpenAI = () => {
   }
 };
 
-// Initialize OpenAI on startup
+// Initialize OpenRouter client
+const initializeOpenRouter = () => {
+  try {
+    if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.startsWith('sk-or-')) {
+      openRouter = new OpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey: process.env.OPENROUTER_API_KEY,
+        timeout: 45000,
+        maxRetries: 3,
+        defaultHeaders: {
+          'HTTP-Referer': 'https://ethioheritage360.com',
+          'X-Title': 'EthioHeritage360 - Ethiopian Heritage Platform'
+        }
+      });
+      openRouterConfigured = true;
+      console.log('✅ OpenRouter client initialized successfully');
+      return true;
+    } else {
+      console.log('⚠️ OpenRouter API key not configured or invalid format');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ OpenRouter initialization error:', error.message);
+    openRouterConfigured = false;
+    return false;
+  }
+};
+
+// Initialize Hugging Face client
+const initializeHuggingFace = () => {
+  try {
+    if (process.env.HF_API_KEY && process.env.HF_API_KEY.startsWith('hf_')) {
+      huggingFace = {
+        apiKey: process.env.HF_API_KEY,
+        baseURL: 'https://api-inference.huggingface.co/models',
+        timeout: 30000
+      };
+      huggingFaceConfigured = true;
+      console.log('✅ Hugging Face client initialized successfully');
+      return true;
+    } else {
+      console.log('⚠️ Hugging Face API key not configured or invalid format');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Hugging Face initialization error:', error.message);
+    huggingFaceConfigured = false;
+    return false;
+  }
+};
+
+// Smart AI provider selection
+const getAvailableProviders = () => {
+  const providers = [];
+  if (openRouterConfigured) providers.push('openrouter');
+  if (openaiConfigured) providers.push('openai');
+  if (huggingFaceConfigured) providers.push('huggingface');
+  return providers;
+};
+
+const selectBestProvider = (queryType) => {
+  const providers = getAvailableProviders();
+  
+  // OpenRouter has access to multiple advanced models
+  if (providers.includes('openrouter')) {
+    return 'openrouter';
+  }
+  
+  // Fallback to OpenAI
+  if (providers.includes('openai')) {
+    return 'openai';
+  }
+  
+  // Hugging Face for specialized tasks
+  if (providers.includes('huggingface')) {
+    return 'huggingface';
+  }
+  
+  return null;
+};
+
+// Initialize all AI providers on startup
 initializeOpenAI();
+initializeOpenRouter();
+initializeHuggingFace();
 
 // Middleware
 app.use(express.json());
@@ -141,18 +229,27 @@ app.use('/api/education', educationRouter);
 
 // ============ AI-POWERED ROUTES ============
 
-// OpenAI middleware for consistent error handling
-const validateOpenAI = (req, res, next) => {
-  if (!openaiConfigured || !openai) {
+// AI middleware for consistent error handling
+const validateAI = (req, res, next) => {
+  const providers = getAvailableProviders();
+  if (providers.length === 0) {
     return res.status(503).json({
       success: false,
-      message: 'OpenAI service unavailable',
-      error: 'OpenAI client not properly configured',
-      suggestion: 'Check OPENAI_API_KEY environment variable'
+      message: 'AI services unavailable',
+      error: 'No AI providers configured',
+      suggestion: 'Check OPENAI_API_KEY, OPENROUTER_API_KEY, or HF_API_KEY environment variables',
+      available_providers: {
+        openai: openaiConfigured,
+        openrouter: openRouterConfigured,
+        huggingface: huggingFaceConfigured
+      }
     });
   }
   next();
 };
+
+// Legacy middleware for backward compatibility
+const validateOpenAI = validateAI;
 
 // Rate limiting helper for OpenAI calls
 const rateLimiter = new Map();
@@ -185,36 +282,106 @@ const checkRateLimit = (req, res, next) => {
   next();
 };
 
-// Enhanced OpenAI request wrapper
-const makeOpenAIRequest = async (requestData, retries = 3) => {
+// Enhanced AI request wrapper with multiple providers
+const makeAIRequest = async (requestData, retries = 3, preferredProvider = null) => {
+  const provider = preferredProvider || selectBestProvider(requestData.intent || 'general');
+  
+  if (!provider) {
+    throw new Error('No AI providers available');
+  }
+  
+  console.log(`🤖 Using AI provider: ${provider.toUpperCase()}`);
+  
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const completion = await openai.chat.completions.create(requestData);
-      return completion;
+      let completion;
+      
+      switch (provider) {
+        case 'openrouter':
+          // Use advanced models for complex queries
+          const model = requestData.complex ? 'anthropic/claude-3-sonnet' : 'openai/gpt-3.5-turbo';
+          completion = await openRouter.chat.completions.create({
+            ...requestData,
+            model
+          });
+          break;
+          
+        case 'openai':
+          completion = await openai.chat.completions.create(requestData);
+          break;
+          
+        case 'huggingface':
+          // Use HuggingFace for specialized tasks
+          const response = await axios.post(
+            `${huggingFace.baseURL}/microsoft/DialoGPT-medium`,
+            {
+              inputs: requestData.messages[requestData.messages.length - 1].content,
+              parameters: {
+                max_length: requestData.max_tokens || 500,
+                temperature: requestData.temperature || 0.7
+              }
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${huggingFace.apiKey}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: huggingFace.timeout
+            }
+          );
+          
+          // Convert HF response to OpenAI format
+          completion = {
+            choices: [{
+              message: {
+                content: response.data[0]?.generated_text || 'I apologize, but I encountered an issue processing your request.'
+              }
+            }],
+            usage: { total_tokens: 0 } // HF doesn't provide token usage
+          };
+          break;
+          
+        default:
+          throw new Error(`Unsupported AI provider: ${provider}`);
+      }
+      
+      return { ...completion, provider };
+      
     } catch (error) {
-      console.error(`OpenAI attempt ${attempt} failed:`, error.message);
+      console.error(`${provider.toUpperCase()} attempt ${attempt} failed:`, error.message);
       
       if (error.status === 429) {
-        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+        const waitTime = Math.pow(2, attempt) * 1000;
         console.log(`Rate limited, waiting ${waitTime}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
         continue;
       }
       
       if (error.status === 401) {
-        throw new Error('OpenAI API key is invalid or expired');
+        throw new Error(`${provider.toUpperCase()} API key is invalid or expired`);
       }
       
       if (error.status >= 500 && attempt < retries) {
-        console.log(`OpenAI server error, retrying in ${attempt * 1000}ms...`);
+        console.log(`${provider.toUpperCase()} server error, retrying in ${attempt * 1000}ms...`);
         await new Promise(resolve => setTimeout(resolve, attempt * 1000));
         continue;
+      }
+      
+      // Try fallback provider on final attempt
+      if (attempt === retries && provider !== 'openai' && openaiConfigured) {
+        console.log(`Falling back to OpenAI...`);
+        return makeAIRequest(requestData, 1, 'openai');
       }
       
       throw error;
     }
   }
-  throw new Error('OpenAI request failed after all retries');
+  throw new Error(`${provider.toUpperCase()} request failed after all retries`);
+};
+
+// Legacy wrapper for backward compatibility
+const makeOpenAIRequest = async (requestData, retries = 3) => {
+  return makeAIRequest(requestData, retries, 'openai');
 };
 
 // ============ ENHANCED AI CHAT SYSTEM ============
