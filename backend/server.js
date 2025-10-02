@@ -217,10 +217,184 @@ const makeOpenAIRequest = async (requestData, retries = 3) => {
   throw new Error('OpenAI request failed after all retries');
 };
 
-// Intelligent Chat Endpoint
+// ============ ENHANCED AI CHAT SYSTEM ============
+
+// Conversation memory storage
+const conversationMemory = new Map();
+const axios = require('axios'); // Add this to package.json if not present
+
+// Real Ethiopian heritage data
+const ethiopianHeritage = {
+  sites: {
+    'lalibela': {
+      name: 'Rock-Hewn Churches of Lalibela',
+      type: 'UNESCO World Heritage Site',
+      location: 'Lalibela, Amhara Region',
+      built: '12th-13th century',
+      significance: 'Extraordinary architectural achievement, carved from solid volcanic rock',
+      visitor_info: 'Open daily, best visited during Timkat (Ethiopian Orthodox Epiphany)',
+      facts: ['11 medieval monolithic churches', 'Carved below ground level', 'Still active pilgrimage site']
+    },
+    'axum': {
+      name: 'Axum Obelisks',
+      type: 'UNESCO World Heritage Site', 
+      location: 'Axum, Tigray Region',
+      built: '3rd-4th century CE',
+      significance: 'Capital of ancient Aksumite Kingdom, cradle of Ethiopian civilization',
+      visitor_info: 'Museum and archaeological sites open year-round',
+      facts: ['Tallest obelisk is 33 meters', 'Ancient trade empire center', 'Home to Queen of Sheba legend']
+    },
+    'gondar': {
+      name: 'Fasil Ghebbi (Royal Enclosure)',
+      type: 'UNESCO World Heritage Site',
+      location: 'Gondar, Amhara Region', 
+      built: '17th-18th century',
+      significance: 'Former imperial capital, unique architectural fusion',
+      visitor_info: 'Castles and churches complex, guided tours available',
+      facts: ['Ethiopian Camelot', 'Six castles and multiple buildings', 'Blend of Hindu, Arab, and European styles']
+    },
+    'omo_valley': {
+      name: 'Lower Valley of the Omo',
+      type: 'UNESCO World Heritage Site',
+      location: 'Southern Nations, Southern Ethiopia',
+      built: 'Prehistoric',
+      significance: 'Cradle of humanity, earliest human fossils',
+      visitor_info: 'Cultural tours to indigenous communities, permits required',
+      facts: ['Lucy (3.2 million years old) found here', '8 different indigenous tribes', 'Paleontological goldmine']
+    }
+  },
+  culture: {
+    languages: ['Amharic', 'Oromo', 'Tigrinya', 'Somali', 'Sidamo', 'Wolaytta', 'Gurage', 'Afar'],
+    religions: ['Ethiopian Orthodox Christianity (43%)', 'Islam (34%)', 'Protestant Christianity (19%)', 'Traditional beliefs (3%)'],
+    festivals: ['Timkat (Epiphany)', 'Meskel (Finding of True Cross)', 'Enkutatash (New Year)', 'Fasika (Easter)'],
+    cuisine: ['Injera (sourdough flatbread)', 'Doro Wat (spicy chicken stew)', 'Kitfo (Ethiopian tartare)', 'Coffee ceremony'],
+    music: ['Eskista (shoulder dance)', 'Traditional krar (lyre)', 'Masinko (one-string violin)', 'Ceremonial drums']
+  }
+};
+
+// Enhanced intent detection with NLP
+const detectIntent = (message) => {
+  const lower = message.toLowerCase();
+  
+  // Specific heritage sites
+  if (lower.includes('lalibela') || lower.includes('rock church')) return 'lalibela';
+  if (lower.includes('axum') || lower.includes('obelisk') || lower.includes('queen of sheba')) return 'axum';
+  if (lower.includes('gondar') || lower.includes('castle') || lower.includes('fasil')) return 'gondar';
+  if (lower.includes('omo valley') || lower.includes('lucy') || lower.includes('fossil')) return 'omo_valley';
+  
+  // General categories
+  if (lower.match(/\b(hello|hi|hey|greetings|good\s+(morning|afternoon|evening))\b/)) return 'greeting';
+  if (lower.includes('weather') || lower.includes('temperature') || lower.includes('climate')) return 'weather';
+  if (lower.includes('food') || lower.includes('cuisine') || lower.includes('restaurant')) return 'cuisine';
+  if (lower.includes('language') || lower.includes('translate') || lower.includes('speak')) return 'language';
+  if (lower.includes('festival') || lower.includes('celebration') || lower.includes('holiday')) return 'festivals';
+  if (lower.includes('music') || lower.includes('dance') || lower.includes('song')) return 'music';
+  if (lower.includes('history') || lower.includes('ancient') || lower.includes('past')) return 'history';
+  if (lower.includes('tour') || lower.includes('visit') || lower.includes('travel') || lower.includes('trip')) return 'tour_planning';
+  if (lower.includes('museum') || lower.includes('exhibit') || lower.includes('artifact')) return 'museum';
+  if (lower.includes('learn') || lower.includes('education') || lower.includes('study')) return 'education';
+  
+  return 'general';
+};
+
+// Fetch real-time data from external APIs
+const fetchExternalData = async (intent, query) => {
+  const results = { source: 'internal', data: null };
+  
+  try {
+    switch (intent) {
+      case 'weather':
+        // You can add weather API here
+        results.data = {
+          suggestion: 'For current weather in Ethiopia, I recommend checking a weather service. Ethiopia has diverse climates from the highlands to the desert regions.',
+          tip: 'Best time to visit heritage sites is during dry season (October-May)'
+        };
+        break;
+        
+      case 'wikipedia_search':
+        try {
+          const wikiResponse = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`, {
+            timeout: 5000
+          });
+          results.source = 'wikipedia';
+          results.data = {
+            title: wikiResponse.data.title,
+            extract: wikiResponse.data.extract,
+            url: wikiResponse.data.content_urls?.desktop?.page
+          };
+        } catch (err) {
+          console.log('Wikipedia API error:', err.message);
+        }
+        break;
+    }
+  } catch (error) {
+    console.log('External API error:', error.message);
+  }
+  
+  return results;
+};
+
+// Generate personalized responses
+const generatePersonalizedResponse = async (intent, message, userId, conversationHistory) => {
+  let response = '';
+  let additionalData = {};
+  
+  // Get real-time external data when relevant
+  const externalData = await fetchExternalData(intent, message);
+  
+  switch (intent) {
+    case 'greeting':
+      const greetings = [
+        '🇪🇹 Welcome to EthioHeritage360! I\'m your personal heritage guide. Ready to explore the wonders of Ethiopia?',
+        'Selam! (Hello in Amharic) 🌟 I\'m here to take you on an incredible journey through Ethiopia\'s rich heritage!',
+        'Greetings, cultural explorer! 🏛️ Let\'s discover the amazing stories of Ethiopian civilization together!',
+        'Hello there! 🎭 I\'m your AI heritage companion, ready to share the fascinating world of Ethiopian culture with you!'
+      ];
+      response = greetings[Math.floor(Math.random() * greetings.length)];
+      additionalData.suggestions = ['Tell me about Lalibela churches', 'What festivals are celebrated?', 'Plan a heritage tour', 'Learn about Ethiopian cuisine'];
+      break;
+      
+    case 'lalibela':
+      const site = ethiopianHeritage.sites.lalibela;
+      response = `🏛️ **${site.name}**\n\n✨ *${site.significance}*\n\n📍 **Location**: ${site.location}\n🗓️ **Built**: ${site.built}\n\n**Amazing Facts:**\n${site.facts.map(fact => `• ${fact}`).join('\n')}\n\n🎫 **Visitor Info**: ${site.visitor_info}\n\nWould you like me to help plan a visit or tell you about other UNESCO sites in Ethiopia?`;
+      additionalData.related_sites = ['Axum Obelisks', 'Gondar Castles', 'Omo Valley'];
+      break;
+      
+    case 'axum':
+      const axumSite = ethiopianHeritage.sites.axum;
+      response = `👑 **${axumSite.name}**\n\n🌟 *${axumSite.significance}*\n\n📍 **Location**: ${axumSite.location}\n🗓️ **Era**: ${axumSite.built}\n\n**Incredible Facts:**\n${axumSite.facts.map(fact => `• ${fact}`).join('\n')}\n\n🎫 **Visit**: ${axumSite.visitor_info}\n\nFun fact: This is where the legendary Queen of Sheba supposedly ruled! 👸`;
+      break;
+      
+    case 'cuisine':
+      response = `🍽️ **Ethiopian Cuisine - A Culinary Adventure!**\n\n**Must-Try Dishes:**\n${ethiopianHeritage.culture.cuisine.map(dish => `• ${dish}`).join('\n')}\n\n☕ **Coffee Origin**: Ethiopia is the birthplace of coffee! The coffee ceremony is a sacred social ritual.\n\n🍞 **Injera**: The spongy sourdough bread that\'s both plate and utensil - made from ancient teff grain.\n\nWould you like recipes, restaurant recommendations, or to learn about the coffee ceremony?`;
+      additionalData.experiences = ['Virtual coffee ceremony', 'Cooking classes', 'Restaurant finder'];
+      break;
+      
+    case 'festivals':
+      response = `🎉 **Ethiopian Festivals - Living Traditions!**\n\n**Major Celebrations:**\n${ethiopianHeritage.culture.festivals.map(fest => `• ${fest}`).join('\n')}\n\n🌟 **Timkat** (Jan 19): Spectacular water blessing ceremony with thousands of pilgrims\n✝️ **Meskel** (Sept 27): Bonfire festival celebrating the finding of the True Cross\n🎊 **Enkutatash** (Sept 11): Ethiopian New Year with flowers and gift-giving\n\nEach festival is a explosion of color, music, and ancient traditions! Which one interests you most?`;
+      break;
+      
+    case 'tour_planning':
+      response = `🗺️ **Let\'s Plan Your Ethiopian Heritage Adventure!**\n\n**Popular Routes:**\n• **Historic North Circuit**: Axum → Lalibela → Gondar (7-10 days)\n• **Omo Valley Cultural Tour**: Meet 8 indigenous tribes (5-7 days)\n• **Danakil Depression**: Otherworldly landscapes (3-4 days)\n• **Simien Mountains**: Wildlife & stunning vistas (4-6 days)\n\n🎯 **Tell me:**\n• How many days do you have?\n• What interests you most? (History/Culture/Nature/Adventure)\n• Preferred travel style? (Luxury/Mid-range/Budget)\n\nI\'ll create a personalized itinerary just for you!`;
+      additionalData.planning_tools = ['Budget calculator', 'Best time to visit', 'Packing checklist', 'Local guides'];
+      break;
+      
+    case 'history':
+      response = `📜 **Ethiopian History - 3000 Years of Civilization!**\n\n🏛️ **Ancient Aksumite Kingdom** (100-960 CE): Major trading power connecting Roman Empire with Ancient India\n\n👸 **Queen of Sheba**: Legendary ruler who visited King Solomon\n\n🦁 **Ethiopian Empire**: Never fully colonized, defeated Italy at Battle of Adwa (1896)\n\n🌍 **Cradle of Humanity**: Lucy and other early human fossils discovered in Omo Valley\n\n📚 **Living Heritage**: Ancient Ge\'ez script, unchanged Orthodox traditions, and continuous cultural practices\n\nWhat specific period or aspect of Ethiopian history fascinates you?`;
+      break;
+      
+    default:
+      // Use AI for complex queries
+      return null; // Will fall back to OpenAI
+  }
+  
+  return { response, additionalData, source: 'enhanced_heritage_ai', externalData };
+};
+
+// Enhanced Chat Endpoint
 app.post('/api/chat', validateOpenAI, checkRateLimit, async (req, res) => {
   try {
-    const { message, context, userId } = req.body;
+    const { message, context, userId = 'anonymous' } = req.body;
     
     if (!message || message.trim().length === 0) {
       return res.status(400).json({ 
@@ -229,65 +403,74 @@ app.post('/api/chat', validateOpenAI, checkRateLimit, async (req, res) => {
       });
     }
 
-    if (message.length > 1000) {
+    if (message.length > 2000) {
       return res.status(400).json({
         success: false,
-        message: 'Message too long (max 1000 characters)'
+        message: 'Message too long (max 2000 characters)'
       });
     }
 
-    // Detect query type for intelligent responses
-    const lowerMessage = message.toLowerCase();
-    const platformKeywords = {
-      welcome: ['welcome', 'hello', 'hi', 'start', 'begin'],
-      help: ['help', 'support', 'assistance', 'guide'],
-      contact: ['contact', 'reach', 'support team', 'admin'],
-      education: ['education', 'learn', 'study', 'school', 'university'],
-      museum: ['museum', 'virtual museum', 'exhibits', 'collections'],
-      tour: ['tour', 'visit', 'travel', 'trip', 'guide'],
-      features: ['features', 'what can', 'capabilities', 'functions'],
-      ecosystem: ['ecosystem', 'platform', 'system', 'about']
-    };
-
-    let queryType = 'general';
-    for (const [type, keywords] of Object.entries(platformKeywords)) {
-      if (keywords.some(keyword => lowerMessage.includes(keyword))) {
-        queryType = type;
-        break;
-      }
+    // Get or create conversation history
+    if (!conversationMemory.has(userId)) {
+      conversationMemory.set(userId, {
+        messages: [],
+        preferences: {},
+        lastActive: Date.now()
+      });
+    }
+    
+    const userConversation = conversationMemory.get(userId);
+    userConversation.messages.push({ role: 'user', content: message, timestamp: Date.now() });
+    userConversation.lastActive = Date.now();
+    
+    // Keep only last 10 messages to manage memory
+    if (userConversation.messages.length > 10) {
+      userConversation.messages = userConversation.messages.slice(-10);
     }
 
-    // Create context-aware system prompt
-    let systemPrompt = `You are the AI assistant for EthioHeritage360, a comprehensive Ethiopian heritage ecosystem platform. You are knowledgeable, helpful, and enthusiastic about Ethiopian culture and heritage.`;
-
-    switch (queryType) {
-      case 'welcome':
-        systemPrompt += ` Welcome users warmly to EthioHeritage360. Explain this is a complete ecosystem with Virtual Museum, Educational resources, Community features, Expert guides, Tour planning, Cultural events, and Research tools.`;
-        break;
-      case 'help':
-        systemPrompt += ` Provide help about platform features: AI Chat Assistant (24/7), Super Admin for technical issues, Museum Curators for exhibits, Tour Organizers for travel, Educational Coordinators for learning, Community Moderators for interactions.`;
-        break;
-      case 'contact':
-        systemPrompt += ` Provide contact info: Super Admin (technical issues), Museum Director (exhibits), Education Coordinator (learning), Tour Manager (travel), Community Manager (interactions), Cultural Expert (heritage questions).`;
-        break;
-      case 'education':
-        systemPrompt += ` Focus on educational features: Interactive learning modules, Virtual field trips, Educational games, Research databases, Teacher resources, Student tools, Certification programs, University partnerships.`;
-        break;
-      case 'museum':
-        systemPrompt += ` Explain virtual museum: 3D interactive exhibits, Historical timelines, Audio-visual storytelling, Artifact collections, VR heritage tours, Interactive maps, Curator presentations, Digital preservation.`;
-        break;
-      case 'tour':
-        systemPrompt += ` Describe tour features: AI-powered itinerary creation, Local guide connections, Heritage site recommendations, Cultural event calendar, Transportation coordination, Safety tips, Group management.`;
-        break;
-      case 'features':
-        systemPrompt += ` List all features: 🏛️ Virtual Museum, 📚 Education Hub, 🗺️ Tour Planner, 👥 Community, 🔍 Research, 📱 Mobile Access, 🎯 Personalization, 🌐 Multilingual support.`;
-        break;
-      case 'ecosystem':
-        systemPrompt += ` Explain the ecosystem: Digital Heritage Preservation, Educational Development, Community Engagement, Tourism Development, Research Collaboration - all interconnected for comprehensive heritage experience.`;
-        break;
-      default:
-        systemPrompt += ` Provide expert knowledge about Ethiopian heritage, culture, and history. Always relate back to platform features. ${context ? `Context: ${context}` : ''}`;
+    // Detect intent with enhanced NLP
+    const intent = detectIntent(message);
+    console.log(`🎯 Detected intent: ${intent} for message: "${message.substring(0, 50)}..."`);
+    
+    // Try to generate personalized response first
+    const personalizedResult = await generatePersonalizedResponse(intent, message, userId, userConversation.messages);
+    
+    if (personalizedResult) {
+      // Use our enhanced system
+      userConversation.messages.push({ role: 'assistant', content: personalizedResult.response, timestamp: Date.now() });
+      
+      return res.json({
+        success: true,
+        data: {
+          message: personalizedResult.response,
+          intent: intent,
+          additional_data: personalizedResult.additionalData,
+          source: personalizedResult.source,
+          external_data: personalizedResult.externalData,
+          conversation_id: userId,
+          timestamp: new Date().toISOString()
+        }
+      });
     }
+    
+    // Fall back to OpenAI for complex queries
+    const conversationContext = userConversation.messages.slice(-5).map(m => `${m.role}: ${m.content}`).join('\n');
+    
+    const systemPrompt = `You are an expert Ethiopian Heritage Assistant for EthioHeritage360 platform. You have deep knowledge of:
+    
+    🏛️ UNESCO World Heritage Sites: Lalibela, Axum, Gondar, Omo Valley
+    🎭 Cultural practices: 80+ ethnic groups, ancient traditions
+    📚 History: 3000+ years, never fully colonized
+    🍽️ Cuisine: Injera, coffee ceremony, spicy stews
+    🎵 Arts: Traditional music, dance, handicrafts
+    🗣️ Languages: 80+ languages, Amharic script
+    
+    Be conversational, enthusiastic, and helpful. Always relate responses back to available platform features.
+    
+    Previous conversation context:
+    ${conversationContext}
+    
+    Current user intent detected: ${intent}`;
 
     const completion = await makeOpenAIRequest({
       model: "gpt-3.5-turbo",
@@ -295,22 +478,26 @@ app.post('/api/chat', validateOpenAI, checkRateLimit, async (req, res) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: message }
       ],
-      max_tokens: 800,
-      temperature: 0.7
+      max_tokens: 1000,
+      temperature: 0.8
     });
 
-    const response = completion.choices[0]?.message?.content;
+    const aiResponse = completion.choices[0]?.message?.content;
+    userConversation.messages.push({ role: 'assistant', content: aiResponse, timestamp: Date.now() });
     
     res.json({
       success: true,
       data: {
-        message: response,
-        query_type: queryType,
-        usage: completion.usage
+        message: aiResponse,
+        intent: intent,
+        source: 'openai_enhanced',
+        conversation_id: userId,
+        usage: completion.usage,
+        timestamp: new Date().toISOString()
       }
     });
   } catch (error) {
-    console.error('OpenAI API Error:', error);
+    console.error('Enhanced Chat Error:', error);
     res.status(500).json({
       success: false,
       message: 'Error processing chat request',
